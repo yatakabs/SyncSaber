@@ -76,7 +76,9 @@ namespace BeatSaberMapperFeed {
                 else {
                     byte[] data = www.downloadHandler.data;
                     string authorID = GetAuthorID(author, data);
-                    yield return DownloadSongs(author, authorID);
+                    if (authorID != String.Empty) {
+                        yield return DownloadSongs(author, authorID);
+                    }
                 }
             }
             _downloaderRunning = false;
