@@ -9,4 +9,4 @@ Next, all you have to do is enter your favorite mappers BeatSaver usernames (one
 That's it! Everytime you launch the game MapperFeed will download any new releases from mappers on your favorites list.
 
 # Download
-Grab the latest MapperFeed.dll from https://github.com/brian91292/BeatSaber-MapperFeed/releases
+[Click here to download the latest MapperFeed.dll](https://github.com/brian91292/BeatSaber-MapperFeed/releases)
