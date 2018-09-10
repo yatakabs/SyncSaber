@@ -14,7 +14,7 @@ using System.Windows.Forms;
 using UnityEngine;
 using UnityEngine.Networking;
 
-namespace CustomSongSync {
+namespace BeatSaberMapperFeed {
     class MapperFeed : MonoBehaviour {
         private bool _downloaderRunning = false;
         private Stack<string> _artistDownloadQueue = new Stack<string>();

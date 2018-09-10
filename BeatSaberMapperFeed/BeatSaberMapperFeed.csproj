@@ -7,8 +7,8 @@
     <ProjectGuid>{205F177C-3995-46B4-854B-9EED576B706D}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>CustomSongSync</RootNamespace>
-    <AssemblyName>MapperFeed</AssemblyName>
+    <RootNamespace>BeatSaberMapperFeed</RootNamespace>
+    <AssemblyName>BeatSaberMapperFeed</AssemblyName>
     <TargetFrameworkVersion>v4.6</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <TargetFrameworkProfile />

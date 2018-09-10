@@ -3,7 +3,7 @@ using System;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
-namespace CustomSongSync {
+namespace BeatSaberMapperFeed {
     public class Plugin : IPlugin {
         public string Name => "MapperFeed";
         public string Version => "1.0.0";
