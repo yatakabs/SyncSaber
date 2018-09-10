@@ -6,7 +6,7 @@ using UnityEngine.SceneManagement;
 namespace CustomSongSync {
     public class Plugin : IPlugin {
         public string Name => "MapperFeed";
-        public string Version => "0.0.1";
+        public string Version => "1.0.0";
         public void OnApplicationStart() {
             new GameObject().AddComponent<MapperFeed>();
         }
