@@ -149,18 +149,26 @@ namespace BeatSaberMapperFeed {
                                 string localPath = $"{Environment.CurrentDirectory}\\.songcache\\{songIndex}.zip";
                                 yield return DownloadFile($"https://beatsaver.com/download/{songIndex}", localPath);
 
-                                ZipFile.ExtractToDirectory(localPath, ".songcache");
+                                if (File.Exists(localPath)) {
+                                    bool extracted = false;
+                                    try {
+                                        ZipFile.ExtractToDirectory(localPath, ".songcache");
+                                        extracted = true;
+                                    }
+                                    catch (Exception) { }
 
-                                yield return null;
+                                    yield return null;
 
-                                File.Delete(localPath);
+                                    File.Delete(localPath);
 
-                                string[] directories = Directory.GetDirectories($"{Environment.CurrentDirectory}\\.songcache");
-                                foreach (var directory in directories) {
-                                    Directory.Move(directory, songDirectory);
+                                    if (extracted) {
+                                        string[] directories = Directory.GetDirectories($"{Environment.CurrentDirectory}\\.songcache");
+                                        foreach (var directory in directories) {
+                                            Directory.Move(directory, songDirectory);
+                                        }
+                                        downloadCount++;
+                                    }
                                 }
-
-                                downloadCount++;
                             }
                             totalSongs++;
                         }
