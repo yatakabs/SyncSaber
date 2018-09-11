@@ -1,4 +1,4 @@
-# MapperFeed v1.0.0
+# Mod Info
 This mod automatically downloads songs from your favorite mappers whenever you launch Beat Saber. If you're lazy like me, this mod is probably for you!
 
 # Getting Started
