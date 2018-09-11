@@ -17,7 +17,7 @@ using UnityEngine.Networking;
 namespace BeatSaberMapperFeed {
     class MapperFeed : MonoBehaviour {
         private bool _downloaderRunning = false;
-        private Stack<string> _artistDownloadQueue = new Stack<string>();
+        private Stack<string> _authorDownloadQueue = new Stack<string>();
 
         void Awake() {
             UnityEngine.Object.DontDestroyOnLoad(this.gameObject);
@@ -29,15 +29,15 @@ namespace BeatSaberMapperFeed {
             
             foreach (string mapper in File.ReadAllLines(favoriteMappersPath)) {
                 Plugin.Log($"Mapper: {mapper}");
-                _artistDownloadQueue.Push(mapper);
+                _authorDownloadQueue.Push(mapper);
             }
         }
 
         void Update() {
-            if (_artistDownloadQueue.Count > 0 && !_downloaderRunning) {
-                StartCoroutine(DownloadAllSongsByAuthor(_artistDownloadQueue.Pop()));
+            if (_authorDownloadQueue.Count > 0 && !_downloaderRunning) {
+                StartCoroutine(DownloadAllSongsByAuthor(_authorDownloadQueue.Pop()));
             }
-            else if (_artistDownloadQueue.Count == 0 && !_downloaderRunning) {
+            else if (_authorDownloadQueue.Count == 0 && !_downloaderRunning) {
                 SongLoader.Instance.RefreshSongs(false);
                 Plugin.Log("Finished updating songs from all mappers!");
                 Destroy(this.gameObject);
@@ -111,7 +111,6 @@ namespace BeatSaberMapperFeed {
             }
 
             while (true) {
-                bool exitLoop = false;
                 string url = $"https://beatsaver.com/browse/byuser/{authorID}/{currentSongIndex.ToString()}";
                 using (UnityWebRequest www = UnityWebRequest.Get(url)) {
                     yield return www.SendWebRequest();
@@ -138,7 +137,6 @@ namespace BeatSaberMapperFeed {
                         }
 
                         if (songIndices.Count == 0) {
-                            exitLoop = true;
                             break;
                         }
                         
@@ -176,10 +174,6 @@ namespace BeatSaberMapperFeed {
                         }
                         currentSongIndex += 20;
                     }
-                }
-                
-                if (exitLoop) {
-                    break;
                 }
             }
             Empty(new DirectoryInfo(".songcache"));
