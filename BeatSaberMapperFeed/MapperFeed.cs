@@ -141,9 +141,9 @@ namespace BeatSaberMapperFeed {
                         }
                         
                         foreach (string songIndex in songIndices) {
-                            string songDirectory = $"{Environment.CurrentDirectory}\\CustomSongs\\{songIndex}";
+                            string currentSongDirectory = $"{Environment.CurrentDirectory}\\CustomSongs\\{songIndex}";
 
-                            if (!Directory.Exists(songDirectory)) {
+                            if (!Directory.Exists(currentSongDirectory)) {
                                 Empty(new DirectoryInfo(".songcache"));
 
                                 string localPath = $"{Environment.CurrentDirectory}\\.songcache\\{songIndex}.zip";
@@ -164,12 +164,34 @@ namespace BeatSaberMapperFeed {
                                     if (extracted) {
                                         string[] directories = Directory.GetDirectories($"{Environment.CurrentDirectory}\\.songcache");
                                         foreach (var directory in directories) {
-                                            Directory.Move(directory, songDirectory);
+                                            Directory.Move(directory, currentSongDirectory);
                                         }
                                         downloadCount++;
                                     }
                                 }
                             }
+
+                            // Check for/remove any duplicate songs
+                            string[] customSongDirectories = Directory.GetDirectories($"{Environment.CurrentDirectory}\\CustomSongs");
+                            string id = songIndex.Substring(0, songIndex.IndexOf("-"));
+                            string version = songIndex.Substring(songIndex.IndexOf("-")+1);
+
+                            foreach (string directory in customSongDirectories) {
+                                string directoryName = directory.Substring(directory.LastIndexOf('\\') + 1);
+                                bool hasDash = directoryName.Contains("-");
+
+
+                                if (hasDash && directoryName.StartsWith($"{id}-") || !hasDash && directoryName == id) {
+                                    if (directoryName != $"{id}-{version}") {
+                                        Empty(new DirectoryInfo(directory));
+                                        Directory.Delete(directory);
+                                        Plugin.Log($"Deleting duplicate song with identifier \"{directoryName}\" (current version: {id}-{version})");
+
+                                    }
+                                }
+                            }
+
+
                             totalSongs++;
                         }
                         currentSongIndex += 20;
