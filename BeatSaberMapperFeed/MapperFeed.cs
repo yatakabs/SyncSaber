@@ -18,9 +18,17 @@ namespace BeatSaberMapperFeed {
     class MapperFeed : MonoBehaviour {
         private bool _downloaderRunning = false;
         private Stack<string> _authorDownloadQueue = new Stack<string>();
+        private List<string> _songDownloadHistory = new List<string>();
+
+        private string _historyPath = null;
 
         void Awake() {
             UnityEngine.Object.DontDestroyOnLoad(this.gameObject);
+
+            _historyPath = $"{Environment.CurrentDirectory}\\UserData\\MapperFeedHistory.txt";
+            if (File.Exists(_historyPath)) {
+                _songDownloadHistory = File.ReadAllLines(_historyPath).ToList();
+            }
 
             string favoriteMappersPath = $"{Environment.CurrentDirectory}\\UserData\\FavoriteMappers.ini";
             if (!File.Exists(favoriteMappersPath)) {
@@ -38,6 +46,10 @@ namespace BeatSaberMapperFeed {
                 StartCoroutine(DownloadAllSongsByAuthor(_authorDownloadQueue.Pop()));
             }
             else if (_authorDownloadQueue.Count == 0 && !_downloaderRunning) {
+                // Write our download history to file
+                _songDownloadHistory.Sort();
+                File.WriteAllLines(_historyPath, _songDownloadHistory);
+
                 SongLoader.Instance.RefreshSongs(false);
                 Plugin.Log("Finished updating songs from all mappers!");
                 Destroy(this.gameObject);
@@ -143,7 +155,7 @@ namespace BeatSaberMapperFeed {
                         foreach (string songIndex in songIndices) {
                             string currentSongDirectory = $"{Environment.CurrentDirectory}\\CustomSongs\\{songIndex}";
 
-                            if (!Directory.Exists(currentSongDirectory)) {
+                            if (!_songDownloadHistory.Contains(songIndex) && !Directory.Exists(currentSongDirectory)) {
                                 Empty(new DirectoryInfo(".songcache"));
 
                                 string localPath = $"{Environment.CurrentDirectory}\\.songcache\\{songIndex}.zip";
@@ -170,6 +182,11 @@ namespace BeatSaberMapperFeed {
                                     }
                                 }
                             }
+                            
+                            // Keep a history of all the songs we download- count it as downloaded even if the user already had it downloaded previously so if they delete it it doesn't get redownloaded
+                            if (!_songDownloadHistory.Contains(songIndex)) {
+                                _songDownloadHistory.Add(songIndex);
+                            }
 
                             // Check for/remove any duplicate songs
                             string[] customSongDirectories = Directory.GetDirectories($"{Environment.CurrentDirectory}\\CustomSongs");
@@ -186,7 +203,6 @@ namespace BeatSaberMapperFeed {
                                         Empty(new DirectoryInfo(directory));
                                         Directory.Delete(directory);
                                         Plugin.Log($"Deleting duplicate song with identifier \"{directoryName}\" (current version: {id}-{version})");
-
                                     }
                                 }
                             }
