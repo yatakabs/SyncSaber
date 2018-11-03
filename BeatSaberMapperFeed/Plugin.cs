@@ -7,11 +7,24 @@ namespace BeatSaberMapperFeed {
     public class Plugin : IPlugin {
         public string Name => "MapperFeed";
         public string Version => "1.0.2";
+
+        public static bool IsInGame = false;
+
+        private bool initialized = false;
+
+        private MapperFeed _mapperFeed = null;
+
         public void OnApplicationStart() {
-            new GameObject().AddComponent<MapperFeed>();
+            Config.Read();
+            Config.Write();
+
+            _mapperFeed = new GameObject().AddComponent<MapperFeed>();
+
+            SceneManager.activeSceneChanged += SceneManagerOnActiveSceneChanged;
         }
 
         public void OnApplicationQuit() {
+            SceneManager.activeSceneChanged -= SceneManagerOnActiveSceneChanged;
         }
 
         public void OnLevelWasLoaded(int level) {
@@ -19,6 +32,12 @@ namespace BeatSaberMapperFeed {
         }
 
         public void OnLevelWasInitialized(int level) {
+        }
+
+        void SceneManagerOnActiveSceneChanged(Scene arg0, Scene scene)
+        {
+            if (scene.name == "Menu") IsInGame = false;
+            else if (scene.name.Contains("Environment")) IsInGame = true;
         }
 
         public void OnUpdate() {
