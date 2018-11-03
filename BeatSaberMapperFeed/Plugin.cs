@@ -6,7 +6,7 @@ using UnityEngine.SceneManagement;
 namespace BeatSaberMapperFeed {
     public class Plugin : IPlugin {
         public string Name => "MapperFeed";
-        public string Version => "1.0.2";
+        public string Version => "1.1.0";
 
         public static bool IsInGame = false;
 
