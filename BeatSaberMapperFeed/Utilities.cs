@@ -1,4 +1,6 @@
-﻿using System;
+﻿using IllusionInjector;
+using IllusionPlugin;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
@@ -40,10 +42,16 @@ namespace BeatSaberMapperFeed
             }
         }
 
-        public static void EmptyDirectory(System.IO.DirectoryInfo directory)
+        public static void EmptyDirectory(string directory, bool delete = true)
         {
-            foreach (System.IO.FileInfo file in directory.GetFiles()) file.Delete();
-            foreach (System.IO.DirectoryInfo subDirectory in directory.GetDirectories()) subDirectory.Delete(true);
+            if (Directory.Exists(directory))
+            {
+                var directoryInfo = new DirectoryInfo(directory);
+                foreach (System.IO.FileInfo file in directoryInfo.GetFiles()) file.Delete();
+                foreach (System.IO.DirectoryInfo subDirectory in directoryInfo.GetDirectories()) subDirectory.Delete(true);
+
+                if (delete) Directory.Delete(directory);
+            }
         }
 
         public static IEnumerator ExtractZip(string zipPath, string extractPath)
@@ -82,6 +90,18 @@ namespace BeatSaberMapperFeed
                     Plugin.Log($"An exception occured while trying to move files into their final directory! {e.ToString()}");
                 }
             }
+        }
+
+        public static bool IsModInstalled(string modName)
+        {
+            foreach (IPlugin p in PluginManager.Plugins)
+            {
+                if (p.Name == modName)
+                {
+                    return true;
+                }
+            }
+            return false;
         }
 
         public static void WriteStringListSafe(string path, List<string> data)
