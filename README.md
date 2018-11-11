@@ -15,7 +15,7 @@ MapperFeed settings are stored in the modprefs.ini which you can find in the Use
 
 | Option                     | Description                                                                                                                  |
 |----------------------------|------------------------------------------------------------------------------------------------------------------------------|
-| **AutoDownloadSongs** | Whether or not MapperFeed should automatically download any new songs it finds, or just add them to the MapperFeed playlist. |
+| **AutoDownloadSongs** | Whether or not SyncSaber should automatically download any new songs it finds, or just add them to the SyncSaber playlist. |
 | **BeastSaberUsername**| Your username from BeastSaber (https://bsaber.com), this config option is optional. Only enter this if you want to automatically download songs posted to your followings/bookmarks feed on BeastSaber |
 
 # Download
