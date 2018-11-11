@@ -7,7 +7,7 @@ using System.Text;
 using System.Threading.Tasks;
 using UnityEngine;
 
-namespace BeatSaberMapperFeed
+namespace SyncSaber
 {
     public class PlaylistSong
     {
@@ -23,12 +23,15 @@ namespace BeatSaberMapperFeed
 
     public class PlaylistIO
     {
+        public static readonly string Path = "Playlists\\SyncSaberPlaylist.json";
+        public static readonly string OldPath = "Playlists\\MapperFeedPlaylist.json";
+
         public static Playlist ReadPlaylist()
         {
             try
             {
-                String json = File.ReadAllText("Playlists\\MapperFeedPlaylist.json");
-                Playlist playlist = new Playlist("MapperFeed Songs", "brian91292", null);
+                String json = File.ReadAllText(Path);
+                Playlist playlist = new Playlist("SyncSaber Songs", "brian91292", null);
 
                 JSONNode playlistNode = JSON.Parse(json);
 
@@ -80,7 +83,7 @@ namespace BeatSaberMapperFeed
 
             playlistNode.Add("fileLoc", new JSONString("1"));
 
-            File.WriteAllText("Playlists\\MapperFeedPlaylist.json", playlistNode.ToString());
+            File.WriteAllText(Path, playlistNode.ToString());
         }
     }
 
@@ -113,7 +116,8 @@ namespace BeatSaberMapperFeed
 
         public bool ReadPlaylist()
         {
-            if (File.Exists("Playlists\\MapperFeedPlaylist.json"))
+            if (File.Exists(PlaylistIO.OldPath)) File.Move(PlaylistIO.OldPath, PlaylistIO.Path);
+            if (File.Exists(PlaylistIO.Path))
             {
                 var playlist = PlaylistIO.ReadPlaylist();
                 if (playlist != null)

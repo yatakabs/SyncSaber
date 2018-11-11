@@ -5,11 +5,11 @@ using System.Runtime.InteropServices;
 // General Information about an assembly is controlled through the following
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
-[assembly: AssemblyTitle("CustomSongSync")]
+[assembly: AssemblyTitle("SyncSaber")]
 [assembly: AssemblyDescription("")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("")]
-[assembly: AssemblyProduct("CustomSongSync")]
+[assembly: AssemblyProduct("SyncSaber")]
 [assembly: AssemblyCopyright("Copyright ©  2018")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
@@ -20,7 +20,7 @@ using System.Runtime.InteropServices;
 [assembly: ComVisible(false)]
 
 // The following GUID is for the ID of the typelib if this project is exposed to COM
-[assembly: Guid("ee3b650f-6588-499d-8126-65a5a6c06075")]
+[assembly: Guid("6b164ffe-cfa8-4047-81a9-208cc5843eb0")]
 
 // Version information for an assembly consists of the following four values:
 //

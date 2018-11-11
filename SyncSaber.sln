@@ -1,9 +1,9 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
-VisualStudioVersion = 15.0.28010.2016
+VisualStudioVersion = 15.0.28010.2050
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BeatSaberMapperFeed", "BeatSaberMapperFeed\BeatSaberMapperFeed.csproj", "{205F177C-3995-46B4-854B-9EED576B706D}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SyncSaber", "SyncSaber\SyncSaber.csproj", "{205F177C-3995-46B4-854B-9EED576B706D}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -20,6 +20,6 @@ Global
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
-		SolutionGuid = {948F0806-941D-4481-8883-8A6BC7B0C840}
+		SolutionGuid = {03578D7C-0D8A-4746-8CB8-23B74DA9E611}
 	EndGlobalSection
 EndGlobal

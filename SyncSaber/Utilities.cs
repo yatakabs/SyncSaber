@@ -8,13 +8,38 @@ using System.IO.Compression;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using TMPro;
 using UnityEngine;
 using UnityEngine.Networking;
 
-namespace BeatSaberMapperFeed
+namespace SyncSaber
 {
     class Utilities
     {
+        public static TextMeshProUGUI CreateNotificationText(string text)
+        {
+            var gameObject = new GameObject();
+            GameObject.DontDestroyOnLoad(gameObject);
+            gameObject.transform.position = new Vector3(0, 0f, 2.5f);
+            gameObject.transform.eulerAngles = new Vector3(0, 0, 0);
+            gameObject.transform.localScale = new Vector3(0.01f, 0.01f, 0.01f);
+
+            var _canvas = gameObject.AddComponent<Canvas>();
+            _canvas.renderMode = RenderMode.WorldSpace;
+            var rectTransform = _canvas.transform as RectTransform;
+            rectTransform.sizeDelta = new Vector2(200, 50);
+
+            var _notificationText = new GameObject().AddComponent<TextMeshProUGUI>();
+            rectTransform = _notificationText.transform as RectTransform;
+            rectTransform.SetParent(_canvas.transform, false);
+            rectTransform.anchoredPosition = new Vector2(0, 45);
+            rectTransform.sizeDelta = new Vector2(400, 20);
+            _notificationText.text = text;
+            _notificationText.fontSize = 10f;
+            _notificationText.alignment = TextAlignmentOptions.Center;
+            return _notificationText;
+        }
+
         public static IEnumerator DownloadFile(string url, string path)
         {
             //Plugin.Log($"Downloading url {url}");

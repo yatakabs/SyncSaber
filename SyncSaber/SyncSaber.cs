@@ -16,7 +16,6 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Web;
-using System.Windows.Forms;
 using System.Xml;
 using System.Xml.Linq;
 using TMPro;
@@ -25,14 +24,14 @@ using UnityEngine.Networking;
 using UnityEngine.SceneManagement;
 using SongBrowserPlugin;
 
-namespace BeatSaberMapperFeed {
-    class MapperFeed : MonoBehaviour {
+namespace SyncSaber {
+    class SyncSaber : MonoBehaviour {
         private bool _downloaderRunning = false;
         private Stack<string> _authorDownloadQueue = new Stack<string>();
         private ConcurrentStack<string> _updateQueue = new ConcurrentStack<string>();
         private ConcurrentDictionary<string, string> _updateInformation = new ConcurrentDictionary<string, string>();
         private List<string> _songDownloadHistory = new List<string>();
-        private Playlist _mapperFeedSongs = new Playlist("MapperFeed Playlist", "brian91292", "1");
+        private Playlist _syncSaberSongs = new Playlist("SyncSaber Playlist", "brian91292", "1");
 
         private string _historyPath = null;
         private int _beatSaberFeedToDownload = 0;
@@ -51,7 +50,11 @@ namespace BeatSaberMapperFeed {
 
             SceneManager.activeSceneChanged += SceneManagerOnActiveSceneChanged;
 
-            _historyPath = $"{Environment.CurrentDirectory}\\UserData\\MapperFeedHistory.txt";
+            _historyPath = $"{Environment.CurrentDirectory}\\UserData\\SyncSaberHistory.txt";
+            var _oldHistoryPath = $"{Environment.CurrentDirectory}\\UserData\\MapperFeedHistory.txt";
+            if (File.Exists(_oldHistoryPath)) File.Move(_oldHistoryPath, _historyPath);
+            if (File.Exists(_oldHistoryPath + ".bak")) File.Move(_oldHistoryPath + ".bak", _historyPath);
+
             if (File.Exists(_historyPath + ".bak"))
             {
                 // Something went wrong when the history file was being written previously, restore it from backup
@@ -77,28 +80,12 @@ namespace BeatSaberMapperFeed {
                 _authorDownloadQueue.Push(mapper);
             }
 
-            if (!_mapperFeedSongs.ReadPlaylist())
+            if (!_syncSaberSongs.ReadPlaylist())
             {
-                _mapperFeedSongs.WritePlaylist();
+                _syncSaberSongs.WritePlaylist();
             }
 
-            gameObject.transform.position = new Vector3(0, 0f, 2.5f);
-            gameObject.transform.eulerAngles = new Vector3(0, 0, 0);
-            gameObject.transform.localScale = new Vector3(0.01f, 0.01f, 0.01f);
-
-            _canvas = gameObject.AddComponent<Canvas>();
-            _canvas.renderMode = RenderMode.WorldSpace;
-            var rectTransform = _canvas.transform as RectTransform;
-            rectTransform.sizeDelta = new Vector2(200, 50);
-
-            _notificationText = new GameObject().AddComponent<TextMeshProUGUI>();
-            rectTransform = _notificationText.transform as RectTransform;
-            rectTransform.SetParent(_canvas.transform, false);
-            rectTransform.anchoredPosition = new Vector2(0, 45);
-            rectTransform.sizeDelta = new Vector2(400, 20);
-            _notificationText.text = "";
-            _notificationText.fontSize = 10f;
-            _notificationText.alignment = TextAlignmentOptions.Center;
+            _notificationText = Utilities.CreateNotificationText(String.Empty);
 
             if (!Directory.Exists("CustomSongs"))
             {
@@ -109,7 +96,7 @@ namespace BeatSaberMapperFeed {
         private void DisplayNotification(string text)
         {
             _uiResetTime = DateTime.Now.AddSeconds(5);
-            _notificationText.text = "MapperFeed- " + text;
+            _notificationText.text = "SyncSaber- " + text;
         }
 
         private void Update() {
@@ -279,7 +266,7 @@ namespace BeatSaberMapperFeed {
         {
             // Update our playlist with the new song if it doesn't exist, or replace the old song id/name with the updated info if it does
             bool playlistSongFound = false;
-            foreach (PlaylistSong s in _mapperFeedSongs.Songs)
+            foreach (PlaylistSong s in _syncSaberSongs.Songs)
             {
                 string id = songIndex.Substring(0, songIndex.IndexOf("-"));
                 string version = songIndex.Substring(songIndex.IndexOf("-") + 1);
@@ -307,7 +294,7 @@ namespace BeatSaberMapperFeed {
             }
             if (!playlistSongFound)
             {
-                _mapperFeedSongs.Add(songIndex, songName);
+                _syncSaberSongs.Add(songIndex, songName);
                 Plugin.Log($"Added new playlist song \"{songName}\" with BeatSaver index {songIndex}");
             }
         }
@@ -603,8 +590,8 @@ namespace BeatSaberMapperFeed {
             // Write our download history to file
             Utilities.WriteStringListSafe(_historyPath, _songDownloadHistory.Distinct().ToList());
 
-            // Write to the MapperFeed playlist
-            _mapperFeedSongs.WritePlaylist();
+            // Write to the SyncSaber playlist
+            _syncSaberSongs.WritePlaylist();
 
             Utilities.EmptyDirectory(".songcache");
 
@@ -705,8 +692,8 @@ namespace BeatSaberMapperFeed {
                 // Write our download history to file
                 Utilities.WriteStringListSafe(_historyPath, _songDownloadHistory.Distinct().ToList());
                 
-                // Write to the MapperFeed playlist
-                _mapperFeedSongs.WritePlaylist();
+                // Write to the SynCSaber playlist
+                _syncSaberSongs.WritePlaylist();
 
                 Plugin.Log($"Reached end of page! Found {totalSongsForPage.ToString()} songs total, downloaded {downloadCountForPage.ToString()}!");
                 pageIndex++;
