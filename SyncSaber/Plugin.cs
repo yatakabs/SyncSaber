@@ -9,7 +9,7 @@ using UnityEngine.SceneManagement;
 namespace SyncSaber {
     public class Plugin : IPlugin {
         public string Name => "SyncSaber";
-        public string Version => "1.2.0";
+        public string Version => "1.2.1";
 
         public static bool IsInGame = false;
         private SyncSaber _syncSaber = null;
