@@ -42,7 +42,6 @@ namespace SyncSaber
 
         public static IEnumerator DownloadFile(string url, string path)
         {
-            //Plugin.Log($"Downloading url {url}");
             using (UnityWebRequest www = UnityWebRequest.Get(url))
             {
                 yield return www.SendWebRequest();
