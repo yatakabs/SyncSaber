@@ -6,8 +6,10 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
-namespace SyncSaber {
-    public class Plugin : IPlugin {
+namespace SyncSaber
+{
+    public class Plugin : IPlugin
+    {
         public string Name => "SyncSaber";
         public string Version => "1.2.3";
 
@@ -33,21 +35,25 @@ namespace SyncSaber {
             _syncSaber = new GameObject().AddComponent<SyncSaber>();
         }
 
-        public void OnApplicationStart() {
+        public void OnApplicationStart()
+        {
             SceneManager.activeSceneChanged += SceneManagerOnActiveSceneChanged;
 
             SharedCoroutineStarter.instance.StartCoroutine(DelayedStartup());
         }
 
-        public void OnApplicationQuit() {
+        public void OnApplicationQuit()
+        {
             SceneManager.activeSceneChanged -= SceneManagerOnActiveSceneChanged;
         }
 
-        public void OnLevelWasLoaded(int level) {
+        public void OnLevelWasLoaded(int level)
+        {
 
         }
 
-        public void OnLevelWasInitialized(int level) {
+        public void OnLevelWasInitialized(int level)
+        {
         }
 
         void SceneManagerOnActiveSceneChanged(Scene arg0, Scene scene)
@@ -65,13 +71,16 @@ namespace SyncSaber {
             }
         }
 
-        public void OnUpdate() {
+        public void OnUpdate()
+        {
         }
 
-        public void OnFixedUpdate() {
+        public void OnFixedUpdate()
+        {
         }
 
-        public static void Log(string msg) {
+        public static void Log(string msg)
+        {
             msg = $"[SyncSaber] {msg}";
             Console.WriteLine(msg);
         }

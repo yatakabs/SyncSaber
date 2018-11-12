@@ -53,7 +53,8 @@ namespace SyncSaber
                 {
                     try
                     {
-                        if (!Directory.Exists(Path.GetDirectoryName(path))) {
+                        if (!Directory.Exists(Path.GetDirectoryName(path)))
+                        {
                             Directory.CreateDirectory(Path.GetDirectoryName(path));
                         }
                         File.WriteAllBytes(path, www.downloadHandler.data);
@@ -94,7 +95,7 @@ namespace SyncSaber
                     yield break;
                 }
 
-                yield return new WaitForSeconds(0.2f) ;
+                yield return new WaitForSeconds(0.2f);
 
                 File.Delete(zipPath);
 

@@ -24,8 +24,10 @@ using UnityEngine.Networking;
 using UnityEngine.SceneManagement;
 using SongBrowserPlugin;
 
-namespace SyncSaber {
-    class SyncSaber : MonoBehaviour {
+namespace SyncSaber
+{
+    class SyncSaber : MonoBehaviour
+    {
         private readonly Regex _digitRegex = new Regex("^[0-9]+$", RegexOptions.Compiled);
 
         private bool _downloaderRunning = false;
@@ -49,7 +51,8 @@ namespace SyncSaber {
         private TMP_Text _notificationText;
         private DateTime _uiResetTime;
 
-        private void Awake() {
+        private void Awake()
+        {
             UnityEngine.Object.DontDestroyOnLoad(this.gameObject);
 
             SceneManager.activeSceneChanged += SceneManagerOnActiveSceneChanged;
@@ -65,7 +68,7 @@ namespace SyncSaber {
             if (File.Exists(_historyPath + ".bak"))
             {
                 // Something went wrong when the history file was being written previously, restore it from backup
-                if (File.Exists(_historyPath)) File.Delete(_historyPath); 
+                if (File.Exists(_historyPath)) File.Delete(_historyPath);
                 File.Move(_historyPath + ".bak", _historyPath);
             }
             if (File.Exists(_historyPath))
@@ -73,13 +76,15 @@ namespace SyncSaber {
                 _songDownloadHistory = File.ReadAllLines(_historyPath).ToList();
             }
             if (!Directory.Exists("CustomSongs")) Directory.CreateDirectory("CustomSongs");
-            
+
             string favoriteMappersPath = $"{Environment.CurrentDirectory}\\UserData\\FavoriteMappers.ini";
-            if (!File.Exists(favoriteMappersPath)) {
+            if (!File.Exists(favoriteMappersPath))
+            {
                 File.WriteAllLines(favoriteMappersPath, new string[] { "" }); // "freeek", "purphoros", "bennydabeast", "rustic", "greatyazer"
             }
-            
-            foreach (string mapper in File.ReadAllLines(favoriteMappersPath)) {
+
+            foreach (string mapper in File.ReadAllLines(favoriteMappersPath))
+            {
                 Plugin.Log($"Mapper: {mapper}");
                 _authorDownloadQueue.Push(mapper);
             }
@@ -99,7 +104,8 @@ namespace SyncSaber {
             _notificationText.text = "SyncSaber- " + text;
         }
 
-        private void Update() {
+        private void Update()
+        {
             if (!_downloaderRunning)
             {
                 if (_updateQueue.Count > 0)
@@ -139,7 +145,7 @@ namespace SyncSaber {
                 _notificationText.text = String.Empty;
             }
         }
-        
+
         private void SceneManagerOnActiveSceneChanged(Scene arg0, Scene scene)
         {
             if (scene.name != "Menu") return;
@@ -162,16 +168,20 @@ namespace SyncSaber {
             }
         }
 
-        private string GetAuthorID(string author, string data) {
+        private string GetAuthorID(string author, string data)
+        {
             string search = $">{author.ToLower()}<";
 
-            while (true) {
+            while (true)
+            {
                 int index = data.IndexOf(search);
-                if (index != -1) {
+                if (index != -1)
+                {
                     string tmp = data.Substring(0, index - 1);
                     return tmp.Substring(tmp.LastIndexOf('/') + 1);
                 }
-                else {
+                else
+                {
                     break;
                 }
             }
@@ -223,7 +233,7 @@ namespace SyncSaber {
         private IEnumerator UpdateSong(string songIndex)
         {
             Utilities.EmptyDirectory(".songcache", false);
-            
+
             // Download and extract the update
             string localPath = $"{Environment.CurrentDirectory}\\.songcache\\{songIndex}.zip";
             yield return Utilities.DownloadFile($"https://beatsaver.com/download/{songIndex}", localPath);
@@ -290,7 +300,7 @@ namespace SyncSaber {
             if (oldBeatSaverId != newBeatSaverId)
             {
                 DisplayNotification($"Updating song {newBeatSaverId}");
-                
+
                 _updateQueue.Push(newBeatSaverId);
                 _updateInformation[newBeatSaverId] = levelPath;
 
@@ -355,18 +365,20 @@ namespace SyncSaber {
                     yield break;
                 }
 
-                if (!zippedSong) {
+                if (!zippedSong)
+                {
                     Plugin.Log($"Attempting to get beatsaver id from path \"{_songPath}\"");
 
                     string directoryName = Path.GetFileName(_songPath);
 
-                retry:
+                    retry:
                     string id = String.Empty;
                     string version = String.Empty;
                     bool hasVersion = false;
 
                     // If the folder name is a full beatsaver id, including version
-                    if (directoryName.Contains("-")) {
+                    if (directoryName.Contains("-"))
+                    {
                         string[] parts = directoryName.Split(new char[] { '-' }, 2);
                         id = parts[0];
                         version = parts[1];
@@ -383,7 +395,8 @@ namespace SyncSaber {
                             yield break;
                         }
                     }
-                    else {
+                    else
+                    {
                         // If the folder contains only digits, assume its a beatsaver id
                         if (_digitRegex.IsMatch(directoryName))
                         {
@@ -405,7 +418,8 @@ namespace SyncSaber {
 
                     yield return GetLatestVersion(levelId, _songPath, id, directoryName, OnGotLatestVersionRetrieved);
                 }
-                else {
+                else
+                {
                     // TODO: IMPLEMENT HANDLING FOR ZIPPED SONG UPDATING
                 }
             }
@@ -483,7 +497,8 @@ namespace SyncSaber {
             _downloaderRunning = false;
         }
 
-        private IEnumerator DownloadSongs(string author, string authorID) {
+        private IEnumerator DownloadSongs(string author, string authorID)
+        {
             var startTime = DateTime.Now;
             int downloadCount = 0;
             int totalSongs = 0;
@@ -493,19 +508,24 @@ namespace SyncSaber {
             DisplayNotification($"Checking for new songs from \"{author}\"");
 
 
-            while (true) {
+            while (true)
+            {
                 string url = $"https://beatsaver.com/browse/byuser/{authorID}/{currentSongIndex.ToString()}";
-                using (UnityWebRequest www = UnityWebRequest.Get(url)) {
+                using (UnityWebRequest www = UnityWebRequest.Get(url))
+                {
                     yield return www.SendWebRequest();
-                    if (www.isNetworkError || www.isHttpError) {
+                    if (www.isNetworkError || www.isHttpError)
+                    {
                         Plugin.Log(www.error);
                     }
-                    else {
+                    else
+                    {
                         string searchResult = www.downloadHandler.text;
 
                         string searchQuery = "/browse/detail/";
                         List<KeyValuePair<string, string>> songInfoList = new List<KeyValuePair<string, string>>();
-                        while (true) {
+                        while (true)
+                        {
                             try
                             {
                                 int index = searchResult.IndexOf(searchQuery);
@@ -547,20 +567,23 @@ namespace SyncSaber {
                         }
 
                         // No need to evaluate this any further if our song list is empty
-                        if (songInfoList.Count == 0) {
+                        if (songInfoList.Count == 0)
+                        {
                             break;
                         }
-                        
-                        foreach (KeyValuePair<string, string> kvp in songInfoList) {
+
+                        foreach (KeyValuePair<string, string> kvp in songInfoList)
+                        {
                             string songIndex = kvp.Key;
                             string songName = kvp.Value;
 
                             // Wait until we aren't in game to continue evaluating songs
                             while (Plugin.IsInGame) yield return null;
-                            
+
                             // Attempt to download the current song
                             string currentSongDirectory = $"{Environment.CurrentDirectory}\\CustomSongs\\{songIndex}";
-                            if (Config.AutoDownloadSongs && !_songDownloadHistory.Contains(songIndex) && !Directory.Exists(currentSongDirectory)) {
+                            if (Config.AutoDownloadSongs && !_songDownloadHistory.Contains(songIndex) && !Directory.Exists(currentSongDirectory))
+                            {
                                 Utilities.EmptyDirectory(".songcache", false);
 
                                 DisplayNotification($"Downloading {songName}");
@@ -569,7 +592,7 @@ namespace SyncSaber {
                                 yield return Utilities.DownloadFile($"https://beatsaver.com/download/{songIndex}", localPath);
                                 yield return Utilities.ExtractZip(localPath, currentSongDirectory);
                                 downloadCount++;
-                               
+
                             }
 
                             // Keep a history of all the songs we download- count it as downloaded even if the user already had it downloaded previously so if they delete it it doesn't get redownloaded
@@ -598,7 +621,7 @@ namespace SyncSaber {
 
             Utilities.EmptyDirectory(".songcache");
 
-            Plugin.Log($"Downloaded {downloadCount.ToString()} songs from mapper \"{author}\" in {((DateTime.Now - startTime).Seconds.ToString())} seconds. Skipped {(totalSongs-downloadCount).ToString()} songs.");
+            Plugin.Log($"Downloaded {downloadCount.ToString()} songs from mapper \"{author}\" in {((DateTime.Now - startTime).Seconds.ToString())} seconds. Skipped {(totalSongs - downloadCount).ToString()} songs.");
         }
 
         private IEnumerator DownloadBeastSaberFeed(string beastSaberUsername, int feedToDownload)
@@ -642,7 +665,7 @@ namespace SyncSaber {
                             {
                                 continue;
                             }
-                            
+
                             if (downloadUrl.Contains("dl.php"))
                             {
                                 //Plugin.Log("Skipping BeastSaber download with old url format!");
@@ -694,7 +717,7 @@ namespace SyncSaber {
 
                 // Write our download history to file
                 Utilities.WriteStringListSafe(_historyPath, _songDownloadHistory.Distinct().ToList());
-                
+
                 // Write to the SynCSaber playlist
                 _syncSaberSongs.WritePlaylist();
 

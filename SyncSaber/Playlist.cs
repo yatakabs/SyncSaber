@@ -103,7 +103,7 @@ namespace SyncSaber
             Songs = new List<PlaylistSong>();
             fileLoc = "";
         }
-        
+
         public void Add(string songIndex, string songName)
         {
             Songs.Add(new PlaylistSong(songIndex, songName));
