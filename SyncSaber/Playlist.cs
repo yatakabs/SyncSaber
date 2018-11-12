@@ -116,7 +116,9 @@ namespace SyncSaber
 
         public bool ReadPlaylist()
         {
-            if (File.Exists(PlaylistIO.OldPath)) File.Move(PlaylistIO.OldPath, PlaylistIO.Path);
+            try { if (File.Exists(PlaylistIO.OldPath)) File.Move(PlaylistIO.OldPath, PlaylistIO.Path); }
+            catch (Exception) { File.Delete(PlaylistIO.OldPath); }
+
             if (File.Exists(PlaylistIO.Path))
             {
                 var playlist = PlaylistIO.ReadPlaylist();

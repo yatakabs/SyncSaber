@@ -56,15 +56,16 @@ namespace SyncSaber {
 
             _historyPath = $"{Environment.CurrentDirectory}\\UserData\\SyncSaberHistory.txt";
             var _oldHistoryPath = $"{Environment.CurrentDirectory}\\UserData\\MapperFeedHistory.txt";
-            if (File.Exists(_oldHistoryPath)) File.Move(_oldHistoryPath, _historyPath);
-            if (File.Exists(_oldHistoryPath + ".bak")) File.Move(_oldHistoryPath + ".bak", _historyPath);
+            try { if (File.Exists(_oldHistoryPath)) File.Move(_oldHistoryPath, _historyPath); }
+            catch (Exception) { File.Delete(_oldHistoryPath); }
+
+            try { if (File.Exists(_oldHistoryPath + ".bak")) File.Move(_oldHistoryPath + ".bak", _historyPath); }
+            catch (Exception) { File.Delete(_oldHistoryPath + ".bak"); }
+
             if (File.Exists(_historyPath + ".bak"))
             {
                 // Something went wrong when the history file was being written previously, restore it from backup
-                if (File.Exists(_historyPath))
-                {
-                    File.Delete(_historyPath);
-                }
+                if (File.Exists(_historyPath)) File.Delete(_historyPath); 
                 File.Move(_historyPath + ".bak", _historyPath);
             }
             if (File.Exists(_historyPath))
@@ -89,6 +90,7 @@ namespace SyncSaber {
             }
 
             _notificationText = Utilities.CreateNotificationText(String.Empty);
+            DisplayNotification("SyncSaber Initialized!");
         }
 
         private void DisplayNotification(string text)
@@ -112,11 +114,13 @@ namespace SyncSaber {
                 {
                     StartCoroutine(DownloadBeastSaberFeed(Config.BeastSaberUsername, _beatSaberFeedToDownload));
                     _beatSaberFeedToDownload++;
+                    Plugin.Log("Downloading beastsaber feed!");
 
                 }
                 else if (_authorDownloadQueue.Count > 0)
                 {
                     StartCoroutine(DownloadAllSongsByAuthor(_authorDownloadQueue.Pop()));
+                    Plugin.Log("Downloading songs by author!");
                 }
                 else if (_authorDownloadQueue.Count == 0 && !_downloaderComplete)
                 {
@@ -473,6 +477,7 @@ namespace SyncSaber {
                     {
                         yield return DownloadSongs(author, authorID);
                     }
+                    else Plugin.Log($"Couldn't find id for mapper {author}");
                 }
             }
             _downloaderRunning = false;
