@@ -293,7 +293,7 @@ namespace SyncSaber
             }
         }
 
-        private void OnGotLatestVersionRetrieved(string levelId, string levelPath, string oldBeatSaverId, string newBeatSaverId)
+        private void OnLatestVersionRetrieved(string levelId, string levelPath, string oldBeatSaverId, string newBeatSaverId)
         {
             Plugin.Log($"OldBeatSaverId: {oldBeatSaverId}, NewBeatSaverId: {newBeatSaverId}");
 
@@ -416,7 +416,7 @@ namespace SyncSaber
                         }
                     }
 
-                    yield return GetLatestVersion(levelId, _songPath, id, directoryName, OnGotLatestVersionRetrieved);
+                    yield return GetLatestVersion(levelId, _songPath, id, directoryName, OnLatestVersionRetrieved);
                 }
                 else
                 {
