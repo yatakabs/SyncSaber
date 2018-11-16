@@ -407,7 +407,7 @@ namespace SyncSaber
                         else
                         {
                             directoryName = Path.GetFileName(Path.GetDirectoryName(_songPath));
-                            if (directoryName != "CustomSongs" && levelsChecked < 3)
+                            if (directoryName != "CustomSongs" && levelsChecked < 2)
                             {
                                 Plugin.Log("Checking one more level up!");
                                 levelsChecked++;
