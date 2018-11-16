@@ -11,7 +11,7 @@ namespace SyncSaber
     public class Plugin : IPlugin
     {
         public string Name => "SyncSaber";
-        public string Version => "1.2.3";
+        public string Version => "1.2.4";
 
         public static bool IsInGame = false;
         private SyncSaber _syncSaber = null;
