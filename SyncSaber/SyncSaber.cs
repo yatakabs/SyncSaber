@@ -370,6 +370,7 @@ namespace SyncSaber
                     Plugin.Log($"Attempting to get beatsaver id from path \"{_songPath}\"");
 
                     string directoryName = Path.GetFileName(_songPath);
+                    int levelsChecked = 0;
 
                     retry:
                     string id = String.Empty;
@@ -406,9 +407,10 @@ namespace SyncSaber
                         else
                         {
                             directoryName = Path.GetFileName(Path.GetDirectoryName(_songPath));
-                            if (directoryName != "CustomSongs")
+                            if (directoryName != "CustomSongs" && levelsChecked < 3)
                             {
                                 Plugin.Log("Checking one more level up!");
+                                levelsChecked++;
                                 goto retry;
                             }
                             Plugin.Log($"Couldn't locate valid BeatSaver ID for song at path \"{_songPath}\"");
