@@ -16,7 +16,10 @@ MapperFeed settings are stored in the modprefs.ini which you can find in the Use
 | Option                     | Description                                                                                                                  |
 |----------------------------|------------------------------------------------------------------------------------------------------------------------------|
 | **AutoDownloadSongs** | Whether or not SyncSaber should automatically download any new songs it finds, or just add them to the SyncSaber playlist. |
-| **BeastSaberUsername**| Your username from BeastSaber (https://bsaber.com), this config option is optional. Only enter this if you want to automatically download songs posted to your followings/bookmarks feed on BeastSaber |
+| **AutoUpdateSongs**| Whether or not SyncSaber will attempt to auto-update songs when you click on them in the song browser. |
+| **BeastSaberUsername**| Your username from BeastSaber (https://bsaber.com), this config option is optional. Only enter this if you want to automatically download songs posted to your followings/bookmarks feed on BeastSaber. |
+| **MaxBeastSaberPages**| The maximum number of pages to scan for new songs on BeastSaber, 0 is unlimited. |
+| **DeleteOldVersions**| Whether or not SyncSaber should keep or delete old versions of songs upon updating them, or when a new release is downloaded from one of your favorite mappers. |
 
 # Download
 [Click here to download the latest SyncSaber.dll](https://github.com/brian91292/SyncSaber/releases)
