@@ -129,13 +129,14 @@ namespace SyncSaber
             return false;
         }
 
-        public static void WriteStringListSafe(string path, List<string> data)
+        public static void WriteStringListSafe(string path, List<string> data, bool sort = true)
         {
             if (File.Exists(path))
-            {
                 File.Copy(path, path + ".bak", true);
-            }
-            data.Sort();
+
+            if(sort) 
+                data.Sort();
+
             File.WriteAllLines(path, data);
             File.Delete(path + ".bak");
         }

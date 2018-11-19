@@ -11,9 +11,8 @@ namespace SyncSaber
     public class Plugin : IPlugin
     {
         public string Name => "SyncSaber";
-        public string Version => "1.2.4";
-
-        public static bool IsInGame = false;
+        public string Version => "1.2.5";
+        
         private SyncSaber _syncSaber = null;
         private TextMeshProUGUI _mapperFeedNotification = null;
 
@@ -49,7 +48,6 @@ namespace SyncSaber
 
         public void OnLevelWasLoaded(int level)
         {
-
         }
 
         public void OnLevelWasInitialized(int level)
@@ -58,11 +56,8 @@ namespace SyncSaber
 
         void SceneManagerOnActiveSceneChanged(Scene arg0, Scene scene)
         {
-            if (scene.name == "Menu") IsInGame = false;
-            else if (scene.name.Contains("Environment"))
+            if (scene.name.Contains("Environment"))
             {
-                IsInGame = true;
-
                 if (_mapperFeedNotification != null)
                 {
                     GameObject.Destroy(_mapperFeedNotification);
