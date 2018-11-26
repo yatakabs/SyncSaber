@@ -22,7 +22,7 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.Networking;
 using UnityEngine.SceneManagement;
-using SongBrowserPlugin;
+//using SongBrowserPlugin;
 
 namespace SyncSaber
 {
@@ -43,9 +43,9 @@ namespace SyncSaber
         private List<string> _songDownloadHistory = new List<string>();
         private Playlist _syncSaberSongs = new Playlist("SyncSaber Playlist", "brian91292", "1");
 
-        private IStandardLevel _lastLevel;
-        private StandardLevelSelectionFlowCoordinator _standardLevelSelectionFlowCoordinator;
-        private StandardLevelListViewController _standardLevelListViewController;
+        private IBeatmapLevel _lastLevel;
+        private SoloFreePlayFlowCoordinator _standardLevelSelectionFlowCoordinator;
+        private LevelListViewController _standardLevelListViewController;
 
         private TMP_Text _notificationText;
         private DateTime _uiResetTime;
@@ -143,16 +143,16 @@ namespace SyncSaber
             if (scene.name != "Menu") return;
             _isInGame = false;
 
-            _standardLevelSelectionFlowCoordinator = Resources.FindObjectsOfTypeAll<StandardLevelSelectionFlowCoordinator>().First();
+            _standardLevelSelectionFlowCoordinator = Resources.FindObjectsOfTypeAll<SoloFreePlayFlowCoordinator>().First();
             if (!_standardLevelSelectionFlowCoordinator) return;
 
-            _standardLevelListViewController = ReflectionUtil.GetPrivateField<StandardLevelListViewController>(_standardLevelSelectionFlowCoordinator, "_levelListViewController");
+            _standardLevelListViewController = ReflectionUtil.GetPrivateField<LevelListViewController>(_standardLevelSelectionFlowCoordinator, "_levelListViewController");
             if (!_standardLevelListViewController) return;
 
-            _standardLevelListViewController.didSelectLevelEvent += PluginUI_didSelectSongEvent;
+            _standardLevelListViewController.didSelectLevelEvent += standardLevelListViewController_didSelectLevelEvent;
         }
 
-        private void PluginUI_didSelectSongEvent(StandardLevelListViewController sender, IStandardLevel level)
+        private void standardLevelListViewController_didSelectLevelEvent(LevelListViewController sender, IBeatmapLevel level)
         {
             if (Config.AutoUpdateSongs && level != _lastLevel && level is CustomLevel)
             {
@@ -160,6 +160,7 @@ namespace SyncSaber
                 StartCoroutine(CheckIfLevelNeedsUpdate(level.levelID));
             }
         }
+        
 
         private string GetAuthorID(string author, string data)
         {
@@ -180,12 +181,13 @@ namespace SyncSaber
 
         private void UpdateSongBrowser()
         {
-            var _songBrowserUI = SongBrowserApplication.Instance.GetPrivateField<SongBrowserPlugin.UI.SongBrowserUI>("_songBrowserUI");
-            if (_songBrowserUI)
-            {
-                _songBrowserUI.UpdateSongList();
-                _songBrowserUI.RefreshSongList();
-            }
+            // TODO: Update after song browser updates
+            //var _songBrowserUI = SongBrowserApplication.Instance.GetPrivateField<SongBrowserPlugin.UI.SongBrowserUI>("_songBrowserUI");
+            //if (_songBrowserUI)
+            //{
+            //    _songBrowserUI.UpdateSongList();
+            //    _songBrowserUI.RefreshSongList();
+            //}
         }
 
         private IEnumerator RefreshSongs(bool fullRefresh = false)
@@ -202,7 +204,7 @@ namespace SyncSaber
             SongLoader.Instance.RefreshSongs(fullRefresh);
             while (SongLoader.AreSongsLoading) yield return null;
 
-            var table = ReflectionUtil.GetPrivateField<StandardLevelListTableView>(_standardLevelListViewController, "_levelListTableView");
+            var table = ReflectionUtil.GetPrivateField<LevelListTableView>(_standardLevelListViewController, "_levelListTableView");
             if (table)
             {
                 // If song browser is installed, update/refresh it
@@ -237,9 +239,9 @@ namespace SyncSaber
             }
 
             // Disable our didSelectLevel event, then refresh the song list
-            _standardLevelListViewController.didSelectLevelEvent -= PluginUI_didSelectSongEvent;
+            _standardLevelListViewController.didSelectLevelEvent -= standardLevelListViewController_didSelectLevelEvent;
             yield return RefreshSongs();
-            _standardLevelListViewController.didSelectLevelEvent += PluginUI_didSelectSongEvent;
+            _standardLevelListViewController.didSelectLevelEvent += standardLevelListViewController_didSelectLevelEvent;
 
             // Write our download history to file
             if (!_songDownloadHistory.Contains(songIndex)) _songDownloadHistory.Add(songIndex);
@@ -331,7 +333,7 @@ namespace SyncSaber
         private IEnumerator CheckIfLevelNeedsUpdate(string levelId)
         {
             Plugin.Log($"Selected level {levelId}");
-            IStandardLevel[] _levelsForGamemode = ReflectionUtil.GetPrivateField<IStandardLevel[]>(ReflectionUtil.GetPrivateField<StandardLevelListViewController>(_standardLevelSelectionFlowCoordinator, "_levelListViewController"), "_levels");
+            IBeatmapLevel[] _levelsForGamemode = ReflectionUtil.GetPrivateField<IBeatmapLevel[]>(ReflectionUtil.GetPrivateField<LevelListViewController>(_standardLevelSelectionFlowCoordinator, "_levelListViewController"), "_levels");
 
             if (levelId.Length > 32 && _levelsForGamemode.Any(x => x.levelID == levelId))
             {
