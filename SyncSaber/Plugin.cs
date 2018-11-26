@@ -11,7 +11,7 @@ namespace SyncSaber
     public class Plugin : IPlugin
     {
         public string Name => "SyncSaber";
-        public string Version => "1.2.5";
+        public string Version => "1.2.6";
         
         private SyncSaber _syncSaber = null;
         private TextMeshProUGUI _mapperFeedNotification = null;
