@@ -139,7 +139,7 @@ namespace SyncSaber
 
         private void SceneManagerOnActiveSceneChanged(Scene arg0, Scene scene)
         {
-            if (scene.name.Contains("Environment")) _isInGame = true;
+            if (scene.name == "GameCore") _isInGame = true;
             if (scene.name != "Menu") return;
             _isInGame = false;
 

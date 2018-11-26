@@ -56,7 +56,7 @@ namespace SyncSaber
 
         void SceneManagerOnActiveSceneChanged(Scene arg0, Scene scene)
         {
-            if (scene.name.Contains("Environment"))
+            if (scene.name == "GameCore")
             {
                 if (_mapperFeedNotification != null)
                 {
