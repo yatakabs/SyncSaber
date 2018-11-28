@@ -57,13 +57,6 @@ namespace SyncSaber
             SceneManager.activeSceneChanged += SceneManagerOnActiveSceneChanged;
 
             _historyPath = $"{Environment.CurrentDirectory}\\UserData\\SyncSaberHistory.txt";
-            var _oldHistoryPath = $"{Environment.CurrentDirectory}\\UserData\\MapperFeedHistory.txt";
-            try { if (File.Exists(_oldHistoryPath)) File.Move(_oldHistoryPath, _historyPath); }
-            catch (Exception) { File.Delete(_oldHistoryPath); }
-
-            try { if (File.Exists(_oldHistoryPath + ".bak")) File.Move(_oldHistoryPath + ".bak", _historyPath); }
-            catch (Exception) { File.Delete(_oldHistoryPath + ".bak"); }
-
             if (File.Exists(_historyPath + ".bak"))
             {
                 // Something went wrong when the history file was being written previously, restore it from backup
@@ -74,6 +67,7 @@ namespace SyncSaber
                 _songDownloadHistory = File.ReadAllLines(_historyPath).ToList();
 
             if (!Directory.Exists("CustomSongs")) Directory.CreateDirectory("CustomSongs");
+            if (!Directory.Exists("Playlists")) Directory.CreateDirectory("Playlists");
 
             string favoriteMappersPath = $"{Environment.CurrentDirectory}\\UserData\\FavoriteMappers.ini";
             if (!File.Exists(favoriteMappersPath))
