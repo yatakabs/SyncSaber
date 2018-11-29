@@ -82,6 +82,7 @@ namespace SyncSaber
 
             playlistNode.Add("fileLoc", new JSONString("1"));
 
+            if (!Directory.Exists("Playlists")) Directory.CreateDirectory("Playlists");
             File.WriteAllText(Path, playlistNode.ToString());
         }
     }

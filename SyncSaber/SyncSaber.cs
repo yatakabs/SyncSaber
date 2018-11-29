@@ -22,7 +22,7 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.Networking;
 using UnityEngine.SceneManagement;
-//using SongBrowserPlugin;
+using SongBrowserPlugin;
 
 namespace SyncSaber
 {
@@ -67,7 +67,6 @@ namespace SyncSaber
                 _songDownloadHistory = File.ReadAllLines(_historyPath).ToList();
 
             if (!Directory.Exists("CustomSongs")) Directory.CreateDirectory("CustomSongs");
-            if (!Directory.Exists("Playlists")) Directory.CreateDirectory("Playlists");
 
             string favoriteMappersPath = $"{Environment.CurrentDirectory}\\UserData\\FavoriteMappers.ini";
             if (!File.Exists(favoriteMappersPath))
@@ -175,13 +174,12 @@ namespace SyncSaber
 
         private void UpdateSongBrowser()
         {
-            // TODO: Update after song browser updates
-            //var _songBrowserUI = SongBrowserApplication.Instance.GetPrivateField<SongBrowserPlugin.UI.SongBrowserUI>("_songBrowserUI");
-            //if (_songBrowserUI)
-            //{
-            //    _songBrowserUI.UpdateSongList();
-            //    _songBrowserUI.RefreshSongList();
-            //}
+           var _songBrowserUI = SongBrowserApplication.Instance.GetPrivateField<SongBrowserPlugin.UI.SongBrowserUI>("_songBrowserUI");
+            if (_songBrowserUI)
+            {
+                _songBrowserUI.UpdateSongList();
+                _songBrowserUI.RefreshSongList();
+            }
         }
 
         private IEnumerator RefreshSongs(bool fullRefresh = false)
