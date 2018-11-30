@@ -20,7 +20,7 @@ namespace SyncSaber
         {
             var gameObject = new GameObject();
             GameObject.DontDestroyOnLoad(gameObject);
-            gameObject.transform.position = new Vector3(0, 0f, 2.0f);
+            gameObject.transform.position = new Vector3(0, 0f, 2.5f);
             gameObject.transform.eulerAngles = new Vector3(0, 0, 0);
             gameObject.transform.localScale = new Vector3(0.01f, 0.01f, 0.01f);
 
@@ -32,7 +32,7 @@ namespace SyncSaber
             var _notificationText = new GameObject().AddComponent<TextMeshProUGUI>();
             rectTransform = _notificationText.transform as RectTransform;
             rectTransform.SetParent(_canvas.transform, false);
-            rectTransform.anchoredPosition = new Vector2(0, 40);
+            rectTransform.anchoredPosition = new Vector2(0, -20);
             rectTransform.sizeDelta = new Vector2(400, 20);
             _notificationText.text = text;
             _notificationText.fontSize = 10f;
@@ -48,21 +48,18 @@ namespace SyncSaber
                 if (www.isNetworkError || www.isHttpError)
                 {
                     Plugin.Log(www.error);
+                    yield break;
                 }
-                else
+                try
                 {
-                    try
-                    {
-                        if (!Directory.Exists(Path.GetDirectoryName(path)))
-                        {
-                            Directory.CreateDirectory(Path.GetDirectoryName(path));
-                        }
-                        File.WriteAllBytes(path, www.downloadHandler.data);
-                    }
-                    catch (Exception e)
-                    {
-                        Plugin.Log($"Exception when writing file! {e.ToString()}");
-                    }
+                    if (!Directory.Exists(Path.GetDirectoryName(path)))
+                        Directory.CreateDirectory(Path.GetDirectoryName(path));
+
+                    File.WriteAllBytes(path, www.downloadHandler.data);
+                }
+                catch (Exception e)
+                {
+                    Plugin.Log($"Exception when writing file! {e.ToString()}");
                 }
             }
         }
