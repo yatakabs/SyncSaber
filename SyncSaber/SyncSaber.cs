@@ -37,7 +37,7 @@ namespace SyncSaber
         private bool _isRefreshing = false;
         private bool _isInGame = false;
         private string _historyPath = null;
-        private int _beatSaberFeedToDownload = 0;
+        private int _beastSaberFeedIndex = 0;
 
         private Stack<string> _authorDownloadQueue = new Stack<string>();
         private ConcurrentStack<KeyValuePair<string,CustomLevel>> _updateQueue = new ConcurrentStack<KeyValuePair<string,CustomLevel>>();
@@ -51,6 +51,8 @@ namespace SyncSaber
         private TMP_Text _notificationText;
         private DateTime _uiResetTime;
         private bool _songBrowserInstalled = false;
+
+        Dictionary<string, string> _beastSaberFeeds = new Dictionary<string, string>();
 
         private List<IBeatmapLevel> CurrentLevels
         {
@@ -67,6 +69,10 @@ namespace SyncSaber
         private void Awake()
         {
             UnityEngine.Object.DontDestroyOnLoad(this.gameObject);
+
+            _beastSaberFeeds.Add("followings", $"https://bsaber.com/members/{Config.BeastSaberUsername}/wall/followings/feed/?acpage=");
+            _beastSaberFeeds.Add("bookmarks", $"https://bsaber.com/members/{Config.BeastSaberUsername}/bookmarks/feed/?acpage=");
+            _beastSaberFeeds.Add("curator recommended", $"https://bsaber.com/members/curatorrecommended/bookmarks/feed/?acpage=");
 
             _songBrowserInstalled = Utilities.IsModInstalled("Song Browser");
             SceneManager.activeSceneChanged += SceneManagerOnActiveSceneChanged;
@@ -119,12 +125,10 @@ namespace SyncSaber
 
             if (!_downloaderRunning)
             {
-                if (Config.BeastSaberUsername != "" && _beatSaberFeedToDownload < 2)
+                if (Config.BeastSaberUsername != "" && _beastSaberFeedIndex < _beastSaberFeeds.Count)
                 {
-                    StartCoroutine(DownloadBeastSaberFeeds(Config.BeastSaberUsername, _beatSaberFeedToDownload));
-                    _beatSaberFeedToDownload++;
-                    Plugin.Log("Downloading beastsaber feed!");
-
+                    StartCoroutine(DownloadBeastSaberFeeds(_beastSaberFeedIndex));
+                    _beastSaberFeedIndex++;
                 }
                 else if (_authorDownloadQueue.Count > 0)
                 {
@@ -502,7 +506,7 @@ namespace SyncSaber
             _downloaderRunning = false;
         }
 
-        private IEnumerator DownloadBeastSaberFeeds(string beastSaberUsername, int feedToDownload)
+        private IEnumerator DownloadBeastSaberFeeds(int feedToDownload)
         {
             _downloaderRunning = true;
             var startTime = DateTime.Now;
@@ -515,11 +519,11 @@ namespace SyncSaber
                 int totalSongsForPage = 0;
                 int downloadCountForPage = 0;
 
-                string notificationMessage = $"Checking page {pageIndex.ToString()} of {(feedToDownload == 0 ? "followings feed" : "bookmarks feed")} from BeastSaber!";
+                string notificationMessage = $"Checking page {pageIndex.ToString()} of {_beastSaberFeeds.ElementAt(feedToDownload).Key} feed from BeastSaber!";
                 Plugin.Log(notificationMessage);
                 DisplayNotification(notificationMessage);
                 _downloaderRunning = true;
-                using (UnityWebRequest www = UnityWebRequest.Get(feedToDownload == 0 ? $"https://bsaber.com/members/{beastSaberUsername}/wall/followings/feed/?acpage={pageIndex}" : $"https://bsaber.com/members/{beastSaberUsername}/bookmarks/feed/?acpage={pageIndex}"))
+                using (UnityWebRequest www = UnityWebRequest.Get(_beastSaberFeeds.ElementAt(feedToDownload).Value + pageIndex.ToString()))
                 {
                     yield return www.SendWebRequest();
                     if (www.isNetworkError || www.isHttpError)
@@ -611,7 +615,7 @@ namespace SyncSaber
             }
             Utilities.EmptyDirectory(".songcache");
 
-            Plugin.Log($"Downloaded {downloadCount.ToString()} songs from BeatSaber {(feedToDownload == 0 ? "followings feed" : "bookmarks feed")} in {((DateTime.Now - startTime).Seconds.ToString())} seconds. Skipped {(totalSongs - downloadCount).ToString()} songs.");
+            Plugin.Log($"Downloaded {downloadCount.ToString()} songs from BeastSaber {_beastSaberFeeds.ElementAt(feedToDownload).Key} feed in {((DateTime.Now - startTime).Seconds.ToString())} seconds. Skipped {(totalSongs - downloadCount).ToString()} songs.");
             _downloaderRunning = false;
         }
     }
