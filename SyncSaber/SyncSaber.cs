@@ -135,7 +135,7 @@ namespace SyncSaber
                     if (!SongLoader.AreSongsLoading)
                     {
                         StartCoroutine(RefreshSongs());
-                        Plugin.Log("Finished updating songs from all mappers!");
+                        Plugin.Log("Finished checking for updates!");
                         DisplayNotification("Finished checking for new songs!");
                         _downloaderComplete = true;
                     }
@@ -508,7 +508,7 @@ namespace SyncSaber
             var startTime = DateTime.Now;
             int downloadCount = 0;
             int totalSongs = 0;
-            int pageIndex = 1;
+            int pageIndex = 0;
 
             while (true)
             {
@@ -534,21 +534,20 @@ namespace SyncSaber
                     doc.LoadXml(beastSaberFeed);
 
                     XmlNodeList nodes = doc.DocumentElement.SelectNodes("/rss/channel/item");
-                    foreach (XmlNode n in nodes)
+                    foreach (XmlNode node in nodes)
                     {
                         while (_isInGame)
                             yield return null;
 
-                        string songName = String.Empty, downloadUrl = String.Empty;
-                        try
+
+                        if (node["DownloadURL"] == null || node["SongTitle"] == null)
                         {
-                            songName = n.SelectNodes("SongTitle")[0].InnerText;
-                            downloadUrl = n.SelectNodes("DownloadURL")[0].InnerText;
-                        }
-                        catch (Exception)
-                        {
+                            Plugin.Log("Essential node was missing! Skipping!");
                             continue;
                         }
+                            
+                        string songName = node["SongTitle"].InnerText;
+                        string downloadUrl = node["DownloadURL"].InnerText;
 
                         if (downloadUrl.Contains("dl.php"))
                         {
