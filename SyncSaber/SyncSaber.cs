@@ -206,9 +206,10 @@ namespace SyncSaber
         private IEnumerator RefreshSongs(bool fullRefresh = false, bool selectOldLevel = true)
         {
             if (_isRefreshing) yield break;
-            _isRefreshing = true;
-
             if (!SongLoader.AreSongsLoaded) yield break;
+            if (!_standardLevelListViewController) yield break;
+
+            _isRefreshing = true;
 
             // Grab the currently selected level id so we can restore it after refreshing
             string selectedLevelId = _standardLevelListViewController.selectedLevel?.levelID;
@@ -219,22 +220,28 @@ namespace SyncSaber
             while (SongLoader.AreSongsLoading) yield return null;
 
             // If song browser is installed, update/refresh it
-            if (_songBrowserInstalled)
+            if (Utilities.IsModInstalled("Song Browser"))
                 RefreshSongBrowser();
 
+            // Set the row index to the previously selected song
+            if (selectOldLevel)
+                ScrollToLevel(selectedLevelId);
+
+            _isRefreshing = false;
+        }
+
+        private void ScrollToLevel(string levelID)
+        {
             var table = ReflectionUtil.GetPrivateField<LevelListTableView>(_standardLevelListViewController, "_levelListTableView");
             if (table)
             {
-                // Set the row index to the previously selected song
-                if (selectOldLevel)
-                {
-                    int row = table.RowNumberForLevelID(selectedLevelId);
-                    TableView tableView = table.GetComponentInChildren<TableView>();
-                    tableView.SelectRow(row, true);
-                    tableView.ScrollToRow(row, true);
-                }
+                TableView tableView = table.GetComponentInChildren<TableView>();
+                tableView.ReloadData();
+
+                int row = table.RowNumberForLevelID(levelID);
+                tableView.SelectRow(row, true);
+                tableView.ScrollToRow(row, true);
             }
-            _isRefreshing = false;
         }
 
         private IEnumerator UpdateSong(KeyValuePair<string, CustomLevel> songInfo)
@@ -269,7 +276,7 @@ namespace SyncSaber
             
             // Disable our didSelectLevel event, then refresh the song list
             _standardLevelListViewController.didSelectLevelEvent -= standardLevelListViewController_didSelectLevelEvent;
-            yield return RefreshSongs(!_songBrowserInstalled, false);
+            yield return RefreshSongs(false, false);
             _standardLevelListViewController.didSelectLevelEvent += standardLevelListViewController_didSelectLevelEvent;
 
             Plugin.Log("Finished refreshing songs!");
