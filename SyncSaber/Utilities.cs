@@ -92,7 +92,7 @@ namespace SyncSaber
                     yield break;
                 }
 
-                yield return new WaitForSeconds(0.2f);
+                yield return new WaitForSeconds(0.25f);
 
                 File.Delete(zipPath);
 
@@ -103,7 +103,14 @@ namespace SyncSaber
                         string[] directories = Directory.GetDirectories($"{Environment.CurrentDirectory}\\.songcache");
                         foreach (var directory in directories)
                         {
-                            Directory.Move(directory, extractPath);
+                            if (!Directory.Exists(extractPath))
+                                Directory.CreateDirectory(extractPath);
+                            
+                            string path = Path.Combine(extractPath, Path.GetFileName(directory));
+                            if (Directory.Exists(path))
+                                Directory.Delete(path, true);
+
+                            Directory.Move(directory, path);
                         }
                     }
                 }

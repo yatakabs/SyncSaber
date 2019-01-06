@@ -37,6 +37,9 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\..\..\..\..\Program Files (x86)\Steam\steamapps\common\Beat Saber\Beat Saber_Data\Managed\Assembly-CSharp.dll</HintPath>
     </Reference>
+    <Reference Include="BeatSaberCustomUI">
+      <HintPath>..\..\..\..\..\..\Program Files (x86)\Steam\steamapps\common\Beat Saber\Plugins\BeatSaberCustomUI.dll</HintPath>
+    </Reference>
     <Reference Include="IllusionInjector">
       <HintPath>..\..\..\..\..\..\..\Program Files (x86)\Steam\steamapps\common\Beat Saber\Beat Saber_Data\Managed\IllusionInjector.dll</HintPath>
     </Reference>
@@ -88,6 +91,7 @@
     <Compile Include="Plugin.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="ReflectionUtil.cs" />
+    <Compile Include="Settings.cs" />
     <Compile Include="SyncSaber.cs" />
     <Compile Include="Utilities.cs" />
   </ItemGroup>

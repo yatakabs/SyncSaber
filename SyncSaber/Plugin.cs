@@ -12,6 +12,8 @@ namespace SyncSaber
     {
         public string Name => "SyncSaber";
         public string Version => "1.3.0";
+
+        public static Plugin Instance;
         
         private SyncSaber _syncSaber = null;
         private TextMeshProUGUI _mapperFeedNotification = null;
@@ -36,13 +38,21 @@ namespace SyncSaber
 
         public void OnApplicationStart()
         {
+            Instance = this;
+            SceneManager.sceneLoaded += SceneManager_sceneLoaded;
             SceneManager.activeSceneChanged += SceneManagerOnActiveSceneChanged;
-
             SharedCoroutineStarter.instance.StartCoroutine(DelayedStartup());
+        }
+
+        private void SceneManager_sceneLoaded(Scene arg0, LoadSceneMode arg1)
+        {
+            if(arg0.name == "Menu")
+                Settings.OnLoad();
         }
 
         public void OnApplicationQuit()
         {
+            SceneManager.sceneLoaded -= SceneManager_sceneLoaded;
             SceneManager.activeSceneChanged -= SceneManagerOnActiveSceneChanged;
         }
 
