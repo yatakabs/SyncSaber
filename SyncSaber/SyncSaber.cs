@@ -42,7 +42,10 @@ namespace SyncSaber
         private Stack<string> _authorDownloadQueue = new Stack<string>();
         private ConcurrentStack<KeyValuePair<JSONObject,CustomLevel>> _updateQueue = new ConcurrentStack<KeyValuePair<JSONObject,CustomLevel>>();
         private List<string> _songDownloadHistory = new List<string>();
-        private Playlist _syncSaberSongs = new Playlist("SyncSaber Playlist", "brian91292", "1");
+        private Playlist _syncSaberSongs = new Playlist("SyncSaberPlaylist", "SyncSaber Playlist", "brian91292", "1");
+        private Playlist _curatorRecommendedSongs = new Playlist("SyncSaberCuratorRecommendedPlaylist", "BeastSaber Curator Recommended", "brian91292", "1");
+        private Playlist _followingsSongs = new Playlist("SyncSaberFollowingsPlaylist", "BeastSaber Followings", "brian91292", "1");
+        private Playlist _bookmarksSongs = new Playlist("SyncSaberBookmarksPlaylist", "BeastSaber Bookmarks", "brian91292", "1");
         private Dictionary<string, DateTime> _updateCheckTracker = new Dictionary<string, DateTime>();
 
         private IBeatmapLevel _lastLevel;
@@ -103,9 +106,6 @@ namespace SyncSaber
                 Plugin.Log($"Mapper: {mapper}");
                 _authorDownloadQueue.Push(mapper);
             }
-
-            if (!_syncSaberSongs.ReadPlaylist())
-                _syncSaberSongs.WritePlaylist();
             
             _notificationText = Utilities.CreateNotificationText(String.Empty);
             DisplayNotification("SyncSaber Initialized!");
@@ -190,6 +190,20 @@ namespace SyncSaber
                     return Config.MaxCuratorRecommendedPages;
             }
             return 0;
+        }
+
+        private Playlist GetPlaylistForFeed(int feedToDownload)
+        {
+            switch (_beastSaberFeeds.ElementAt(feedToDownload).Key)
+            {
+                case "followings":
+                    return _followingsSongs;
+                case "bookmarks":
+                    return _bookmarksSongs;
+                case "curator recommended":
+                    return _curatorRecommendedSongs;
+            }
+            return null;
         }
         
         private void RefreshSongBrowser()
@@ -318,40 +332,40 @@ namespace SyncSaber
             _downloaderRunning = false;
         }
 
-        private void UpdatePlaylist(string songIndex, string songName)
+        private void UpdatePlaylist(Playlist playlist, string songIndex, string songName)
         {
             // Update our playlist with the new song if it doesn't exist, or replace the old song id/name with the updated info if it does
             bool playlistSongFound = false;
-            foreach (PlaylistSong s in _syncSaberSongs.Songs)
+            foreach (PlaylistSong s in playlist.Songs)
             {
                 string id = songIndex.Substring(0, songIndex.IndexOf("-"));
                 string version = songIndex.Substring(songIndex.IndexOf("-") + 1);
 
                 if (s.key.StartsWith(id))
                 {
-                    if (s.key.Contains("-"))
+                    if (_beatSaverRegex.IsMatch(s.key))
                     {
                         string oldVersion = s.key.Substring(s.key.IndexOf("-") + 1);
                         if (Convert.ToInt32(oldVersion) < Convert.ToInt32(version))
                         {
                             s.key = songIndex;
                             s.songName = songName;
-                            Plugin.Log($"Updated old playlist song \"{songName}\" with index {id} to version {version}");
+                            Plugin.Log($"Success updating playlist {playlist.Title}! Updated \"{songName}\" with index {id} from version {oldVersion} to {version}");
                         }
                     }
-                    else
+                    else if(_digitRegex.IsMatch(s.key))
                     {
                         s.key = songIndex;
                         s.songName = songName;
-                        Plugin.Log($"Playlist song was missing version number! Updated old playlist song \"{songName}\" with index {id} to version {version}");
+                        Plugin.Log($"Success updating playlist {playlist.Title}! Song \"{songName}\" with index {id} was missing version! Adding version {version}");
                     }
                     playlistSongFound = true;
                 }
             }
             if (!playlistSongFound)
             {
-                _syncSaberSongs.Add(songIndex, songName);
-                Plugin.Log($"Added new playlist song \"{songName}\" with BeatSaver index {songIndex}");
+                playlist.Add(songIndex, songName);
+                Plugin.Log($"Success adding new song \"{songName}\" with BeatSaver index {songIndex} to playlist {playlist.Title}!");
             }
         }
         
@@ -512,9 +526,8 @@ namespace SyncSaber
                         _songDownloadHistory.Add(songIndex);
 
                         // Update our playlist with the latest song info
-                        UpdatePlaylist(songIndex, songName);
-
-
+                        UpdatePlaylist(_syncSaberSongs, songIndex, songName);
+                        
                         // Delete any duplicate songs that we've downloaded
                         RemoveOldVersions(songIndex);
                     }
@@ -613,7 +626,8 @@ namespace SyncSaber
                             _songDownloadHistory.Add(songIndex);
 
                             // Update our playlist with the latest song info
-                            UpdatePlaylist(songIndex, songName);
+                            UpdatePlaylist(_syncSaberSongs, songIndex, songName);
+                            UpdatePlaylist(GetPlaylistForFeed(feedToDownload), songIndex, songName);
 
                             // Delete any duplicate songs that we've downloaded
                             RemoveOldVersions(songIndex);
@@ -637,7 +651,8 @@ namespace SyncSaber
 
                 // Write to the SynCSaber playlist
                 _syncSaberSongs.WritePlaylist();
-
+                GetPlaylistForFeed(feedToDownload).WritePlaylist();
+                
                 Plugin.Log($"Reached end of page! Found {totalSongsForPage.ToString()} songs total, downloaded {downloadCountForPage.ToString()}!");
                 pageIndex++;
 

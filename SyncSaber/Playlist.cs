@@ -23,14 +23,13 @@ namespace SyncSaber
 
     public class PlaylistIO
     {
-        public static readonly string Path = "Playlists\\SyncSaberPlaylist.json";
 
-        public static Playlist ReadPlaylist()
+        public static Playlist ReadPlaylistSongs(Playlist playlist)
         {
             try
             {
-                String json = File.ReadAllText(Path);
-                Playlist playlist = new Playlist("SyncSaber Songs", "brian91292", null);
+                string playlistPath = $"Playlists\\{playlist.fileName}{(playlist.oldFormat ? ".json" : ".bplist")}";
+                String json = File.ReadAllText(playlistPath);
 
                 JSONNode playlistNode = JSON.Parse(json);
 
@@ -83,7 +82,7 @@ namespace SyncSaber
             playlistNode.Add("fileLoc", new JSONString("1"));
 
             if (!Directory.Exists("Playlists")) Directory.CreateDirectory("Playlists");
-            File.WriteAllText(Path, playlistNode.ToString());
+            File.WriteAllText($"Playlists\\{playlist.fileName}{(playlist.oldFormat ? ".json" : ".bplist")}", playlistNode.ToString());
         }
     }
 
@@ -94,14 +93,19 @@ namespace SyncSaber
         public string Image;
         public List<PlaylistSong> Songs;
         public string fileLoc;
+        public string fileName;
+        public bool oldFormat = true;
 
-        public Playlist(string playlistTitle, string playlistAuthor, string image)
+        public Playlist(string playlistFileName, string playlistTitle, string playlistAuthor, string image)
         {
+            this.fileName = playlistFileName;
             this.Title = playlistTitle;
             this.Author = playlistAuthor;
             this.Image = image;
             Songs = new List<PlaylistSong>();
             fileLoc = "";
+
+            ReadPlaylist();
         }
 
         public void Add(string songIndex, string songName)
@@ -116,9 +120,15 @@ namespace SyncSaber
 
         public bool ReadPlaylist()
         {
-            if (File.Exists(PlaylistIO.Path))
+            string oldPlaylistPath = $"Playlists\\{this.fileName}.json";
+            string newPlaylistPath = $"Playlists\\{this.fileName}.bplist";
+            oldFormat = !File.Exists(newPlaylistPath);
+            Plugin.Log($"Playlist \"{Title}\" found in {(oldFormat?"old":"new")} playlist format.");
+
+            string playlistPath = oldFormat ? oldPlaylistPath : newPlaylistPath;
+            if (File.Exists(playlistPath))
             {
-                var playlist = PlaylistIO.ReadPlaylist();
+                var playlist = PlaylistIO.ReadPlaylistSongs(this);
                 if (playlist != null)
                 {
                     this.Title = playlist.Title;
