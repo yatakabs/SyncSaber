@@ -40,7 +40,7 @@ namespace SyncSaber
         private int _beastSaberFeedIndex = 0;
 
         private Stack<string> _authorDownloadQueue = new Stack<string>();
-        private ConcurrentStack<KeyValuePair<string,CustomLevel>> _updateQueue = new ConcurrentStack<KeyValuePair<string,CustomLevel>>();
+        private ConcurrentStack<KeyValuePair<JSONObject,CustomLevel>> _updateQueue = new ConcurrentStack<KeyValuePair<JSONObject,CustomLevel>>();
         private List<string> _songDownloadHistory = new List<string>();
         private Playlist _syncSaberSongs = new Playlist("SyncSaber Playlist", "brian91292", "1");
         private Dictionary<string, DateTime> _updateCheckTracker = new Dictionary<string, DateTime>();
@@ -119,18 +119,17 @@ namespace SyncSaber
 
         private void Update()
         {
-            if (_updateQueue.Count > 0)
-            {
-                if (_updateQueue.TryPop(out var songInfo))
-                {
-                    Plugin.Log($"Updating {songInfo.Key}");
-                    StartCoroutine(UpdateSong(songInfo));
-                }
-            }
-
             if (!_downloaderRunning)
             {
-                if (_authorDownloadQueue.Count > 0)
+                if (_updateQueue.Count > 0)
+                {
+                    if (_updateQueue.TryPop(out var songUpdateInfo))
+                    {
+                        Plugin.Log($"Updating {songUpdateInfo.Key}");
+                        StartCoroutine(UpdateSong(songUpdateInfo));
+                    }
+                }
+                else if (_authorDownloadQueue.Count > 0)
                 {
                     StartCoroutine(DownloadAllSongsByAuthor(_authorDownloadQueue.Pop()));
                 }
@@ -143,7 +142,7 @@ namespace SyncSaber
                 {
                     if (!SongLoader.AreSongsLoading)
                     {
-                        StartCoroutine(RefreshSongs());
+                        StartCoroutine(RefreshSongs(false, false));
                         Plugin.Log("Finished checking for updates!");
                         DisplayNotification("Finished checking for new songs!");
                         _downloaderComplete = true;
@@ -220,7 +219,7 @@ namespace SyncSaber
             while (SongLoader.AreSongsLoading) yield return null;
 
             // If song browser is installed, update/refresh it
-            if (Utilities.IsModInstalled("Song Browser"))
+            if (_songBrowserInstalled)
                 RefreshSongBrowser();
 
             // Set the row index to the previously selected song
@@ -230,7 +229,7 @@ namespace SyncSaber
             _isRefreshing = false;
         }
 
-        private void ScrollToLevel(string levelID)
+        private bool ScrollToLevel(string levelID)
         {
             var table = ReflectionUtil.GetPrivateField<LevelListTableView>(_standardLevelListViewController, "_levelListTableView");
             if (table)
@@ -238,72 +237,76 @@ namespace SyncSaber
                 TableView tableView = table.GetComponentInChildren<TableView>();
                 tableView.ReloadData();
 
-                int row = table.RowNumberForLevelID(levelID);
-                tableView.SelectRow(row, true);
-                tableView.ScrollToRow(row, true);
+                var levels = CurrentLevels.Where(l => l.levelID == levelID).ToArray();
+                if (levels.Length > 0)
+                {
+                    int row = table.RowNumberForLevelID(levelID);
+                    tableView.SelectRow(row, true);
+                    tableView.ScrollToRow(row, true);
+                    Plugin.Log($"Success scrolling to {levelID}!");
+                    return true;
+                }
             }
+            Plugin.Log($"Failed to scroll to {levelID}!");
+            return false;
         }
 
-        private IEnumerator UpdateSong(KeyValuePair<string, CustomLevel> songInfo)
+        private IEnumerator UpdateSong(KeyValuePair<JSONObject, CustomLevel> songUpdateInfo)
         {
-            string songIndex = songInfo.Key;
-            CustomLevel oldLevel = songInfo.Value;
-
+            _downloaderRunning = true;
+            JSONObject song = songUpdateInfo.Key;
+            CustomLevel oldLevel = songUpdateInfo.Value;
+            string songIndex = song["version"];
+            string songHash = ((string)song["hashMd5"]).ToUpper();
+            
             Utilities.EmptyDirectory(".songcache", false);
-
-            // Download and extract the update
-            string localPath = $"{Environment.CurrentDirectory}\\.songcache\\{songIndex}.zip";
-            yield return Utilities.DownloadFile($"https://beatsaver.com/download/{songIndex}", localPath);
-            yield return Utilities.ExtractZip(localPath, $"{Environment.CurrentDirectory}\\CustomSongs\\{songIndex}");
-
+            
             var table = ReflectionUtil.GetPrivateField<LevelListTableView>(_standardLevelListViewController, "_levelListTableView");
             if (Config.DeleteOldVersions)
             {
                 // Only delete the old song after the new one is downloaded and extracted
-                Directory.Delete(oldLevel.customSongInfo.path, true);
+                Utilities.EmptyDirectory(oldLevel.customSongInfo.path, true);
                 SongLoader.Instance.RemoveSongWithLevelID(oldLevel.levelID);
 
-                if (_songBrowserInstalled)
+                if (table && _songBrowserInstalled)
                 {
-                    if (table)
-                    {
-                        var levels = CurrentLevels;
-                        levels.Remove(oldLevel);
-                        table.SetLevels(levels.ToArray());
-                    }
+                    var lvls = CurrentLevels;
+                    lvls.Remove(oldLevel);
+                    table.SetLevels(lvls.ToArray());
+
+                    RefreshSongBrowser();
                 }
             }
             
-            // Disable our didSelectLevel event, then refresh the song list
+            string currentSongDirectory = $"{Environment.CurrentDirectory}\\CustomSongs\\{songIndex}";
+            if (Directory.Exists(currentSongDirectory))
+                Utilities.EmptyDirectory(currentSongDirectory, true);
+            
+            // Download and extract the update
+            string localPath = $"{Environment.CurrentDirectory}\\.songcache\\{songIndex}.zip";
+            yield return Utilities.DownloadFile(song["downloadUrl"], localPath);
+            yield return Utilities.ExtractZip(localPath, currentSongDirectory);
+
             _standardLevelListViewController.didSelectLevelEvent -= standardLevelListViewController_didSelectLevelEvent;
             yield return RefreshSongs(false, false);
             _standardLevelListViewController.didSelectLevelEvent += standardLevelListViewController_didSelectLevelEvent;
-
+            
             Plugin.Log("Finished refreshing songs!");
-            try
+            // Try to scroll to the newly updated level, if it exists in the list
+            var levels = SongLoader.CustomLevels.Where(l => l.levelID.StartsWith(songHash)).ToArray();
+            if (levels.Length > 0)
             {
-                // Try to scroll to the newly updated level, if it exists in the list
-                CustomLevel newLevel = (CustomLevel)CurrentLevels.Where(x => x is CustomLevel && ((CustomLevel)x).customSongInfo.path.Contains(songIndex))?.FirstOrDefault();
-                if (newLevel)
+                Plugin.Log($"Scrolling to level {levels[0].levelID}");
+                if (!ScrollToLevel(levels[0].levelID))
                 {
-                    Plugin.Log("Found new level!");
                     if (table)
                     {
-                        // Set the row index to the previously selected song
-                        int row = table.RowNumberForLevelID(newLevel.levelID);
-                        TableView tableView = table.GetComponentInChildren<TableView>();
-                        tableView.SelectRow(row, true);
-                        tableView.ScrollToRow(row, true);
+                        var lvls = CurrentLevels;
+                        lvls.Add(levels[0]);
+                        table.SetLevels(lvls.ToArray());
                     }
+                    ScrollToLevel(levels[0].levelID);
                 }
-                else
-                {
-                    Plugin.Log("Failed to find new level!");
-                }
-            }
-            catch (Exception ex)
-            {
-                Plugin.Log($"Exception when attempting to find new song! {ex.ToString()}");
             }
 
             // Write our download history to file
@@ -312,6 +315,7 @@ namespace SyncSaber
 
             DisplayNotification("Song update complete!");
             Plugin.Log($"Success updating song {songIndex}");
+            _downloaderRunning = false;
         }
 
         private void UpdatePlaylist(string songIndex, string songName)
@@ -404,7 +408,7 @@ namespace SyncSaber
                                     Plugin.Log("Downloading update for " + level.customSongInfo.songName);
                                     DisplayNotification($"Updating song {level.customSongInfo.songName}");
 
-                                    _updateQueue.Push(new KeyValuePair<string, CustomLevel>(song["version"], level));
+                                    _updateQueue.Push(new KeyValuePair<JSONObject, CustomLevel>(song, level));
                                     break;
                                 }
                             }
@@ -509,11 +513,12 @@ namespace SyncSaber
 
                         // Update our playlist with the latest song info
                         UpdatePlaylist(songIndex, songName);
+
+
+                        // Delete any duplicate songs that we've downloaded
+                        RemoveOldVersions(songIndex);
                     }
-
-                    // Delete any duplicate songs that we've downloaded
-                    RemoveOldVersions(songIndex);
-
+                    
                     totalSongs++;
 
                     yield return null;
@@ -609,10 +614,10 @@ namespace SyncSaber
 
                             // Update our playlist with the latest song info
                             UpdatePlaylist(songIndex, songName);
-                        }
 
-                        // Check for/remove any duplicate songs
-                        RemoveOldVersions(songIndex);
+                            // Delete any duplicate songs that we've downloaded
+                            RemoveOldVersions(songIndex);
+                        }
 
                         totalSongs++;
                         totalSongsForPage++;

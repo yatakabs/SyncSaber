@@ -72,7 +72,7 @@ namespace SyncSaber
                 foreach (System.IO.FileInfo file in directoryInfo.GetFiles()) file.Delete();
                 foreach (System.IO.DirectoryInfo subDirectory in directoryInfo.GetDirectories()) subDirectory.Delete(true);
 
-                if (delete) Directory.Delete(directory);
+                if (delete) Directory.Delete(directory, true);
             }
         }
 
