@@ -50,6 +50,7 @@ namespace SyncSaber
                     Plugin.Log(www.error);
                     yield break;
                 }
+                
                 try
                 {
                     if (!Directory.Exists(Path.GetDirectoryName(path)))
@@ -76,6 +77,14 @@ namespace SyncSaber
             }
         }
 
+        public static void MoveFilesRecursively(DirectoryInfo source, DirectoryInfo target)
+        {
+            foreach (DirectoryInfo dir in source.GetDirectories())
+                MoveFilesRecursively(dir, target.CreateSubdirectory(dir.Name));
+            foreach (FileInfo file in source.GetFiles())
+                file.MoveTo(Path.Combine(target.FullName, file.Name));
+        }
+
         public static IEnumerator ExtractZip(string zipPath, string extractPath)
         {
             if (File.Exists(zipPath))
@@ -93,25 +102,17 @@ namespace SyncSaber
                 }
 
                 yield return new WaitForSeconds(0.25f);
-
+                
                 File.Delete(zipPath);
 
                 try
                 {
                     if (extracted)
                     {
-                        string[] directories = Directory.GetDirectories($"{Environment.CurrentDirectory}\\.songcache");
-                        foreach (var directory in directories)
-                        {
-                            if (!Directory.Exists(extractPath))
-                                Directory.CreateDirectory(extractPath);
-                            
-                            string path = Path.Combine(extractPath, Path.GetFileName(directory));
-                            if (Directory.Exists(path))
-                                Directory.Delete(path, true);
+                        if (!Directory.Exists(extractPath))
+                            Directory.CreateDirectory(extractPath);
 
-                            Directory.Move(directory, path);
-                        }
+                        MoveFilesRecursively(new DirectoryInfo($"{Environment.CurrentDirectory}\\.songcache"), new DirectoryInfo(extractPath));
                     }
                 }
                 catch (Exception e)

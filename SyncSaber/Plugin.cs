@@ -46,8 +46,10 @@ namespace SyncSaber
 
         private void SceneManager_sceneLoaded(Scene arg0, LoadSceneMode arg1)
         {
-            if(arg0.name == "Menu")
+            if (arg0.name == "Menu")
+            {
                 Settings.OnLoad();
+            }
         }
 
         public void OnApplicationQuit()
