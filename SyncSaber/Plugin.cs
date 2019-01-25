@@ -11,7 +11,7 @@ namespace SyncSaber
     public class Plugin : IPlugin
     {
         public string Name => "SyncSaber";
-        public string Version => "1.3.1";
+        public string Version => "1.3.2";
 
         public static Plugin Instance;
         

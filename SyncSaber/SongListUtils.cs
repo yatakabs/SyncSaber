@@ -44,12 +44,14 @@ namespace SyncSaber
                     _songBrowserInstalled = Utilities.IsModInstalled("Song Browser");
                     _songDownloaderInstalled = Utilities.IsModInstalled("BeatSaver Downloader");
                     _initialized = true;
-                } catch (Exception e)
+                }
+                catch (Exception e)
                 {
                     Plugin.Log($"Exception {e}");
                 }
             }
         }
+        
         private enum SongBrowserAction { Refresh = 1, ResetFilter = 2 }
         private static void ExecuteSongBrowserAction(SongBrowserAction action)
         {
