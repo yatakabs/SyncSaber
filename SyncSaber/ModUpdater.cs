@@ -45,7 +45,7 @@ namespace SyncSaber
             StartCoroutine(CollectCurrentModInfo());
         }
         
-        public IEnumerator AcquireDependencies(ModInfo info)
+        public IEnumerator AcquireDependencies(ModInfo info, Action OnCompleted)
         {
             foreach (JSONString dependency in info.UpdateInfo["links"]["dependencies"].AsArray)
             {
@@ -135,7 +135,7 @@ namespace SyncSaber
                     yield return DownloadUpdate(new ModInfo() {
                         Name = dependencyName,
                         UpdateInfo = updateJson.AsArray[0].AsObject
-                    }, null);
+                    }, OnCompleted);
                 }
             }
         }
@@ -164,10 +164,8 @@ namespace SyncSaber
                 UpdatedModInfo.Add(modInfo.UpdateInfo);
                 //Plugin.Log($"Downloaded update for {modInfo.UpdateInfo["name"].Value}");
             }
-            yield return AcquireDependencies(modInfo);
-
             OnCompleted?.Invoke();
-
+            yield return AcquireDependencies(modInfo, OnCompleted);
             Plugin.Log($"{modInfo.Name} updated to version {modInfo.UpdateInfo["version"].Value} successfully!");
         }
 

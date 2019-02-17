@@ -11,11 +11,13 @@ using CustomUI.Utilities;
 using HMUI;
 using IllusionInjector;
 using SimpleJSON;
+using UnityEngine;
 
 namespace SyncSaber
 {
     public class ModListViewController : CustomListViewController
     {
+        private LevelListTableCell _songListTableCellInstance;
         protected override void DidActivate(bool firstActivation, ActivationType type)
         {
             try
@@ -23,6 +25,7 @@ namespace SyncSaber
                 base.DidActivate(firstActivation, type);
                 if (firstActivation)
                 {
+                    _songListTableCellInstance = Resources.FindObjectsOfTypeAll<LevelListTableCell>().First(x => (x.name == "LevelListTableCell"));
                     _customListTableView.didSelectRowEvent += _customListTableView_didSelectRowEvent;
                 }
             }
@@ -55,9 +58,7 @@ namespace SyncSaber
                 _tableCell = Instantiate(_songListTableCellInstance);
 
             ModInfo modInfo = ModUpdater.Instance.CurrentModInfo[row];
-
-            Plugin.Log("CellForRow");
-
+            
             _tableCell.songName = modInfo.CurrentInfo["details"]["title"].Value;
             if (modInfo.UpdatePending)
                 _tableCell.author = "<color=#ffff00ff>Update pending! Restart the game to complete.</color>";
