@@ -34,7 +34,6 @@ namespace SyncSaber
 
         private bool _downloaderRunning = false;
         private bool _downloaderComplete = false;
-        private bool _isRefreshing = false;
         private bool _isInGame = false;
         private string _historyPath = null;
         private int _beastSaberFeedIndex = 0;
@@ -59,6 +58,8 @@ namespace SyncSaber
 
         Dictionary<string, string> _beastSaberFeeds = new Dictionary<string, string>();
 
+        public static SyncSaber Instance = null;
+
         private List<IBeatmapLevel> CurrentLevels
         {
             get
@@ -71,9 +72,16 @@ namespace SyncSaber
             }
         }
 
+        public static void OnLoad()
+        {
+            if (Instance) return;
+            new GameObject("SyncSaber").AddComponent<SyncSaber>();
+        }
+
         private void Awake()
         {
-            UnityEngine.Object.DontDestroyOnLoad(this.gameObject);
+            Instance = this;
+            DontDestroyOnLoad(gameObject);
 
             if(Config.SyncFollowingsFeed)
                 _beastSaberFeeds.Add("followings", $"https://bsaber.com/members/{Config.BeastSaberUsername}/wall/followings");
@@ -85,7 +93,7 @@ namespace SyncSaber
             _songBrowserInstalled = Utilities.IsModInstalled("Song Browser");
             SceneManager.activeSceneChanged += SceneManagerOnActiveSceneChanged;
 
-            _historyPath = $"{Environment.CurrentDirectory}\\UserData\\SyncSaberHistory.txt";
+            _historyPath = Path.Combine(Environment.CurrentDirectory, "UserData", "SyncSaberHistory.txt");
             if (File.Exists(_historyPath + ".bak"))
             {
                 // Something went wrong when the history file was being written previously, restore it from backup
@@ -97,7 +105,7 @@ namespace SyncSaber
 
             if (!Directory.Exists("CustomSongs")) Directory.CreateDirectory("CustomSongs");
 
-            string favoriteMappersPath = $"{Environment.CurrentDirectory}\\UserData\\FavoriteMappers.ini";
+            string favoriteMappersPath = Path.Combine(Environment.CurrentDirectory, "UserData", "FavoriteMappers.ini");
             if (!File.Exists(favoriteMappersPath))
                 File.WriteAllLines(favoriteMappersPath, new string[] { "" }); // "freeek", "purphoros", "bennydabeast", "rustic", "greatyazer"
 
@@ -213,10 +221,8 @@ namespace SyncSaber
             _downloaderRunning = true;
             JSONObject song = songUpdateInfo.Key;
             CustomLevel oldLevel = songUpdateInfo.Value;
-            string songIndex = song["version"];
-            string songHash = ((string)song["hashMd5"]).ToUpper();
-            
-            Utilities.EmptyDirectory(".songcache", false);
+            string songIndex = song["version"].Value;
+            string songHash = (song["hashMd5"].Value).ToUpper();
             
             var table = ReflectionUtil.GetPrivateField<LevelListTableView>(_standardLevelListViewController, "_levelListTableView");
             if (Config.DeleteOldVersions)
@@ -234,13 +240,11 @@ namespace SyncSaber
                 SongLoader.Instance.RemoveSongWithLevelID(oldLevel.levelID);
             }
             
-            string currentSongDirectory = $"{Environment.CurrentDirectory}\\CustomSongs\\{songIndex}";
-            if (Directory.Exists(currentSongDirectory))
-                Utilities.EmptyDirectory(currentSongDirectory, true);
-            
+            string currentSongDirectory = Path.Combine(Environment.CurrentDirectory, "CustomSongs", songIndex);
+            string localPath = Path.Combine(Path.GetTempPath(), $"{songIndex}.zip");
+
             // Download and extract the update
-            string localPath = $"{Environment.CurrentDirectory}\\.songcache\\{songIndex}.zip";
-            yield return Utilities.DownloadFile(song["downloadUrl"], localPath);
+            yield return Utilities.DownloadFile(song["downloadUrl"].Value, localPath);
             yield return Utilities.ExtractZip(localPath, currentSongDirectory);
 
             _standardLevelListViewController.didSelectLevelEvent -= standardLevelListViewController_didSelectLevelEvent;
@@ -359,7 +363,7 @@ namespace SyncSaber
 
                             foreach (JSONObject song in result["songs"].AsArray)
                             {
-                                if (((string)song["hashMd5"]).ToLower() != songHash.ToLower())
+                                if ((song["hashMd5"].Value).ToLower() != songHash.ToLower())
                                 {
                                     Plugin.Log("Downloading update for " + level.customSongInfo.songName);
                                     DisplayNotification($"Updating song {level.customSongInfo.songName}");
@@ -378,7 +382,7 @@ namespace SyncSaber
         {
             if (!Config.DeleteOldVersions) return;
 
-            string[] customSongDirectories = Directory.GetDirectories($"{Environment.CurrentDirectory}\\CustomSongs");
+            string[] customSongDirectories = Directory.GetDirectories(Path.Combine(Environment.CurrentDirectory, "CustomSongs"));
             string id = songIndex.Substring(0, songIndex.IndexOf("-"));
             string version = songIndex.Substring(songIndex.IndexOf("-") + 1);
 
@@ -398,7 +402,7 @@ namespace SyncSaber
                             string oldVersion = directoryName;
                             if (Convert.ToInt32(directoryVersion) > Convert.ToInt32(version))
                             {
-                                directoryToRemove = $"{Environment.CurrentDirectory}\\CustomSongs\\{songIndex}";
+                                directoryToRemove = Path.Combine(Environment.CurrentDirectory, "CustomSongs", songIndex);
                                 currentVersion = directoryName;
                                 oldVersion = songIndex;
                             }
@@ -448,16 +452,14 @@ namespace SyncSaber
                     while (_isInGame || SongLoader.AreSongsLoading)
                         yield return null;
 
-                    string songIndex = song["version"], songName = song["songName"];
-                    string currentSongDirectory = $"{Environment.CurrentDirectory}\\CustomSongs\\{songIndex}";
+                    string songIndex = song["version"].Value, songName = song["songName"].Value;
+                    string currentSongDirectory = Path.Combine(Environment.CurrentDirectory, "CustomSongs", songIndex);
                     if (Config.AutoDownloadSongs && !_songDownloadHistory.Contains(songIndex) && !Directory.Exists(currentSongDirectory))
                     {
-                        Utilities.EmptyDirectory(".songcache", false);
-
                         DisplayNotification($"Downloading {songName}");
 
-                        string localPath = $"{Environment.CurrentDirectory}\\.songcache\\{songIndex}.zip";
-                        yield return Utilities.DownloadFile(song["downloadUrl"], localPath);
+                        string localPath = Path.Combine(Path.GetTempPath(), $"{songIndex}.zip");
+                        yield return Utilities.DownloadFile(song["downloadUrl"].Value, localPath);
                         yield return Utilities.ExtractZip(localPath, currentSongDirectory);
                         downloadCount++;
                     }
@@ -485,9 +487,7 @@ namespace SyncSaber
 
             // Write to the SyncSaber playlist
             _syncSaberSongs.WritePlaylist();
-
-            Utilities.EmptyDirectory(".songcache");
-
+            
             Plugin.Log($"Downloaded {downloadCount} songs from mapper \"{author}\" in {((DateTime.Now - startTime - idleTime).Seconds)} seconds. Skipped {(totalSongs - downloadCount)} songs.");
             _downloaderRunning = false;
         }
@@ -546,14 +546,12 @@ namespace SyncSaber
                         }
 
                         string songIndex = downloadUrl.Substring(downloadUrl.LastIndexOf('/') + 1);
-                        string currentSongDirectory = $"{Environment.CurrentDirectory}\\CustomSongs\\{songIndex}";
+                        string currentSongDirectory = Path.Combine(Environment.CurrentDirectory, "CustomSongs", songIndex);
                         if (Config.AutoDownloadSongs && !_songDownloadHistory.Contains(songIndex) && !Directory.Exists(currentSongDirectory))
                         {
-                            Utilities.EmptyDirectory(".songcache", false);
-
                             DisplayNotification($"Downloading {songName}");
 
-                            string localPath = $"{Environment.CurrentDirectory}\\.songcache\\{songIndex}.zip";
+                            string localPath = Path.Combine(Path.GetTempPath(), $"{songIndex}.zip");
                             yield return Utilities.DownloadFile($"https://beatsaver.com/download/{songIndex}", localPath);
                             yield return Utilities.ExtractZip(localPath, currentSongDirectory);
                             downloadCount++;
@@ -599,8 +597,6 @@ namespace SyncSaber
                 if (pageIndex > GetMaxBeastSaberPages(feedToDownload) + 1 && GetMaxBeastSaberPages(feedToDownload) != 0)
                     break;
             }
-            Utilities.EmptyDirectory(".songcache");
-
             Plugin.Log($"Downloaded {downloadCount} songs from BeastSaber {_beastSaberFeeds.ElementAt(feedToDownload).Key} feed in {((DateTime.Now - startTime).Seconds)} seconds. Checked {(pageIndex+1)} page{(pageIndex>0?"s":"")}, skipped {(totalSongs - downloadCount)} songs.");
             _downloaderRunning = false;
         }

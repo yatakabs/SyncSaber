@@ -15,7 +15,6 @@ namespace SyncSaber
 
         public static Plugin Instance;
         
-        private SyncSaber _syncSaber = null;
         private TextMeshProUGUI _mapperFeedNotification = null;
 
         private IEnumerator DelayedStartup()
@@ -33,7 +32,9 @@ namespace SyncSaber
             Config.Read();
             Config.Write();
 
-            _syncSaber = new GameObject().AddComponent<SyncSaber>();
+
+            ModUpdater.OnLoad();
+            SyncSaber.OnLoad();
         }
 
         public void OnApplicationStart()

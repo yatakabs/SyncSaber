@@ -1,4 +1,5 @@
-﻿using CustomUI.Settings;
+﻿using CustomUI.MenuButton;
+using CustomUI.Settings;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -11,6 +12,8 @@ namespace SyncSaber
     {
         public static void OnLoad()
         {
+            MenuButtonUI.AddButton("Mod Updater", () => { ModUpdater.Instance.ModUpdaterMenu.Present(); });
+
             var menu = SettingsUI.CreateSubMenu("SyncSaber");
             var autoDownload = menu.AddBool("Auto-Download Songs", "Determines if SyncSaber should download new songs or just add them to the SyncSaber playlist.");
             autoDownload.GetValue += () => { return Config.AutoDownloadSongs; };
