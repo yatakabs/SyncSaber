@@ -22,19 +22,25 @@ namespace SyncSaber
         {
             try
             {
-                base.DidActivate(firstActivation, type);
                 if (firstActivation)
-                {
                     _songListTableCellInstance = Resources.FindObjectsOfTypeAll<LevelListTableCell>().First(x => (x.name == "LevelListTableCell"));
+
+                base.DidActivate(firstActivation, type);
+
+                if (firstActivation)
                     _customListTableView.didSelectRowEvent += _customListTableView_didSelectRowEvent;
-                }
             }
             catch (Exception e)
             {
                 Console.WriteLine("EXCEPTION IN ModListViewController.DidActivate: " + e);
             }
         }
-        
+
+        protected override void DidDeactivate(DeactivationType type)
+        {
+            base.DidDeactivate(type);
+        }
+
         private void _customListTableView_didSelectRowEvent(TableView table, int row)
         {
             ModInfo modInfo = ModUpdater.Instance.CurrentModInfo[row];
@@ -59,9 +65,9 @@ namespace SyncSaber
 
             ModInfo modInfo = ModUpdater.Instance.CurrentModInfo[row];
             
-            _tableCell.songName = modInfo.CurrentInfo["details"]["title"].Value;
+            _tableCell.songName = $"{modInfo.CurrentInfo["details"]["title"].Value} {modInfo.CurrentInfo["version"].Value}";
             if (modInfo.UpdatePending)
-                _tableCell.author = "<color=#ffff00ff>Update pending! Restart the game to complete.</color>";
+                _tableCell.author = "<color=#ffff00ff>Update complete! Restart the game to apply.</color>";
             else if (modInfo.UpdateInfo == null)
                 _tableCell.author = "<color=#00ff00ff>Up to date</color>";
             else

@@ -123,18 +123,34 @@ namespace SyncSaber
                         yield break;
                     }
 
+                    JSONObject updateObject = null;
+                    foreach(JSONObject update in updateJson.AsArray)
+                    {
+                        if (update["approval"]["status"].Value == "approved")
+                        {
+                            updateObject = update;
+                            break;
+                        }
+                    }
+
+                    if (updateObject == null)
+                    {
+                        Plugin.Log($"Couldn't find approved version for dependency {updateJson["name"].Value}. Aborting!");
+                        yield break;
+                    }
+
                     if (dependencyInfo != null)
                     {
                         dependencyName = dependencyInfo.Name;
                         dependencyInfo.UpdatePending = true;
-                        dependencyInfo.UpdateInfo = updateJson.AsArray[0].AsObject;
+                        dependencyInfo.UpdateInfo = updateObject;
                         CurrentModInfo[dependencyIndex] = dependencyInfo;
                     }
 
                     Plugin.Log($"Downloading update for dependency {dependencyName}");
                     yield return DownloadUpdate(new ModInfo() {
                         Name = dependencyName,
-                        UpdateInfo = updateJson.AsArray[0].AsObject
+                        UpdateInfo = updateObject
                     }, OnCompleted);
                 }
             }
