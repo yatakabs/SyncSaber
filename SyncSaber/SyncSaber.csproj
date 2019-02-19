@@ -100,6 +100,14 @@
     <Compile Include="Plugin.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="ReflectionUtil.cs" />
+    <Compile Include="SemVer\Comparator.cs" />
+    <Compile Include="SemVer\ComparatorSet.cs" />
+    <Compile Include="SemVer\Desugarer.cs" />
+    <Compile Include="SemVer\PartialVersion.cs" />
+    <Compile Include="SemVer\PreReleaseVersion.cs" />
+    <Compile Include="SemVer\Range.cs" />
+    <Compile Include="SemVer\Tuple.cs" />
+    <Compile Include="SemVer\Version.cs" />
     <Compile Include="Settings.cs" />
     <Compile Include="SongListUtils.cs" />
     <Compile Include="SyncSaber.cs" />

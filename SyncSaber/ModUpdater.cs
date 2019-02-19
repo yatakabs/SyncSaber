@@ -1,4 +1,5 @@
 ﻿using CustomUI.BeatSaber;
+using SemVer;
 using SimpleJSON;
 using System;
 using System.Collections;
@@ -10,6 +11,7 @@ using System.Text;
 using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.Networking;
+using Version = SemVer.Version;
 
 namespace SyncSaber
 {
@@ -52,58 +54,25 @@ namespace SyncSaber
                 bool updateRequired = true;
                 string[] parts = dependency.Value.Split('@');
                 string dependencyName = parts[0];
-                string dependencyVersion = parts[1].Substring(1);
-
-                string[] versionParts = dependencyVersion.Split('.');
-                int major = int.Parse(versionParts[0]);
-                int minor = int.Parse(versionParts[1]);
-                int patch = int.Parse(versionParts[2]);
+                Range dependencyRange = new Range(parts[1]);
+                Version dependencyVersion = new Version(dependency.Value);
 
                 //Plugin.Log($"Plugin {info.Name} depends on {dependencyName} (v{dependencyVersion})");
-                
+
+                Version installedVersion = new Version("0.0.0");
                 int dependencyIndex = CurrentModInfo.FindIndex(i => i.CurrentInfo["name"].Value == dependencyName);
                 ModInfo dependencyInfo = null;
                 if (dependencyIndex != -1)
                 {
                     dependencyInfo = CurrentModInfo[dependencyIndex];
-                    //Plugin.Log($"Checking if dependency {dependencyName} needs an update!");
-
-                    string installedVersion = dependencyInfo.CurrentInfo["version"].Value;
-                    string[] installedVersionParts = installedVersion.Split('.');
-                    int installedMajor = int.Parse(installedVersionParts[0]);
-                    int installedMinor = int.Parse(installedVersionParts[1]);
-                    int installedPatch = int.Parse(installedVersionParts[2]);
-                    
-                    if(major > installedMajor)
-                    {
-                        //Plugin.Log("Major version update!");
-                    }
-                    else if(major == installedMajor)
-                    {
-                        if(minor > installedMinor)
-                        {
-                            //Plugin.Log("Minor version update!");
-                        }
-                        else if(minor == installedMinor)
-                        {
-                            if(patch > installedPatch)
-                            {
-                                //Plugin.Log("Patch version update!");
-                            }
-                            else
-                            {
-                                //Plugin.Log("Dependency is up to date!");
-                                updateRequired = false;
-                            }
-                        }
-                    }
+                    installedVersion = new Version(info.CurrentInfo["version"].Value);
                 }
 
-                if(updateRequired)
+                if (updateRequired)
                 {
                     JSONNode updateJson = null;
                     //Plugin.Log($"Requesting update info for dependency {dependencyName} v{dependencyVersion}.");
-                    using (UnityWebRequest updateRequest = UnityWebRequest.Get($"https://www.modsaber.org/api/v1.1/mods/versions/{dependencyName}"))
+                    using (UnityWebRequest updateRequest = UnityWebRequest.Get($"https://www.modsaber.org/api/v1.1/mods/semver/{dependencyName}/^{dependencyRange.ToString()}"))
                     {
                         yield return updateRequest.SendWebRequest();
 
@@ -115,18 +84,18 @@ namespace SyncSaber
                         updateJson = JSON.Parse(updateRequest.downloadHandler.text);
                     }
                     if (updateJson == null) continue;
-
-
+                    
                     if (UpdatedModInfo.FindIndex(u => u["name"].Value == updateJson["name"].Value) != -1)
                     {
-                        Plugin.Log($"Dependency {updateJson["name"].Value} is already downloaded! Skipping!");
+                        Plugin.Log($"Dependency {updateJson["name"].Value} has already been updated! Skipping!");
                         yield break;
                     }
 
                     JSONObject updateObject = null;
                     foreach(JSONObject update in updateJson.AsArray)
                     {
-                        if (update["approval"]["status"].Value == "approved")
+                        Version updateVersion = new Version(update["version"].Value);
+                        if (dependencyRange.IsSatisfied(updateVersion) && updateVersion > installedVersion && update["approval"]["status"].Value == "approved")
                         {
                             updateObject = update;
                             break;
@@ -230,32 +199,29 @@ namespace SyncSaber
                         Name = dllName,
                         CurrentInfo = version
                     };
-
-                    // Check if a newer update is available
-                    if (version["approval"]["status"].Value == "denied" && version["approval"]["reason"].Value.StartsWith("Newer"))
+                    
+                    JSONNode ModSaberModInfo = null;
+                    using (UnityWebRequest updateRequest = UnityWebRequest.Get($"https://www.modsaber.org/api/v1.1/mods/versions/{version["name"].Value}"))
                     {
-                        JSONNode updateJson = null;
-                        //Plugin.Log($"Requesting update info for {dllName}.");
-                        using (UnityWebRequest updateRequest = UnityWebRequest.Get($"https://www.modsaber.org/api/v1.1/mods/versions/{version["name"].Value}"))
-                        {
-                            yield return updateRequest.SendWebRequest();
+                        yield return updateRequest.SendWebRequest();
 
-                            if (updateRequest.isNetworkError || updateRequest.isHttpError)
-                            {
-                                Plugin.Log($"Error when checking for plugin update! {updateRequest.error}");
-                                continue;
-                            }
-                            updateJson = JSON.Parse(updateRequest.downloadHandler.text);
+                        if (updateRequest.isNetworkError || updateRequest.isHttpError)
+                        {
+                            Plugin.Log($"Error when checking for plugin update! {updateRequest.error}");
+                            continue;
                         }
-                        if (updateJson == null) continue;
+                        ModSaberModInfo = JSON.Parse(updateRequest.downloadHandler.text);
+                    }
+                    if (ModSaberModInfo == null) continue;
 
-                        foreach (JSONObject update in updateJson.AsArray)
+                    var currentVersion = new Version(version["version"].Value);
+                    foreach (JSONObject update in ModSaberModInfo.AsArray)
+                    {
+                        var updateVersion = new Version(update["version"].Value);
+                        if (updateVersion > currentVersion && update["approval"]["status"].Value == "approved")
                         {
-                            if (update["approval"]["status"].Value == "approved")
-                            {
-                                currentModInfo.UpdateInfo = update;
-                                break;
-                            }
+                            currentModInfo.UpdateInfo = update;
+                            break;
                         }
                     }
                     CurrentModInfo.Add(currentModInfo);
