@@ -65,7 +65,7 @@ namespace SyncSaber
                 if (dependencyIndex != -1)
                 {
                     dependencyInfo = CurrentModInfo[dependencyIndex];
-                    installedVersion = new Version(info.CurrentInfo["version"].Value);
+                    installedVersion = new Version(dependencyInfo.CurrentInfo["version"].Value);
                 }
 
                 if (updateRequired)
