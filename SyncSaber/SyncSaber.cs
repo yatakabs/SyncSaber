@@ -460,8 +460,11 @@ namespace SyncSaber
 
                         string localPath = Path.Combine(Path.GetTempPath(), $"{songIndex}.zip");
                         yield return Utilities.DownloadFile(song["downloadUrl"].Value, localPath);
-                        yield return Utilities.ExtractZip(localPath, currentSongDirectory);
-                        downloadCount++;
+                        if (File.Exists(localPath))
+                        {
+                            yield return Utilities.ExtractZip(localPath, currentSongDirectory);
+                            downloadCount++;
+                        }
                     }
 
                     // Keep a history of all the songs we download- count it as downloaded even if the user already had it downloaded previously so if they delete it it doesn't get redownloaded
@@ -545,6 +548,8 @@ namespace SyncSaber
                             continue;
                         }
 
+                        Plugin.Log($"Attempting to download {songName} from \"{downloadUrl}\"");
+
                         string songIndex = downloadUrl.Substring(downloadUrl.LastIndexOf('/') + 1);
                         string currentSongDirectory = Path.Combine(Environment.CurrentDirectory, "CustomSongs", songIndex);
                         if (Config.AutoDownloadSongs && !_songDownloadHistory.Contains(songIndex) && !Directory.Exists(currentSongDirectory))
@@ -553,9 +558,12 @@ namespace SyncSaber
 
                             string localPath = Path.Combine(Path.GetTempPath(), $"{songIndex}.zip");
                             yield return Utilities.DownloadFile($"https://beatsaver.com/download/{songIndex}", localPath);
-                            yield return Utilities.ExtractZip(localPath, currentSongDirectory);
-                            downloadCount++;
-                            downloadCountForPage++;
+                            if (File.Exists(localPath))
+                            {
+                                yield return Utilities.ExtractZip(localPath, currentSongDirectory);
+                                downloadCount++;
+                                downloadCountForPage++;
+                            }
                         }
 
                         // Keep a history of all the songs we download- count it as downloaded even if the user already had it downloaded previously so if they delete it it doesn't get redownloaded

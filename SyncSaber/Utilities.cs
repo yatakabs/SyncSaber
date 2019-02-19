@@ -47,7 +47,7 @@ namespace SyncSaber
                 yield return www.SendWebRequest();
                 if (www.isNetworkError || www.isHttpError)
                 {
-                    Plugin.Log(www.error);
+                    Plugin.Log($"DownloadFile failed with error {www.error}, HttpResponseCode: {www.responseCode}");
                     yield break;
                 }
                 
