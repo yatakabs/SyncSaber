@@ -20,7 +20,7 @@ namespace SyncSaber
         public string Name = "";
         public JSONObject CurrentInfo = null;
         public JSONObject UpdateInfo = null;
-        public bool UpdatePending = false;
+        public bool UpdateInitiated = false;
     }
 
     public class ModUpdater : MonoBehaviour
@@ -72,7 +72,7 @@ namespace SyncSaber
                 {
                     JSONNode updateJson = null;
                     //Plugin.Log($"Requesting update info for dependency {dependencyName} v{dependencyVersion}.");
-                    using (UnityWebRequest updateRequest = UnityWebRequest.Get($"https://www.modsaber.org/api/v1.1/mods/semver/{dependencyName}/^{dependencyRange.ToString()}"))
+                    using (UnityWebRequest updateRequest = UnityWebRequest.Get($"https://www.modsaber.org/api/v1.1/mods/semver/{dependencyName}/{dependencyRange.ToString()}"))
                     {
                         yield return updateRequest.SendWebRequest();
 
@@ -111,7 +111,7 @@ namespace SyncSaber
                     if (dependencyInfo != null)
                     {
                         dependencyName = dependencyInfo.Name;
-                        dependencyInfo.UpdatePending = true;
+                        dependencyInfo.UpdateInitiated = true;
                         dependencyInfo.UpdateInfo = updateObject;
                         CurrentModInfo[dependencyIndex] = dependencyInfo;
                     }
@@ -225,13 +225,15 @@ namespace SyncSaber
                         }
                     }
                     CurrentModInfo.Add(currentModInfo);
+
                     break;
                 }
                 yield return null;
             }
+            Plugin.Log($"Identified {CurrentModInfo.Count} mods from ModSaber!");
+
             if (ModUpdaterMenu.customFlowCoordinator.isActivated)
-                (ModUpdaterMenu.mainViewController as ModListViewController)._customListTableView?.ReloadData();
-            //Plugin.Log($"Found {CurrentModInfo.Count} mods!");
+                ModListViewController.ReloadData();
         }
     }
 }

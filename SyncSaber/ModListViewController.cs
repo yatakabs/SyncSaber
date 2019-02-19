@@ -18,6 +18,12 @@ namespace SyncSaber
     public class ModListViewController : CustomListViewController
     {
         private LevelListTableCell _songListTableCellInstance;
+        private static ModListViewController _instance;
+        private void Awake()
+        {
+            _instance = this;
+        }
+
         protected override void DidActivate(bool firstActivation, ActivationType type)
         {
             try
@@ -41,14 +47,20 @@ namespace SyncSaber
             base.DidDeactivate(type);
         }
 
+        public static void ReloadData()
+        {
+            ModUpdater.Instance.CurrentModInfo = ModUpdater.Instance.CurrentModInfo.OrderBy(m => m.UpdateInfo == null).ThenBy(m => m.CurrentInfo["details"]["title"].Value).ToList();
+            _instance?._customListTableView.ReloadData();
+        }
+
         private void _customListTableView_didSelectRowEvent(TableView table, int row)
         {
             ModInfo modInfo = ModUpdater.Instance.CurrentModInfo[row];
             if (modInfo.UpdateInfo != null)
             {
                 Plugin.Log($"Downloading update for plugin {modInfo.Name}");
-                ModUpdater.Instance.CurrentModInfo[row].UpdatePending = true;
-                StartCoroutine(ModUpdater.Instance.DownloadUpdate(modInfo, () => _customListTableView.ReloadData()));
+                ModUpdater.Instance.CurrentModInfo[row].UpdateInitiated = true;
+                StartCoroutine(ModUpdater.Instance.DownloadUpdate(modInfo, () => ReloadData()));
             }
         }
 
@@ -66,7 +78,7 @@ namespace SyncSaber
             ModInfo modInfo = ModUpdater.Instance.CurrentModInfo[row];
             
             _tableCell.songName = $"{modInfo.CurrentInfo["details"]["title"].Value} {modInfo.CurrentInfo["version"].Value}";
-            if (modInfo.UpdatePending)
+            if (modInfo.UpdateInitiated)
                 _tableCell.author = "<color=#ffff00ff>Update complete! Restart the game to apply.</color>";
             else if (modInfo.UpdateInfo == null)
                 _tableCell.author = "<color=#00ff00ff>Up to date</color>";
