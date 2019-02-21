@@ -485,6 +485,7 @@ namespace SyncSaber
 
                         string songIndex = song["version"].Value, songName = song["songName"].Value;
                         string currentSongDirectory = Path.Combine(Environment.CurrentDirectory, "CustomSongs", songIndex);
+                        bool downloadFailed = false;
                         if (Config.AutoDownloadSongs && !_songDownloadHistory.Contains(songIndex) && !Directory.Exists(currentSongDirectory))
                         {
                             DisplayNotification($"Downloading {songName}");
@@ -496,10 +497,12 @@ namespace SyncSaber
                                 yield return Utilities.ExtractZip(localPath, currentSongDirectory);
                                 downloadCount++;
                             }
+                            else
+                                downloadFailed = true;
                         }
 
                         // Keep a history of all the songs we download- count it as downloaded even if the user already had it downloaded previously so if they delete it it doesn't get redownloaded
-                        if (!_songDownloadHistory.Contains(songIndex))
+                        if (!downloadFailed && !_songDownloadHistory.Contains(songIndex))
                         {
                             _songDownloadHistory.Add(songIndex);
 
@@ -584,6 +587,7 @@ namespace SyncSaber
 
                         string songIndex = downloadUrl.Substring(downloadUrl.LastIndexOf('/') + 1);
                         string currentSongDirectory = Path.Combine(Environment.CurrentDirectory, "CustomSongs", songIndex);
+                        bool downloadFailed = false;
                         if (Config.AutoDownloadSongs && !_songDownloadHistory.Contains(songIndex) && !Directory.Exists(currentSongDirectory))
                         {
                             DisplayNotification($"Downloading {songName}");
@@ -596,10 +600,12 @@ namespace SyncSaber
                                 downloadCount++;
                                 downloadCountForPage++;
                             }
+                            else
+                                downloadFailed = true;
                         }
 
                         // Keep a history of all the songs we download- count it as downloaded even if the user already had it downloaded previously so if they delete it it doesn't get redownloaded
-                        if (!_songDownloadHistory.Contains(songIndex))
+                        if (!downloadFailed && !_songDownloadHistory.Contains(songIndex))
                         {
                             _songDownloadHistory.Add(songIndex);
 
