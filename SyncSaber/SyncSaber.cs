@@ -428,13 +428,9 @@ namespace SyncSaber
             _downloaderRunning = true;
             var startTime = DateTime.Now;
             TimeSpan idleTime = new TimeSpan();
-            int downloadCount = 0;
-            int totalSongs = 0;
-            
-            DisplayNotification($"Checking for new songs from \"{author}\"");
-            
-            string url = $"https://beatsaver.com/api/songs/search/user/{author}";
-            using (UnityWebRequest www = UnityWebRequest.Get(url))
+
+            string mapperId = String.Empty;
+            using (UnityWebRequest www = UnityWebRequest.Get($"https://beatsaver.com/api/songs/search/user/{author}"))
             {
                 yield return www.SendWebRequest();
                 if (www.isNetworkError || www.isHttpError)
@@ -449,39 +445,75 @@ namespace SyncSaber
 
                 foreach (JSONObject song in result["songs"].AsArray)
                 {
-                    while (_isInGame || SongLoader.AreSongsLoading)
-                        yield return null;
+                    mapperId = song["uploaderId"].Value;
+                    break;
+                }
 
-                    string songIndex = song["version"].Value, songName = song["songName"].Value;
-                    string currentSongDirectory = Path.Combine(Environment.CurrentDirectory, "CustomSongs", songIndex);
-                    if (Config.AutoDownloadSongs && !_songDownloadHistory.Contains(songIndex) && !Directory.Exists(currentSongDirectory))
+                if (mapperId == String.Empty)
+                {
+                    Plugin.Log($"Failed to find mapper \"{author}\"");
+                    _downloaderRunning = true;
+                    yield break;
+                }
+            }
+
+            int downloadCount = 0, currentSongIndex = 0, totalSongs = 1;
+
+            DisplayNotification($"Checking for new songs from \"{author}\"");
+
+            while (currentSongIndex < totalSongs)
+            {
+                using (UnityWebRequest www = UnityWebRequest.Get($"https://beatsaver.com/api/songs/byuser/{mapperId}/{currentSongIndex}"))
+                {
+                    yield return www.SendWebRequest();
+                    if (www.isNetworkError || www.isHttpError)
                     {
-                        DisplayNotification($"Downloading {songName}");
+                        Plugin.Log(www.error);
+                        _downloaderRunning = false;
+                        yield break;
+                    }
 
-                        string localPath = Path.Combine(Path.GetTempPath(), $"{songIndex}.zip");
-                        yield return Utilities.DownloadFile(song["downloadUrl"].Value, localPath);
-                        if (File.Exists(localPath))
+                    JSONNode result = JSON.Parse(www.downloadHandler.text);
+                    if (result["total"].AsInt == 0) yield break;
+
+                    totalSongs = result["total"].AsInt;
+
+                    foreach (JSONObject song in result["songs"].AsArray)
+                    {
+                        while (_isInGame || SongLoader.AreSongsLoading)
+                            yield return null;
+
+                        string songIndex = song["version"].Value, songName = song["songName"].Value;
+                        string currentSongDirectory = Path.Combine(Environment.CurrentDirectory, "CustomSongs", songIndex);
+                        if (Config.AutoDownloadSongs && !_songDownloadHistory.Contains(songIndex) && !Directory.Exists(currentSongDirectory))
                         {
-                            yield return Utilities.ExtractZip(localPath, currentSongDirectory);
-                            downloadCount++;
+                            DisplayNotification($"Downloading {songName}");
+
+                            string localPath = Path.Combine(Path.GetTempPath(), $"{songIndex}.zip");
+                            yield return Utilities.DownloadFile(song["downloadUrl"].Value, localPath);
+                            if (File.Exists(localPath))
+                            {
+                                yield return Utilities.ExtractZip(localPath, currentSongDirectory);
+                                downloadCount++;
+                            }
                         }
+
+                        // Keep a history of all the songs we download- count it as downloaded even if the user already had it downloaded previously so if they delete it it doesn't get redownloaded
+                        if (!_songDownloadHistory.Contains(songIndex))
+                        {
+                            _songDownloadHistory.Add(songIndex);
+
+                            // Update our playlist with the latest song info
+                            UpdatePlaylist(_syncSaberSongs, songIndex, songName);
+
+                            // Delete any duplicate songs that we've downloaded
+                            RemoveOldVersions(songIndex);
+                        }
+
+                        currentSongIndex++;
+
+                        yield return null;
                     }
-
-                    // Keep a history of all the songs we download- count it as downloaded even if the user already had it downloaded previously so if they delete it it doesn't get redownloaded
-                    if (!_songDownloadHistory.Contains(songIndex))
-                    {
-                        _songDownloadHistory.Add(songIndex);
-
-                        // Update our playlist with the latest song info
-                        UpdatePlaylist(_syncSaberSongs, songIndex, songName);
-                        
-                        // Delete any duplicate songs that we've downloaded
-                        RemoveOldVersions(songIndex);
-                    }
-                    
-                    totalSongs++;
-
-                    yield return null;
                 }
             }
 
