@@ -113,7 +113,7 @@ namespace SyncSaber
 
             foreach (string mapper in File.ReadAllLines(favoriteMappersPath))
             {
-                //Plugin.Log($"Mapper: {mapper}");
+                Plugin.Log($"Mapper: {mapper}");
                 _authorDownloadQueue.Push(mapper);
             }
 
@@ -272,7 +272,6 @@ namespace SyncSaber
             yield return Utilities.ExtractZip(localPath, currentSongDirectory);
             yield return new WaitUntil(() => SongLoader.AreSongsLoaded && !SongLoader.AreSongsLoading);
             yield return SongListUtils.RetrieveNewSong(songIndex, true);
-
             yield return new WaitForSeconds(0.5f);
 
             bool success = false;
@@ -448,6 +447,8 @@ namespace SyncSaber
         
         private IEnumerator DownloadAllSongsByAuthor(string author)
         {
+            Plugin.Log($"Downloading all songs from {author}");
+
             _downloaderRunning = true;
             var startTime = DateTime.Now;
             TimeSpan idleTime = new TimeSpan();
@@ -464,7 +465,11 @@ namespace SyncSaber
                 }
 
                 JSONNode result = JSON.Parse(www.downloadHandler.text);
-                if (result["total"].AsInt == 0) yield break;
+                if (result["total"].AsInt == 0)
+                {
+                    _downloaderRunning = false;
+                    yield break;
+                }
 
                 foreach (JSONObject song in result["songs"].AsArray)
                 {
@@ -475,7 +480,7 @@ namespace SyncSaber
                 if (mapperId == String.Empty)
                 {
                     Plugin.Log($"Failed to find mapper \"{author}\"");
-                    _downloaderRunning = true;
+                    _downloaderRunning = false;
                     yield break;
                 }
             }
@@ -497,7 +502,11 @@ namespace SyncSaber
                     }
 
                     JSONNode result = JSON.Parse(www.downloadHandler.text);
-                    if (result["total"].AsInt == 0) yield break;
+                    if (result["total"].AsInt == 0)
+                    {
+                        _downloaderRunning = false;
+                        yield break;
+                    }
 
                     totalSongs = result["total"].AsInt;
 
