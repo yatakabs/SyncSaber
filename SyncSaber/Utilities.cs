@@ -1,4 +1,5 @@
-﻿using IllusionInjector;
+﻿using CustomUI.BeatSaber;
+using IllusionInjector;
 using IllusionPlugin;
 using System;
 using System.Collections;
@@ -29,11 +30,8 @@ namespace SyncSaber
             var rectTransform = _canvas.transform as RectTransform;
             rectTransform.sizeDelta = new Vector2(200, 50);
 
-            var _notificationText = new GameObject().AddComponent<TextMeshProUGUI>();
-            rectTransform = _notificationText.transform as RectTransform;
-            rectTransform.SetParent(_canvas.transform, false);
-            rectTransform.anchoredPosition = new Vector2(0, -20);
-            rectTransform.sizeDelta = new Vector2(400, 20);
+            var _notificationText = BeatSaberUI.CreateText(_canvas.transform as RectTransform, text, new Vector2(0, -20), new Vector2(400, 20));
+
             _notificationText.text = text;
             _notificationText.fontSize = 10f;
             _notificationText.alignment = TextAlignmentOptions.Center;

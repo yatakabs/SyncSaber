@@ -22,7 +22,7 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.Networking;
 using UnityEngine.SceneManagement;
-using SongBrowserPlugin;
+//using SongBrowserPlugin;
 using SimpleJSON;
 
 namespace SyncSaber
@@ -39,7 +39,7 @@ namespace SyncSaber
         private int _beastSaberFeedIndex = 0;
 
         private Stack<string> _authorDownloadQueue = new Stack<string>();
-        private ConcurrentStack<KeyValuePair<JSONObject,CustomLevel>> _updateQueue = new ConcurrentStack<KeyValuePair<JSONObject,CustomLevel>>();
+        private ConcurrentStack<KeyValuePair<JSONObject, CustomLevel>> _updateQueue = new ConcurrentStack<KeyValuePair<JSONObject, CustomLevel>>();
         private List<string> _songDownloadHistory = new List<string>();
         private Playlist _syncSaberSongs = new Playlist("SyncSaberPlaylist", "SyncSaber Playlist", "brian91292", "1");
         private Playlist _curatorRecommendedSongs = new Playlist("SyncSaberCuratorRecommendedPlaylist", "BeastSaber Curator Recommended", "brian91292", "1");
@@ -47,30 +47,32 @@ namespace SyncSaber
         private Playlist _bookmarksSongs = new Playlist("SyncSaberBookmarksPlaylist", "BeastSaber Bookmarks", "brian91292", "1");
         private Dictionary<string, DateTime> _updateCheckTracker = new Dictionary<string, DateTime>();
 
-        private IBeatmapLevel _lastLevel;
+        private IPreviewBeatmapLevel _lastLevel;
         private SoloFreePlayFlowCoordinator _standardLevelSelectionFlowCoordinator;
-        private LevelListViewController _standardLevelListViewController;
+        private LevelPackLevelsViewController _standardLevelListViewController;
 
         private TMP_Text _notificationText;
         private DateTime _uiResetTime;
         private bool _songBrowserInstalled = false;
         private int _updateCheckIntervalMinutes = 30;
+        private bool _initialized = false;
+        private bool _didDownloadAnySong = false;
 
         Dictionary<string, string> _beastSaberFeeds = new Dictionary<string, string>();
 
         public static SyncSaber Instance = null;
 
-        private List<IBeatmapLevel> CurrentLevels
-        {
-            get
-            {
-                return ReflectionUtil.GetPrivateField<IBeatmapLevel[]>(_standardLevelListViewController, "_levels").ToList();
-            }
-            set
-            {
-                ReflectionUtil.SetPrivateField(_standardLevelListViewController, "_levels", value);
-            }
-        }
+        //private List<IBeatmapLevel> CurrentLevels
+        //{
+        //    get
+        //    {
+        //        return ReflectionUtil.GetPrivateField<IBeatmapLevel[]>(_standardLevelListViewController, "_levels").ToList();
+        //    }
+        //    set
+        //    {
+        //        ReflectionUtil.SetPrivateField(_standardLevelListViewController, "_levels", value);
+        //    }
+        //}
 
         public static void OnLoad()
         {
@@ -83,11 +85,11 @@ namespace SyncSaber
             Instance = this;
             DontDestroyOnLoad(gameObject);
 
-            if(Config.SyncFollowingsFeed)
+            if (Config.SyncFollowingsFeed)
                 _beastSaberFeeds.Add("followings", $"https://bsaber.com/members/{Config.BeastSaberUsername}/wall/followings");
-            if(Config.SyncBookmarksFeed)
+            if (Config.SyncBookmarksFeed)
                 _beastSaberFeeds.Add("bookmarks", $"https://bsaber.com/members/{Config.BeastSaberUsername}/bookmarks");
-            if(Config.SyncCuratorRecommendedFeed)
+            if (Config.SyncCuratorRecommendedFeed)
                 _beastSaberFeeds.Add("curator recommended", $"https://bsaber.com/members/curatorrecommended/bookmarks");
 
             _songBrowserInstalled = Utilities.IsModInstalled("Song Browser");
@@ -114,19 +116,31 @@ namespace SyncSaber
                 //Plugin.Log($"Mapper: {mapper}");
                 _authorDownloadQueue.Push(mapper);
             }
-            
+
+            StartCoroutine(FinishInitialization());
+        }
+
+        private IEnumerator FinishInitialization()
+        {
+            yield return new WaitUntil(() => Resources.FindObjectsOfTypeAll<TMP_FontAsset>().Any(t => t.name == "Teko-Medium SDF No Glow"));
+
             _notificationText = Utilities.CreateNotificationText(String.Empty);
             DisplayNotification("SyncSaber Initialized!");
+
+            _initialized = true;
         }
 
         private void DisplayNotification(string text)
         {
             _uiResetTime = DateTime.Now.AddSeconds(5);
-            _notificationText.text = "SyncSaber- " + text;
+            if(_notificationText)
+                _notificationText.text = "SyncSaber- " + text;
         }
 
         private void FixedUpdate()
         {
+            if (!_initialized) return;
+
             if (!_downloaderRunning)
             {
                 if (_updateQueue.Count > 0)
@@ -150,7 +164,10 @@ namespace SyncSaber
                 {
                     if (!SongLoader.AreSongsLoading)
                     {
-                        StartCoroutine(SongListUtils.RefreshSongs(false, false));
+                        if (_didDownloadAnySong)
+                        {
+                            StartCoroutine(SongListUtils.RefreshSongs(false, false));
+                        }
                         Plugin.Log("Finished checking for updates!");
                         DisplayNotification("Finished checking for new songs!");
                         _downloaderComplete = true;
@@ -164,24 +181,32 @@ namespace SyncSaber
 
         private void SceneManagerOnActiveSceneChanged(Scene arg0, Scene scene)
         {
+            StartCoroutine(DelayedActiveSceneChanged(scene));
+        }
+
+        private IEnumerator DelayedActiveSceneChanged(Scene scene)
+        {
+            yield return new WaitForSeconds(0.1f);
+
             SongListUtils.Initialize();
 
             if (scene.name == "GameCore") _isInGame = true;
-            if (scene.name != "Menu") return;
+            if (scene.name != "MenuCore") yield break;
             _isInGame = false;
             
             _standardLevelSelectionFlowCoordinator = Resources.FindObjectsOfTypeAll<SoloFreePlayFlowCoordinator>().First();
-            if (!_standardLevelSelectionFlowCoordinator) return;
-
-            _standardLevelListViewController = ReflectionUtil.GetPrivateField<LevelListViewController>(_standardLevelSelectionFlowCoordinator, "_levelListViewController");
-            if (!_standardLevelListViewController) return;
-
+            if (!_standardLevelSelectionFlowCoordinator) yield break;
+            
+            _standardLevelListViewController = ReflectionUtil.GetPrivateField<LevelPackLevelsViewController>(_standardLevelSelectionFlowCoordinator, "_levelPackLevelsViewController");
+            if (!_standardLevelListViewController) yield break;
+            
+            _standardLevelListViewController.didSelectLevelEvent -= standardLevelListViewController_didSelectLevelEvent;
             _standardLevelListViewController.didSelectLevelEvent += standardLevelListViewController_didSelectLevelEvent;
         }
 
-        private void standardLevelListViewController_didSelectLevelEvent(LevelListViewController sender, IBeatmapLevel level)
+        private void standardLevelListViewController_didSelectLevelEvent(LevelPackLevelsViewController sender, IPreviewBeatmapLevel level)
         {
-            if (Config.AutoUpdateSongs && level != _lastLevel && level is CustomLevel)
+            if (Config.AutoUpdateSongs && level != _lastLevel && level.levelID.Length > 32)
             {
                 _lastLevel = level;
                 StartCoroutine(HandleDidSelectLevelEvent(level.levelID));
@@ -224,7 +249,6 @@ namespace SyncSaber
             string songIndex = song["version"].Value;
             string songHash = (song["hashMd5"].Value).ToUpper();
             
-            var table = ReflectionUtil.GetPrivateField<LevelListTableView>(_standardLevelListViewController, "_levelListTableView");
             if (Config.DeleteOldVersions)
             {
                 string songPath = oldLevel.customSongInfo.path;
@@ -246,27 +270,26 @@ namespace SyncSaber
             // Download and extract the update
             yield return Utilities.DownloadFile(song["downloadUrl"].Value, localPath);
             yield return Utilities.ExtractZip(localPath, currentSongDirectory);
+            yield return new WaitUntil(() => SongLoader.AreSongsLoaded && !SongLoader.AreSongsLoading);
+            yield return SongListUtils.RetrieveNewSong(songIndex, true);
 
-            _standardLevelListViewController.didSelectLevelEvent -= standardLevelListViewController_didSelectLevelEvent;
-            yield return SongListUtils.RefreshSongs(false, false);
-            _standardLevelListViewController.didSelectLevelEvent += standardLevelListViewController_didSelectLevelEvent;
-            
-            Plugin.Log("Finished refreshing songs!");
+            yield return new WaitForSeconds(0.5f);
+
+            bool success = false;
             // Try to scroll to the newly updated level, if it exists in the list
             var levels = SongLoader.CustomLevels.Where(l => l.levelID.StartsWith(songHash)).ToArray();
             if (levels.Length > 0)
             {
                 Plugin.Log($"Scrolling to level {levels[0].levelID}");
-                if (!SongListUtils.ScrollToLevel(levels[0].levelID))
-                {
-                    if (table)
-                    {
-                        var lvls = CurrentLevels;
-                        lvls.Add(levels[0]);
-                        table.SetLevels(lvls.ToArray());
-                    }
-                    SongListUtils.ScrollToLevel(levels[0].levelID);
-                }
+                yield return SongListUtils.ScrollToLevel(levels[0].levelID, (s) => success = s);
+            }
+
+            if(!success)
+            {
+                Plugin.Log("Failed to find new level!");
+                DisplayNotification("Song update failed.");
+                _downloaderRunning = false;
+                yield break;
             }
 
             // Write our download history to file
@@ -314,11 +337,11 @@ namespace SyncSaber
                 Plugin.Log($"Success adding new song \"{songName}\" with BeatSaver index {songIndex} to playlist {playlist.Title}!");
             }
         }
-        
+
         private IEnumerator HandleDidSelectLevelEvent(string levelId)
         {
             Plugin.Log($"Selected level {levelId}");
-            if (levelId.Length > 32 && CurrentLevels.Any(x => x.levelID == levelId))
+            if (levelId.Length > 32)// && CurrentLevels.Any(x => x.levelID == levelId))
             {
                 CustomLevel level = SongLoader.CustomLevels.First(x => x.levelID == levelId);
                 if (!level)
@@ -496,6 +519,7 @@ namespace SyncSaber
                             {
                                 yield return Utilities.ExtractZip(localPath, currentSongDirectory);
                                 downloadCount++;
+                                _didDownloadAnySong = true;
                             }
                             else
                                 downloadFailed = true;
@@ -554,10 +578,19 @@ namespace SyncSaber
                         _downloaderRunning = false;
                         yield break;
                     }
-
+                    
                     string beastSaberFeed = www.downloadHandler.text;
                     XmlDocument doc = new XmlDocument();
-                    doc.LoadXml(beastSaberFeed);
+                    try
+                    {
+                        doc.LoadXml(beastSaberFeed);
+                    }
+                    catch (Exception ex)
+                    {
+                        Plugin.Log(ex.ToString());
+                        _downloaderRunning = false;
+                        yield break;
+                    }
 
                     XmlNodeList nodes = doc.DocumentElement.SelectNodes("/rss/channel/item");
                     foreach (XmlNode node in nodes)
@@ -582,9 +615,7 @@ namespace SyncSaber
                             totalSongsForPage++;
                             continue;
                         }
-
-                        Plugin.Log($"Attempting to download {songName} from \"{downloadUrl}\"");
-
+                        
                         string songIndex = downloadUrl.Substring(downloadUrl.LastIndexOf('/') + 1);
                         string currentSongDirectory = Path.Combine(Environment.CurrentDirectory, "CustomSongs", songIndex);
                         bool downloadFailed = false;
@@ -599,6 +630,7 @@ namespace SyncSaber
                                 yield return Utilities.ExtractZip(localPath, currentSongDirectory);
                                 downloadCount++;
                                 downloadCountForPage++;
+                                _didDownloadAnySong = true;
                             }
                             else
                                 downloadFailed = true;
