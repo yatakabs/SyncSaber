@@ -280,7 +280,7 @@ namespace SyncSaber
             if (levels.Length > 0)
             {
                 Plugin.Log($"Scrolling to level {levels[0].levelID}");
-                yield return SongListUtils.ScrollToLevel(levels[0].levelID, (s) => success = s);
+                yield return SongListUtils.ScrollToLevel(levels[0].levelID, (s) => success = s, false);
             }
 
             if(!success)
