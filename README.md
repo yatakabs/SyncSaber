@@ -9,7 +9,7 @@ This mod keeps all your songs up to date, and additionally downloads all the new
    * If you want SyncSaber to automatically download content from your BeastSaber bookmarks/followings feeds, all you have to do is enter your BeastSaber username in the Beat Saber settings menu under the SyncSaber submenu. You can also enable the "Curator Recommended" BeastSaber feed, which automatically downloads the best songs recently recommended by curators on BeastSaber!
 
 # Dependencies
-SyncSaber requires [CustomUI](https://github.com/brian91292/BeatSaber-CustomUI/releases) and [SongLoader](https://www.modsaber.org/mod/song-loader), both of which are available on the ModSaber mod installer ([Get the ModSaber installer here](https://github.com/lolPants/modsaber-installer/releases)).
+SyncSaber requires [CustomUI](https://github.com/brian91292/BeatSaber-CustomUI/releases) and [SongLoader](https://github.com/Kylemc1413/BeatSaberSongLoader/releases), both of which are available on the [BeatMods](https://beatmods.com/).
 
 # Getting Started
 You can manage almost all SyncSaber settings via the Beat Saber settings menu! Just look for the SyncSaber menu! Keep reading to find out how to setup additional features of SyncSaber that cannot be configured from the menu!
