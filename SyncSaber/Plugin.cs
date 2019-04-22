@@ -2,6 +2,7 @@
 using System;
 using System.Collections;
 using System.IO;
+using System.Runtime.CompilerServices;
 using TMPro;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -11,11 +12,10 @@ namespace SyncSaber
     public class Plugin : IPlugin
     {
         public string Name => "SyncSaber";
-        public string Version => "1.3.2";
+        public string Version => "1.3.6";
 
         public static Plugin Instance;
         
-        private SyncSaber _syncSaber = null;
         private TextMeshProUGUI _mapperFeedNotification = null;
 
         private IEnumerator DelayedStartup()
@@ -32,8 +32,9 @@ namespace SyncSaber
 
             Config.Read();
             Config.Write();
-
-            _syncSaber = new GameObject().AddComponent<SyncSaber>();
+            
+            //ModUpdater.OnLoad();
+            SyncSaber.OnLoad();
         }
 
         public void OnApplicationStart()
@@ -44,26 +45,18 @@ namespace SyncSaber
             SharedCoroutineStarter.instance.StartCoroutine(DelayedStartup());
         }
 
-        private void SceneManager_sceneLoaded(Scene arg0, LoadSceneMode arg1)
-        {
-            if (arg0.name == "Menu")
-            {
-                Settings.OnLoad();
-            }
-        }
-
         public void OnApplicationQuit()
         {
             SceneManager.sceneLoaded -= SceneManager_sceneLoaded;
             SceneManager.activeSceneChanged -= SceneManagerOnActiveSceneChanged;
         }
 
-        public void OnLevelWasLoaded(int level)
+        private void SceneManager_sceneLoaded(Scene arg0, LoadSceneMode arg1)
         {
-        }
-
-        public void OnLevelWasInitialized(int level)
-        {
+            if (arg0.name == "MenuCore")
+            {
+                Settings.OnLoad();
+            }
         }
 
         void SceneManagerOnActiveSceneChanged(Scene arg0, Scene scene)
@@ -78,6 +71,14 @@ namespace SyncSaber
             }
         }
 
+        public void OnLevelWasLoaded(int level)
+        {
+        }
+
+        public void OnLevelWasInitialized(int level)
+        {
+        }
+
         public void OnUpdate()
         {
         }
@@ -85,11 +86,13 @@ namespace SyncSaber
         public void OnFixedUpdate()
         {
         }
-
-        public static void Log(string msg)
+        
+        public static void Log(string text,
+                        [CallerFilePath] string file = "",
+                        [CallerMemberName] string member = "",
+                        [CallerLineNumber] int line = 0)
         {
-            msg = $"[SyncSaber] {msg}";
-            Console.WriteLine(msg);
+            Console.WriteLine($"[SyncSaber] {Path.GetFileName(file)}->{member}({line}): {text}");
         }
     }
 }

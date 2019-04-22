@@ -1,4 +1,5 @@
-﻿using IllusionInjector;
+﻿using CustomUI.BeatSaber;
+using IllusionInjector;
 using IllusionPlugin;
 using System;
 using System.Collections;
@@ -29,11 +30,8 @@ namespace SyncSaber
             var rectTransform = _canvas.transform as RectTransform;
             rectTransform.sizeDelta = new Vector2(200, 50);
 
-            var _notificationText = new GameObject().AddComponent<TextMeshProUGUI>();
-            rectTransform = _notificationText.transform as RectTransform;
-            rectTransform.SetParent(_canvas.transform, false);
-            rectTransform.anchoredPosition = new Vector2(0, -20);
-            rectTransform.sizeDelta = new Vector2(400, 20);
+            var _notificationText = BeatSaberUI.CreateText(_canvas.transform as RectTransform, text, new Vector2(0, -20), new Vector2(400, 20));
+
             _notificationText.text = text;
             _notificationText.fontSize = 10f;
             _notificationText.alignment = TextAlignmentOptions.Center;
@@ -47,7 +45,7 @@ namespace SyncSaber
                 yield return www.SendWebRequest();
                 if (www.isNetworkError || www.isHttpError)
                 {
-                    Plugin.Log(www.error);
+                    Plugin.Log($"DownloadFile failed with error {www.error}, HttpResponseCode: {www.responseCode}");
                     yield break;
                 }
                 
@@ -82,7 +80,25 @@ namespace SyncSaber
             foreach (DirectoryInfo dir in source.GetDirectories())
                 MoveFilesRecursively(dir, target.CreateSubdirectory(dir.Name));
             foreach (FileInfo file in source.GetFiles())
-                file.MoveTo(Path.Combine(target.FullName, file.Name));
+            {
+                string newFilePath = Path.Combine(target.FullName, file.Name);
+                if (File.Exists(newFilePath)) {
+                    try
+                    {
+                        File.Delete(newFilePath);
+                    }
+                    catch(Exception)
+                    {
+                        //Plugin.Log($"Failed to delete file {Path.GetFileName(newFilePath)}! File is in use!");
+                        string filesToDelete = Path.Combine(Environment.CurrentDirectory, "FilesToDelete");
+                        if (!Directory.Exists(filesToDelete))
+                            Directory.CreateDirectory(filesToDelete);
+                        File.Move(newFilePath, Path.Combine(filesToDelete, file.Name));
+                        //Plugin.Log("Moved file into FilesToDelete directory!");
+                    }
+                }
+                file.MoveTo(newFilePath);
+            }
         }
 
         public static IEnumerator ExtractZip(string zipPath, string extractPath)
@@ -92,7 +108,10 @@ namespace SyncSaber
                 bool extracted = false;
                 try
                 {
-                    ZipFile.ExtractToDirectory(zipPath, ".songcache");
+                    if (Directory.Exists(".syncsabertemp"))
+                        Directory.CreateDirectory(".syncsabertemp");
+
+                    ZipFile.ExtractToDirectory(zipPath, ".syncsabertemp");
                     extracted = true;
                 }
                 catch (Exception)
@@ -100,9 +119,7 @@ namespace SyncSaber
                     Plugin.Log($"An error occured while trying to extract \"{zipPath}\"!");
                     yield break;
                 }
-
                 yield return new WaitForSeconds(0.25f);
-                
                 File.Delete(zipPath);
 
                 try
@@ -112,13 +129,14 @@ namespace SyncSaber
                         if (!Directory.Exists(extractPath))
                             Directory.CreateDirectory(extractPath);
 
-                        MoveFilesRecursively(new DirectoryInfo($"{Environment.CurrentDirectory}\\.songcache"), new DirectoryInfo(extractPath));
+                        MoveFilesRecursively(new DirectoryInfo(Path.Combine(Environment.CurrentDirectory, ".syncsabertemp")), new DirectoryInfo(extractPath));
                     }
                 }
                 catch (Exception e)
                 {
                     Plugin.Log($"An exception occured while trying to move files into their final directory! {e.ToString()}");
                 }
+                EmptyDirectory(".syncsabertemp");
             }
         }
 
