@@ -1,4 +1,4 @@
-﻿using IllusionPlugin;
+﻿using IPA.Old;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -9,6 +9,7 @@ namespace SyncSaber
 {
     class Config
     {
+        
         public static bool AutoDownloadSongs;
         public static bool AutoUpdateSongs;
         public static string BeastSaberUsername;
@@ -22,30 +23,30 @@ namespace SyncSaber
 
         public static void Write()
         {
-            ModPrefs.SetBool(Plugin.Instance.Name, "AutoDownloadSongs", AutoDownloadSongs);
-            ModPrefs.SetBool(Plugin.Instance.Name, "AutoUpdateSongs", AutoUpdateSongs);
-            ModPrefs.SetString(Plugin.Instance.Name, "BeastSaberUsername", BeastSaberUsername);
-            ModPrefs.SetBool(Plugin.Instance.Name, "DeleteOldVersions", DeleteOldVersions);
-            ModPrefs.SetBool(Plugin.Instance.Name, "SyncBookmarksFeed", SyncBookmarksFeed);
-            ModPrefs.SetBool(Plugin.Instance.Name, "SyncCuratorRecommendedFeed", SyncCuratorRecommendedFeed);
-            ModPrefs.SetBool(Plugin.Instance.Name, "SyncFollowingsFeed", SyncFollowingsFeed);
-            ModPrefs.SetInt(Plugin.Instance.Name, "MaxBookmarksPages", MaxBookmarksPages);
-            ModPrefs.SetInt(Plugin.Instance.Name, "MaxCuratorRecommendedPages", MaxCuratorRecommendedPages);
-            ModPrefs.SetInt(Plugin.Instance.Name, "MaxFollowingsPages", MaxFollowingsPages);
+            IPA.Config.ModPrefs.SetBool(Plugin.Instance.Name, "AutoDownloadSongs", AutoDownloadSongs);
+            IPA.Config.ModPrefs.SetBool(Plugin.Instance.Name, "AutoUpdateSongs", AutoUpdateSongs);
+            IPA.Config.ModPrefs.SetString(Plugin.Instance.Name, "BeastSaberUsername", BeastSaberUsername);
+            IPA.Config.ModPrefs.SetBool(Plugin.Instance.Name, "DeleteOldVersions", DeleteOldVersions);
+            IPA.Config.ModPrefs.SetBool(Plugin.Instance.Name, "SyncBookmarksFeed", SyncBookmarksFeed);
+            IPA.Config.ModPrefs.SetBool(Plugin.Instance.Name, "SyncCuratorRecommendedFeed", SyncCuratorRecommendedFeed);
+            IPA.Config.ModPrefs.SetBool(Plugin.Instance.Name, "SyncFollowingsFeed", SyncFollowingsFeed);
+            IPA.Config.ModPrefs.SetInt(Plugin.Instance.Name, "MaxBookmarksPages", MaxBookmarksPages);
+            IPA.Config.ModPrefs.SetInt(Plugin.Instance.Name, "MaxCuratorRecommendedPages", MaxCuratorRecommendedPages);
+            IPA.Config.ModPrefs.SetInt(Plugin.Instance.Name, "MaxFollowingsPages", MaxFollowingsPages);
         }
 
         public static void Read()
         {
-            AutoDownloadSongs = ModPrefs.GetBool(Plugin.Instance.Name, "AutoDownloadSongs", true);
-            AutoUpdateSongs = ModPrefs.GetBool(Plugin.Instance.Name, "AutoUpdateSongs", true);
-            BeastSaberUsername = ModPrefs.GetString(Plugin.Instance.Name, "BeastSaberUsername", "");
-            DeleteOldVersions = ModPrefs.GetBool(Plugin.Instance.Name, "DeleteOldVersions", true);
-            SyncBookmarksFeed = ModPrefs.GetBool(Plugin.Instance.Name, "SyncBookmarksFeed", true);
-            SyncCuratorRecommendedFeed = ModPrefs.GetBool(Plugin.Instance.Name, "SyncCuratorRecommendedFeed", false);
-            SyncFollowingsFeed = ModPrefs.GetBool(Plugin.Instance.Name, "SyncFollowingsFeed", true);
-            MaxFollowingsPages = ModPrefs.GetInt(Plugin.Instance.Name, "MaxFollowingsPages", 0);
-            MaxCuratorRecommendedPages = ModPrefs.GetInt(Plugin.Instance.Name, "MaxCuratorRecommendedPages", 0);
-            MaxBookmarksPages = ModPrefs.GetInt(Plugin.Instance.Name, "MaxBookmarksPages", 0);
+            AutoDownloadSongs = IPA.Config.ModPrefs.GetBool(Plugin.Instance.Name, "AutoDownloadSongs", true);
+            AutoUpdateSongs = IPA.Config.ModPrefs.GetBool(Plugin.Instance.Name, "AutoUpdateSongs", true);
+            BeastSaberUsername = IPA.Config.ModPrefs.GetString(Plugin.Instance.Name, "BeastSaberUsername", "");
+            DeleteOldVersions = IPA.Config.ModPrefs.GetBool(Plugin.Instance.Name, "DeleteOldVersions", true);
+            SyncBookmarksFeed = IPA.Config.ModPrefs.GetBool(Plugin.Instance.Name, "SyncBookmarksFeed", true);
+            SyncCuratorRecommendedFeed = IPA.Config.ModPrefs.GetBool(Plugin.Instance.Name, "SyncCuratorRecommendedFeed", false);
+            SyncFollowingsFeed = IPA.Config.ModPrefs.GetBool(Plugin.Instance.Name, "SyncFollowingsFeed", true);
+            MaxFollowingsPages = IPA.Config.ModPrefs.GetInt(Plugin.Instance.Name, "MaxFollowingsPages", 0);
+            MaxCuratorRecommendedPages = IPA.Config.ModPrefs.GetInt(Plugin.Instance.Name, "MaxCuratorRecommendedPages", 0);
+            MaxBookmarksPages = IPA.Config.ModPrefs.GetInt(Plugin.Instance.Name, "MaxBookmarksPages", 0);
         }
     }
 }

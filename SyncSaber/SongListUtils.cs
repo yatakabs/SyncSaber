@@ -2,8 +2,8 @@
 using CustomUI.BeatSaber;
 using CustomUI.Utilities;
 using HMUI;
-using SongBrowserPlugin;
-using SongBrowserPlugin.DataAccess;
+using SongBrowser;
+using SongBrowser.DataAccess;
 using SongLoaderPlugin;
 using SongLoaderPlugin.OverrideClasses;
 using System;
@@ -59,7 +59,7 @@ namespace SyncSaber
         private enum SongBrowserAction { ResetFilter = 1 }
         private static void ExecuteSongBrowserAction(SongBrowserAction action)
         {
-            var _songBrowserUI = SongBrowserApplication.Instance.GetPrivateField<SongBrowserPlugin.UI.SongBrowserUI>("_songBrowserUI");
+            var _songBrowserUI = SongBrowserApplication.Instance.GetPrivateField<SongBrowser.UI.SongBrowserUI>("_songBrowserUI");
             if (_songBrowserUI)
             {
                 if (action.HasFlag(SongBrowserAction.ResetFilter))

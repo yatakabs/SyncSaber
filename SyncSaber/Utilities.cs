@@ -1,6 +1,5 @@
 ﻿using CustomUI.BeatSaber;
-using IllusionInjector;
-using IllusionPlugin;
+using IPA.Old;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -142,9 +141,16 @@ namespace SyncSaber
 
         public static bool IsModInstalled(string modName)
         {
-            foreach (IPlugin p in PluginManager.Plugins)
+            foreach (IPlugin p in IPA.Loader.PluginManager.Plugins)
             {
                 if (p.Name == modName)
+                {
+                    return true;
+                }
+            }
+            foreach (var p in IPA.Loader.PluginManager.AllPlugins)
+            {
+                if (p.Metadata.Id == modName)
                 {
                     return true;
                 }
