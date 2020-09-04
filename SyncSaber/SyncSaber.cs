@@ -26,6 +26,7 @@ using SyncSaber.Extentions;
 using SyncSaber.Configuration;
 using SyncSaber.NetWorks;
 using System.Threading;
+using BS_Utils.Utilities;
 
 namespace SyncSaber
 {
@@ -208,10 +209,13 @@ namespace SyncSaber
             if (scene.name != "MenuCore") yield break;
             _isInGame = false;
             
-            _standardLevelSelectionFlowCoordinator = Resources.FindObjectsOfTypeAll<SoloFreePlayFlowCoordinator>().First();
+            _standardLevelSelectionFlowCoordinator = Resources.FindObjectsOfTypeAll<SoloFreePlayFlowCoordinator>().FirstOrDefault();
             if (!_standardLevelSelectionFlowCoordinator) yield break;
-            
-            _standardLevelListViewController = ReflectionUtil.GetPrivateField<LevelCollectionViewController>(_standardLevelSelectionFlowCoordinator, "_levelCollectionViewController");
+
+            var selectionNavigate = _standardLevelSelectionFlowCoordinator.GetPrivateField<LevelSelectionNavigationController>("_levelSelectionNavigationController");
+
+
+            _standardLevelListViewController = selectionNavigate.GetPrivateField<LevelCollectionViewController>("_levelCollectionViewController");
             if (!_standardLevelListViewController) yield break;
             
             _standardLevelListViewController.didSelectLevelEvent -= standardLevelListViewController_didSelectLevelEvent;
@@ -223,7 +227,7 @@ namespace SyncSaber
             if (PluginConfig.Instance.AutoUpdateSongs && level != _lastLevel && level.levelID.Length > 32)
             {
                 _lastLevel = level;
-                StartCoroutine(HandleDidSelectLevelEvent(level.levelID));
+                HandleDidSelectLevelEvent(level.levelID);
             }
         }
 
@@ -332,17 +336,17 @@ namespace SyncSaber
             }
         }
 
-        private IEnumerator HandleDidSelectLevelEvent(string levelId)
+        private async void HandleDidSelectLevelEvent(string levelId)
         {
             Logger.Info($"Selected level {levelId}");
             if (levelId.Length > 32)// && CurrentLevels.Any(x => x.levelID == levelId))
             {
-                var level = Loader.CustomLevels.FirstOrDefault(x => x.Value.levelID.ToUpper() == levelId.ToUpper());
-                if (level.Key == null)
+                if (Loader.GetLevelById(levelId) == null)
                 {
                     Logger.Info("Level does not exist!");
-                    yield break;
+                    return;
                 }
+                var level = Loader.CustomLevels.FirstOrDefault(x => x.Value.levelID.ToUpper() == levelId.ToUpper());
 
                 bool zippedSong = false;
                 string _songPath = level.Key;
@@ -352,45 +356,34 @@ namespace SyncSaber
                 if (string.IsNullOrEmpty(_songPath))
                 {
                     Logger.Info("Song path is null or empty!");
-                    yield break;
+                    return;
                 }
                 if (!Directory.Exists(_songPath))
                 {
                     Logger.Info("Song folder does not exist!");
-                    yield break;
+                    return;
                 }
 
                 if (!zippedSong)
                 {
-                    string songHash = levelId.Substring(0, 32);
+                    string songHash = levelId.Split('_').Last();
                     if (!_updateCheckTracker.ContainsKey(songHash) || (_updateCheckTracker.ContainsKey(songHash) && (DateTime.Now -_updateCheckTracker[songHash]).TotalSeconds >= _updateCheckIntervalMinutes * 60))
                     {
                         _updateCheckTracker[songHash] = DateTime.Now;
                         //Logger.Info($"Getting latest version for song with hash {songHash}");
-                        using (UnityWebRequest www = UnityWebRequest.Get($"https://beatsaver.com/api/maps/by-hash/{songHash}"))
-                        {
-                            string userAgent = $"SyncSaber/{Assembly.GetExecutingAssembly().GetName().Version}";
-                            www.SetRequestHeader("User-Agent", userAgent);
-                            yield return www.SendWebRequest();
-                            if (www.isNetworkError || www.isHttpError)
-                            {
-                                Logger.Info(www.error);
-                                yield break;
-                            }
-                            JSONNode result = JSON.Parse(www.downloadHandler.text);
-                            if (result["total"].AsInt == 0) yield break;
 
-                            foreach (var song in result["songs"].AsArray)
-                            {
-                                if ((song.Value["hashMd5"].Value).ToLower() != songHash.ToLower())
-                                {
-                                    Logger.Info("Downloading update for " + level.Value.songName);
-                                    DisplayNotification($"Updating song {level.Value.songName}");
+                        var res = await WebClient.GetAsync($"https://beatsaver.com/api/maps/by-hash/{songHash}", new CancellationTokenSource().Token);
+                        if (!res.IsSuccessStatusCode) {
+                            Logger.Info($"{res.StatusCode}");
+                            return;
+                        }
 
-                                    _updateQueue.Push(new KeyValuePair<JSONObject, KeyValuePair<string, CustomPreviewBeatmapLevel>>(song.Value as JSONObject, level));
-                                    break;
-                                }
-                            }
+                        JSONNode result = JSON.Parse(res.ContentToString());
+                        if (result["hash"].Value.ToLower() != songHash.ToLower()) {
+                            Logger.Info("Downloading update for " + level.Value.songName);
+                            DisplayNotification($"Updating song {level.Value.songName}");
+
+                            _updateQueue.Push(new KeyValuePair<JSONObject, KeyValuePair<string, CustomPreviewBeatmapLevel>>(result.AsObject, level));
                         }
                     }
                 }
