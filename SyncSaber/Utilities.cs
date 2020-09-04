@@ -1,4 +1,5 @@
-﻿using CustomUI.BeatSaber;
+﻿using BeatSaberMarkupLanguage.Components;
+using IPA.Loader;
 using IPA.Old;
 using System;
 using System.Collections;
@@ -44,7 +45,7 @@ namespace SyncSaber
                 yield return www.SendWebRequest();
                 if (www.isNetworkError || www.isHttpError)
                 {
-                    Plugin.Log($"DownloadFile failed with error {www.error}, HttpResponseCode: {www.responseCode}");
+                    Logger.Info($"DownloadFile failed with error {www.error}, HttpResponseCode: {www.responseCode}");
                     yield break;
                 }
                 
@@ -57,7 +58,7 @@ namespace SyncSaber
                 }
                 catch (Exception e)
                 {
-                    Plugin.Log($"Exception when writing file! {e.ToString()}");
+                    Logger.Info($"Exception when writing file! {e.ToString()}");
                 }
             }
         }
@@ -88,12 +89,12 @@ namespace SyncSaber
                     }
                     catch(Exception)
                     {
-                        //Plugin.Log($"Failed to delete file {Path.GetFileName(newFilePath)}! File is in use!");
+                        //Logger.Info($"Failed to delete file {Path.GetFileName(newFilePath)}! File is in use!");
                         string filesToDelete = Path.Combine(Environment.CurrentDirectory, "FilesToDelete");
                         if (!Directory.Exists(filesToDelete))
                             Directory.CreateDirectory(filesToDelete);
                         File.Move(newFilePath, Path.Combine(filesToDelete, file.Name));
-                        //Plugin.Log("Moved file into FilesToDelete directory!");
+                        //Logger.Info("Moved file into FilesToDelete directory!");
                     }
                 }
                 file.MoveTo(newFilePath);
@@ -115,7 +116,7 @@ namespace SyncSaber
                 }
                 catch (Exception)
                 {
-                    Plugin.Log($"An error occured while trying to extract \"{zipPath}\"!");
+                    Logger.Info($"An error occured while trying to extract \"{zipPath}\"!");
                     yield break;
                 }
                 yield return new WaitForSeconds(0.25f);
@@ -133,7 +134,7 @@ namespace SyncSaber
                 }
                 catch (Exception e)
                 {
-                    Plugin.Log($"An exception occured while trying to move files into their final directory! {e.ToString()}");
+                    Logger.Info($"An exception occured while trying to move files into their final directory! {e.ToString()}");
                 }
                 EmptyDirectory(".syncsabertemp");
             }
@@ -141,21 +142,7 @@ namespace SyncSaber
 
         public static bool IsModInstalled(string modName)
         {
-            foreach (IPlugin p in IPA.Loader.PluginManager.Plugins)
-            {
-                if (p.Name == modName)
-                {
-                    return true;
-                }
-            }
-            foreach (var p in IPA.Loader.PluginManager.AllPlugins)
-            {
-                if (p.Metadata.Id == modName)
-                {
-                    return true;
-                }
-            }
-            return false;
+            return PluginManager.GetPlugin(modName) != null;
         }
 
         public static void WriteStringListSafe(string path, List<string> data, bool sort = true)

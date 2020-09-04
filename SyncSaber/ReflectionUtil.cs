@@ -7,7 +7,7 @@ using UnityEngine;
 /**
  * Modified by Moon on 8/20/2018
  * Code originally sourced from xyonico's repo, modified to suit my needs
- * (https://github.com/xyonico/BeatSaberSongLoader/blob/master/SongLoaderPlugin/ReflectionUtil.cs)
+ * (https://github.com/xyonico/BeatSaberLoader/blob/master/LoaderPlugin/ReflectionUtil.cs)
  */
 
 namespace SyncSaber

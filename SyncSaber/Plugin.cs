@@ -1,21 +1,57 @@
-﻿using IPA.Old;
-using System;
+﻿using System;
 using System.Collections;
-using System.IO;
-using System.Runtime.CompilerServices;
-using TMPro;
-using UnityEngine;
+using System.Collections.Generic;
+using System.Linq;
+using IPA;
+using IPA.Config;
+using IPA.Config.Stores;
 using UnityEngine.SceneManagement;
+using UnityEngine;
+using IPALogger = IPA.Logging.Logger;
+using BS_Utils.Utilities;
+using SongCore;
+using System.Reflection;
+using System.IO;
+using TMPro;
+using IPA.Loader;
+using IPA.Utilities;
 
 namespace SyncSaber
 {
-    public class Plugin : IPlugin
+    [Plugin(RuntimeOptions.SingleStartInit)]
+    public class Plugin
     {
-        public string Name => "SyncSaber";
-        public string Version => "1.3.6";
+        public static bool SongBrowserPluginPresent { get; set; }
 
-        public static Plugin Instance;
+        internal static Plugin instance { get; private set; }
+        public string Name => "SyncSaber";
+
+        [Init]
+        /// <summary>
+        /// Called when the plugin is first loaded by IPA (either when the game starts or when the plugin is enabled if it starts disabled).
+        /// [Init] methods that use a Constructor or called before regular methods like InitWithConfig.
+        /// Only use [Init] with one Constructor.
+        /// </summary>
+        public void Init(IPALogger logger)
+        {
+            instance = this;
+            Logger.log = logger;
+            Logger.log.Debug("Logger initialized.");
+        }
+
+        #region BSIPA Config
+        //Uncomment to use BSIPA's config
+        [Init]
+        public void InitWithConfig(IPA.Config.Config conf)
+        {
+            Configuration.PluginConfig.Instance = conf.Generated<Configuration.PluginConfig>();
+            Logger.log.Debug("Config loaded");
+        }
+        #endregion
+
         
+        
+
         private TextMeshProUGUI _mapperFeedNotification = null;
 
         private IEnumerator DelayedStartup()
@@ -25,26 +61,25 @@ namespace SyncSaber
             {
                 File.Move("Plugins\\BeatSaberMapperFeed.dll", "Plugins\\BeatSaberMapperFeed.dll.delete-me");
                 _mapperFeedNotification = Utilities.CreateNotificationText("Old version of MapperFeed detected! Restart the game now to enable SyncSaber!");
-                Plugin.Log("Old MapperFeed detected!");
+                Logger.Info("Old MapperFeed detected!");
 
                 yield break;
             }
-
-            Config.Read();
-            Config.Write();
-            
-            //ModUpdater.OnLoad();
             SyncSaber.OnLoad();
         }
 
+        [OnStart]
         public void OnApplicationStart()
         {
-            Instance = this;
+            instance = this;
+            SongBrowserPluginPresent = PluginManager.GetPlugin("Song Browser") != null;
             SceneManager.sceneLoaded += SceneManager_sceneLoaded;
             SceneManager.activeSceneChanged += SceneManagerOnActiveSceneChanged;
-            SharedCoroutineStarter.instance.StartCoroutine(DelayedStartup());
+            DelayedStartup();
+            //SharedCoroutineStarter.instance.StartCoroutine(DelayedStartup());
         }
 
+        [OnExit]
         public void OnApplicationQuit()
         {
             SceneManager.sceneLoaded -= SceneManager_sceneLoaded;
@@ -53,10 +88,10 @@ namespace SyncSaber
 
         private void SceneManager_sceneLoaded(Scene arg0, LoadSceneMode arg1)
         {
-            if (arg0.name == "MenuCore")
-            {
-                Settings.OnLoad();
-            }
+            //if (arg0.name == "MenuCore")
+            //{
+            //    Settings.OnLoad();
+            //}
         }
 
         void SceneManagerOnActiveSceneChanged(Scene arg0, Scene scene)
@@ -86,13 +121,20 @@ namespace SyncSaber
         public void OnFixedUpdate()
         {
         }
-        
-        public static void Log(string text,
-                        [CallerFilePath] string file = "",
-                        [CallerMemberName] string member = "",
-                        [CallerLineNumber] int line = 0)
+
+        public static void SongBrowserCancelFilter()
         {
-            Console.WriteLine($"[SyncSaber] {Path.GetFileName(file)}->{member}({line}): {text}");
+            if (SongBrowserPluginPresent) {
+                var songBrowserUI = SongBrowser.SongBrowserApplication.Instance.GetField<SongBrowser.UI.SongBrowserUI, SongBrowser.SongBrowserApplication>("_songBrowserUI");
+                if (songBrowserUI) {
+                    if (songBrowserUI.Model.Settings.filterMode != SongBrowser.DataAccess.SongFilterMode.None && songBrowserUI.Model.Settings.sortMode != SongBrowser.DataAccess.SongSortMode.Original) {
+                        songBrowserUI.CancelFilter();
+                    }
+                }
+                else {
+                    Logger.Info("There was a problem obtaining SongBrowserUI object, unable to reset filters");
+                }
+            }
         }
     }
 }

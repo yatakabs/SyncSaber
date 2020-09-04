@@ -1,4 +1,4 @@
-﻿using SimpleJSON;
+﻿using SyncSaber.SimpleJSON;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -49,7 +49,7 @@ namespace SyncSaber
             }
             catch (Exception e)
             {
-                Plugin.Log($"Exception parsing playlist: {e.ToString()}");
+                Logger.Info($"Exception parsing playlist: {e.ToString()}");
             }
             return null;
         }
@@ -76,7 +76,7 @@ namespace SyncSaber
             }
             catch (Exception e)
             {
-                Plugin.Log($"{e.ToString()}");
+                Logger.Info($"{e.ToString()}");
             }
 
             playlistNode.Add("fileLoc", new JSONString("1"));
@@ -123,7 +123,7 @@ namespace SyncSaber
             string oldPlaylistPath = $"Playlists\\{this.fileName}.json";
             string newPlaylistPath = $"Playlists\\{this.fileName}.bplist";
             oldFormat = !File.Exists(newPlaylistPath);
-            Plugin.Log($"Playlist \"{Title}\" found in {(oldFormat?"old":"new")} playlist format.");
+            Logger.Info($"Playlist \"{Title}\" found in {(oldFormat?"old":"new")} playlist format.");
 
             string playlistPath = oldFormat ? oldPlaylistPath : newPlaylistPath;
             if (File.Exists(playlistPath))
@@ -136,7 +136,7 @@ namespace SyncSaber
                     this.Image = playlist.Image;
                     this.Songs = playlist.Songs;
                     this.fileLoc = playlist.fileLoc;
-                    Plugin.Log("Success loading playlist!");
+                    Logger.Info("Success loading playlist!");
                     return true;
                 }
             }
