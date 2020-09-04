@@ -1,12 +1,14 @@
 ﻿using BeatSaberMarkupLanguage.Components;
 using IPA.Loader;
 using IPA.Old;
+using SyncSaber.NetWorks;
 using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 using TMPro;
@@ -38,28 +40,16 @@ namespace SyncSaber
             return _notificationText;
         }
 
-        public static IEnumerator DownloadFile(string url, string path)
+        public static async Task DownloadFile(string url, string path)
         {
-            using (UnityWebRequest www = UnityWebRequest.Get(url))
-            {
-                yield return www.SendWebRequest();
-                if (www.isNetworkError || www.isHttpError)
-                {
-                    Logger.Info($"DownloadFile failed with error {www.error}, HttpResponseCode: {www.responseCode}");
-                    yield break;
-                }
-                
-                try
-                {
-                    if (!Directory.Exists(Path.GetDirectoryName(path)))
-                        Directory.CreateDirectory(Path.GetDirectoryName(path));
-
-                    File.WriteAllBytes(path, www.downloadHandler.data);
-                }
-                catch (Exception e)
-                {
-                    Logger.Info($"Exception when writing file! {e.ToString()}");
-                }
+            var res = await WebClient.DownloadSong(url, new System.Threading.CancellationToken());
+            try {
+                if (!Directory.Exists(Path.GetDirectoryName(path)))
+                    Directory.CreateDirectory(Path.GetDirectoryName(path));
+                File.WriteAllBytes(path, res);
+            }
+            catch (Exception e) {
+                Logger.Info($"Exception when writing file! {e}");
             }
         }
 
@@ -101,7 +91,7 @@ namespace SyncSaber
             }
         }
 
-        public static IEnumerator ExtractZip(string zipPath, string extractPath)
+        public static async Task ExtractZip(string zipPath, string extractPath)
         {
             if (File.Exists(zipPath))
             {
@@ -117,9 +107,9 @@ namespace SyncSaber
                 catch (Exception)
                 {
                     Logger.Info($"An error occured while trying to extract \"{zipPath}\"!");
-                    yield break;
+                    return;
                 }
-                yield return new WaitForSeconds(0.25f);
+                await Task.Delay(500);
                 File.Delete(zipPath);
 
                 try

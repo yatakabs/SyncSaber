@@ -18,6 +18,7 @@ using IPA.Utilities;
 using BeatSaberMarkupLanguage.Settings;
 using SyncSaber.UI;
 using System.Threading.Tasks;
+using BeatSaberMarkupLanguage.MenuButtons;
 
 namespace SyncSaber
 {
@@ -74,23 +75,26 @@ namespace SyncSaber
         {
             instance = this;
             SongBrowserPluginPresent = PluginManager.GetPlugin("Song Browser") != null;
-            BSEvents.earlyMenuSceneLoadedFresh += this.BSEvents_earlyMenuSceneLoadedFresh;
+            
+            //BSEvents.earlyMenuSceneLoadedFresh += this.BSEvents_earlyMenuSceneLoadedFresh;
             SceneManager.sceneLoaded += SceneManager_sceneLoaded;
             SceneManager.activeSceneChanged += SceneManagerOnActiveSceneChanged;
             _ = DelayedStartup();
             //SharedCoroutineStarter.instance.StartCoroutine(DelayedStartup());
         }
 
-        private void BSEvents_earlyMenuSceneLoadedFresh(ScenesTransitionSetupDataSO obj)
-        {
-            try {
-                BSMLSettings.instance.AddSettingsMenu("SYNC SABER", SettingViewController.instance.ResourceName, SettingViewController.instance);
-            }
-            catch (Exception e) {
-                Logger.Error(e);
-            }
-            throw new NotImplementedException();
-        }
+        //private void BSEvents_earlyMenuSceneLoadedFresh(ScenesTransitionSetupDataSO obj)
+        //{
+        //    try {
+        //        BSMLSettings.instance.AddSettingsMenu("SYNC SABER", SettingViewController.instance.ResourceName, SettingViewController.instance);
+        //        var button = new MenuButton("SyncSaber", "", SyncSaber.Instance.FixedUpdate);
+        //        MenuButtons.instance.RegisterButton(button);
+        //    }
+        //    catch (Exception e) {
+        //        Logger.Error(e);
+        //    }
+        //    throw new NotImplementedException();
+        //}
 
         [OnExit]
         public void OnApplicationQuit()
