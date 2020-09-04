@@ -11,12 +11,12 @@ namespace SyncSaber
 {
     public class PlaylistSong
     {
-        public string key;
+        public string hash;
         public string songName;
 
-        public PlaylistSong(string songIndex, string songName)
+        public PlaylistSong(string hash, string songName)
         {
-            this.key = songIndex;
+            this.hash = hash;
             this.songName = songName;
         }
     }
@@ -40,7 +40,7 @@ namespace SyncSaber
 
                 foreach (JSONNode node in playlistNode["songs"].AsArray)
                 {
-                    playlist.Songs.Add(new PlaylistSong(node["key"], node["songName"]));
+                    playlist.Songs.Add(new PlaylistSong(node["hash"], node["songName"]));
                 }
 
                 playlist.fileLoc = null;
@@ -68,7 +68,7 @@ namespace SyncSaber
                 foreach (PlaylistSong s in playlist.Songs)
                 {
                     JSONObject songObject = new JSONObject();
-                    songObject.Add("key", new JSONString(s.key));
+                    songObject.Add("hash", new JSONString(s.hash));
                     songObject.Add("songName", new JSONString(s.songName));
                     songArray.Add(songObject);
                 }
@@ -108,9 +108,9 @@ namespace SyncSaber
             ReadPlaylist();
         }
 
-        public void Add(string songIndex, string songName)
+        public void Add(string hash, string songName)
         {
-            Songs.Add(new PlaylistSong(songIndex, songName));
+            Songs.Add(new PlaylistSong(hash, songName));
         }
 
         public void WritePlaylist()
