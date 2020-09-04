@@ -76,12 +76,17 @@ namespace SyncSaber
 
         public static void OnLoad()
         {
-            if (Instance) return;
+            Logger.Info("Start OnLoad.");
+            if (Instance) {
+                Logger.Info($"Instance is null.");
+                return;
+            } 
             new GameObject("SyncSaber").AddComponent<SyncSaber>();
         }
 
         private void Awake()
         {
+            Logger.Info("Start Awake.");
             Instance = this;
             DontDestroyOnLoad(gameObject);
 
@@ -105,7 +110,9 @@ namespace SyncSaber
             if (File.Exists(_historyPath))
                 _songDownloadHistory = File.ReadAllLines(_historyPath).ToList();
 
-            if (!Directory.Exists("CustomSongs")) Directory.CreateDirectory("CustomSongs");
+            if (!Directory.Exists(Path.Combine(Environment.CurrentDirectory, "Beat Saber_Data", "CustomLevels"))) {
+                Directory.CreateDirectory(Path.Combine(Environment.CurrentDirectory, "Beat Saber_Data", "CustomLevels"));
+            }
 
             string favoriteMappersPath = Path.Combine(Environment.CurrentDirectory, "UserData", "FavoriteMappers.ini");
             if (!File.Exists(favoriteMappersPath))
@@ -118,6 +125,8 @@ namespace SyncSaber
             }
 
             StartCoroutine(FinishInitialization());
+
+            Logger.Info("Finish Awake.");
         }
 
         private IEnumerator FinishInitialization()
@@ -141,31 +150,23 @@ namespace SyncSaber
         {
             if (!_initialized) return;
 
-            if (!_downloaderRunning)
-            {
-                if (_updateQueue.Count > 0)
-                {
-                    if (_updateQueue.TryPop(out var songUpdateInfo))
-                    {
+            if (!_downloaderRunning) {
+                if (_updateQueue.Count > 0) {
+                    if (_updateQueue.TryPop(out var songUpdateInfo)) {
                         //Logger.Info($"Updating {songUpdateInfo.Key}");
-                        StartCoroutine(UpdateSong(songUpdateInfo));
+                        //StartCoroutine(UpdateSong(songUpdateInfo));
                     }
                 }
-                else if (_authorDownloadQueue.Count > 0)
-                {
+                else if (_authorDownloadQueue.Count > 0) {
                     StartCoroutine(DownloadAllSongsByAuthor(_authorDownloadQueue.Pop()));
                 }
-                else if (PluginConfig.Instance.BeastSaberUsername != "" && _beastSaberFeedIndex < _beastSaberFeeds.Count)
-                {
+                else if (PluginConfig.Instance.BeastSaberUsername != "" && _beastSaberFeedIndex < _beastSaberFeeds.Count) {
                     StartCoroutine(DownloadBeastSaberFeeds(_beastSaberFeedIndex));
                     _beastSaberFeedIndex++;
                 }
-                else if (_authorDownloadQueue.Count == 0 && !_downloaderComplete)
-                {
-                    if (!Loader.AreSongsLoading)
-                    {
-                        if (_didDownloadAnySong)
-                        {
+                else if (_authorDownloadQueue.Count == 0 && !_downloaderComplete) {
+                    if (!Loader.AreSongsLoading) {
+                        if (_didDownloadAnySong) {
                             StartCoroutine(SongListUtils.RefreshSongs(false, false));
                         }
                         Logger.Info("Finished checking for updates!");
@@ -241,64 +242,64 @@ namespace SyncSaber
             return null;
         }
         
-        private IEnumerator UpdateSong(KeyValuePair<JSONObject, KeyValuePair<string, CustomPreviewBeatmapLevel>> songUpdateInfo)
-        {
-            _downloaderRunning = true;
-            JSONObject song = songUpdateInfo.Key;
-            var oldLevel = songUpdateInfo.Value;
-            string songIndex = song["version"].Value;
-            string songHash = (song["hashMd5"].Value).ToUpper();
+        //private IEnumerator UpdateSong(KeyValuePair<JSONObject, KeyValuePair<string, CustomPreviewBeatmapLevel>> songUpdateInfo)
+        //{
+        //    _downloaderRunning = true;
+        //    JSONObject song = songUpdateInfo.Key;
+        //    var oldLevel = songUpdateInfo.Value;
+        //    string songIndex = song["version"].Value;
+        //    string songHash = (song["hashMd5"].Value).ToUpper();
             
-            if (PluginConfig.Instance.DeleteOldVersions)
-            {
-                string songPath = oldLevel.Key;
-                DirectoryInfo parent = Directory.GetParent(songPath);
-                while(parent.Name != "CustomSongs")
-                {
-                    songPath = parent.FullName;
-                    parent = parent.Parent;
-                }
+        //    if (PluginConfig.Instance.DeleteOldVersions)
+        //    {
+        //        string songPath = oldLevel.Key;
+        //        DirectoryInfo parent = Directory.GetParent(songPath);
+        //        while(parent.Name != "CustomSongs")
+        //        {
+        //            songPath = parent.FullName;
+        //            parent = parent.Parent;
+        //        }
 
-                // Only delete the old song after the new one is downloaded and extracted
-                Utilities.EmptyDirectory(songPath, true);
-                Loader.Instance.RemoveSongWithLevelID(oldLevel.Value.levelID);
-            }
+        //        // Only delete the old song after the new one is downloaded and extracted
+        //        Utilities.EmptyDirectory(songPath, true);
+        //        Loader.Instance.RemoveSongWithLevelID(oldLevel.Value.levelID);
+        //    }
             
-            string currentSongDirectory = Path.Combine(Environment.CurrentDirectory, "CustomSongs", songIndex);
-            string localPath = Path.Combine(Path.GetTempPath(), $"{songIndex}.zip");
+        //    string currentSongDirectory = Path.Combine(Environment.CurrentDirectory, "CustomSongs", songIndex);
+        //    string localPath = Path.Combine(Path.GetTempPath(), $"{songIndex}.zip");
 
-            // Download and extract the update
-            yield return Utilities.DownloadFile(song["downloadUrl"].Value, localPath);
-            yield return Utilities.ExtractZip(localPath, currentSongDirectory);
-            yield return new WaitUntil(() => Loader.AreSongsLoaded && !Loader.AreSongsLoading);
-            Loader.Instance.RefreshSongs(false);
-            yield return new WaitUntil(() => Loader.AreSongsLoaded && !Loader.AreSongsLoading);
+        //    // Download and extract the update
+        //    yield return Utilities.DownloadFile($"https://beatsaver.com/{song["downloadURL"].Value}", localPath);
+        //    yield return Utilities.ExtractZip(localPath, currentSongDirectory);
+        //    yield return new WaitUntil(() => Loader.AreSongsLoaded && !Loader.AreSongsLoading);
+        //    Loader.Instance.RefreshSongs(false);
+        //    yield return new WaitUntil(() => Loader.AreSongsLoaded && !Loader.AreSongsLoading);
 
-            bool success = false;
-            // Try to scroll to the newly updated level, if it exists in the list
-            var levels = Loader.CustomLevels.Where(l => l.Value.levelID.Split('_').Last() == songHash).Select(x => x.Value).ToArray();
-            if (levels.Length > 0)
-            {
-                Logger.Info($"Scrolling to level {levels[0].levelID}");
-                yield return SongListUtils.ScrollToLevel(levels[0].levelID, (s) => success = s, false);
-            }
+        //    bool success = false;
+        //    // Try to scroll to the newly updated level, if it exists in the list
+        //    var levels = Loader.CustomLevels.Where(l => l.Value.levelID.Split('_').Last() == songHash).Select(x => x.Value).ToArray();
+        //    if (levels.Length > 0)
+        //    {
+        //        Logger.Info($"Scrolling to level {levels[0].levelID}");
+        //        yield return SongListUtils.ScrollToLevel(levels[0].levelID, (s) => success = s, false);
+        //    }
 
-            if(!success)
-            {
-                Logger.Info("Failed to find new level!");
-                DisplayNotification("Song update failed.");
-                _downloaderRunning = false;
-                yield break;
-            }
+        //    if(!success)
+        //    {
+        //        Logger.Info("Failed to find new level!");
+        //        DisplayNotification("Song update failed.");
+        //        _downloaderRunning = false;
+        //        yield break;
+        //    }
 
-            // Write our download history to file
-            if (!_songDownloadHistory.Contains(songIndex)) _songDownloadHistory.Add(songIndex);
-            Utilities.WriteStringListSafe(_historyPath, _songDownloadHistory.Distinct().ToList());
+        //    // Write our download history to file
+        //    if (!_songDownloadHistory.Contains(songIndex)) _songDownloadHistory.Add(songIndex);
+        //    Utilities.WriteStringListSafe(_historyPath, _songDownloadHistory.Distinct().ToList());
 
-            DisplayNotification("Song update complete!");
-            Logger.Info($"Success updating song {songIndex}");
-            _downloaderRunning = false;
-        }
+        //    DisplayNotification("Song update complete!");
+        //    Logger.Info($"Success updating song {songIndex}");
+        //    _downloaderRunning = false;
+        //}
 
         private void UpdatePlaylist(Playlist playlist, string songIndex, string songName)
         {
@@ -491,7 +492,7 @@ namespace SyncSaber
 
             while (currentSongIndex < totalSongs)
             {
-                using (UnityWebRequest www = UnityWebRequest.Get($"https://beatsaver.com/api/songs/byuser/{mapperId}/{currentSongIndex}"))
+                using (UnityWebRequest www = UnityWebRequest.Get($"https://beatsaver.com/api/search/text/{currentSongIndex}?q={mapperId}/"))
                 {
                     yield return www.SendWebRequest();
                     if (www.isNetworkError || www.isHttpError)
@@ -501,29 +502,30 @@ namespace SyncSaber
                         yield break;
                     }
 
-                    JSONNode result = JSON.Parse(www.downloadHandler.text);
-                    if (result["total"].AsInt == 0)
+                    JSONArray result = JSON.Parse(www.downloadHandler.text)["docs"].AsArray;
+                    if (result.Count == 0)
                     {
                         _downloaderRunning = false;
                         yield break;
                     }
 
-                    totalSongs = result["total"].AsInt;
+                    totalSongs = result.Count;
 
-                    foreach (JSONObject song in result["songs"].AsArray)
+                    foreach (JSONObject song in result)
                     {
                         while (_isInGame || Loader.AreSongsLoading)
                             yield return null;
 
-                        string songIndex = song["version"].Value, songName = song["songName"].Value;
-                        string currentSongDirectory = Path.Combine(Environment.CurrentDirectory, "CustomSongs", songIndex);
+                        var hash = song["hash"].Value;
+                        var songName = song["songName"].Value;
+                        string currentSongDirectory = Path.Combine(Environment.CurrentDirectory, "Beat Saber_Data", "CustomLevels", $"{song["id"].Value} ({song["songName"].Value} - {song["levelAuthor"].Value})");
                         bool downloadFailed = false;
-                        if (PluginConfig.Instance.AutoDownloadSongs && !_songDownloadHistory.Contains(songIndex) && !Directory.Exists(currentSongDirectory))
+                        if (PluginConfig.Instance.AutoDownloadSongs && Loader.GetLevelByHash(hash) == null)
                         {
                             DisplayNotification($"Downloading {songName}");
 
-                            string localPath = Path.Combine(Path.GetTempPath(), $"{songIndex}.zip");
-                            yield return Utilities.DownloadFile(song["downloadUrl"].Value, localPath);
+                            string localPath = Path.Combine(Path.GetTempPath(), $"{hash}.zip");
+                            yield return Utilities.DownloadFile($"https://beatsaver.com{song["downloadURL"].Value}", localPath);
                             if (File.Exists(localPath))
                             {
                                 yield return Utilities.ExtractZip(localPath, currentSongDirectory);
@@ -535,15 +537,15 @@ namespace SyncSaber
                         }
 
                         // Keep a history of all the songs we download- count it as downloaded even if the user already had it downloaded previously so if they delete it it doesn't get redownloaded
-                        if (!downloadFailed && !_songDownloadHistory.Contains(songIndex))
+                        if (!downloadFailed && !_songDownloadHistory.Contains(hash))
                         {
-                            _songDownloadHistory.Add(songIndex);
+                            _songDownloadHistory.Add(hash);
 
                             // Update our playlist with the latest song info
-                            UpdatePlaylist(_syncSaberSongs, songIndex, songName);
+                            UpdatePlaylist(_syncSaberSongs, hash, songName);
 
                             // Delete any duplicate songs that we've downloaded
-                            RemoveOldVersions(songIndex);
+                            RemoveOldVersions(hash);
                         }
 
                         currentSongIndex++;

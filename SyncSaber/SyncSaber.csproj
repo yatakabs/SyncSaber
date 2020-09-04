@@ -56,6 +56,11 @@
       <HintPath>$(BeatSaberDir)\Plugins\BS_Utils.dll</HintPath>
       <SpecificVersion>False</SpecificVersion>
     </Reference>
+    <Reference Include="HMLib, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <Private>False</Private>
+      <HintPath>$(BeatSaberDir)\Beat Saber_Data\Managed\HMLib.dll</HintPath>
+      <SpecificVersion>False</SpecificVersion>
+    </Reference>
     <Reference Include="HMUI, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <Private>False</Private>
       <HintPath>$(BeatSaberDir)\Beat Saber_Data\Managed\HMUI.dll</HintPath>
@@ -157,10 +162,12 @@
     <Compile Include="SimpleJSON\SimpleJSON.cs" />
     <Compile Include="SongListUtils.cs" />
     <Compile Include="SyncSaber.cs" />
+    <Compile Include="UI\SettingViewController.cs" />
     <Compile Include="Utilities.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="BuildTargets.targets" />
+    <EmbeddedResource Include="UI\SettingView.bsml" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="manifest.json" />

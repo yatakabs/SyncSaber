@@ -9,7 +9,7 @@
 //{
 //    class Config
 //    {
-        
+
 //        public static bool AutoDownloadSongs;
 //        public static bool AutoUpdateSongs;
 //        public static string BeastSaberUsername;

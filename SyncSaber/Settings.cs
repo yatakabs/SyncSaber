@@ -49,5 +49,5 @@
 //            downloadCuratorRecommendedFeed.EnabledText = "Sync";
 //            downloadCuratorRecommendedFeed.DisabledText = "Don't Sync";
 //        }
-//     }
+//    }
 //}
