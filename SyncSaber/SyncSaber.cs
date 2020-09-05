@@ -475,10 +475,10 @@ namespace SyncSaber
                         var hash = song["hash"].Value;
                         var songName = song["name"].Value;
                         var metaData = song["metadata"].AsObject;
-                        Logger.Info($"{hash} : {songName}");
+                        Logger.Debug($"{hash} : {songName}");
                         string currentSongDirectory = Path.Combine(Environment.CurrentDirectory, "Beat Saber_Data", "CustomLevels", $"{song["key"].Value} ({songName} - {metaData["songAuthorName"].Value})");
                         bool downloadFailed = false;
-                        Logger.Info($"{songName} : {currentSongDirectory}");
+                        Logger.Debug($"{songName} : {currentSongDirectory}");
                         if (PluginConfig.Instance.AutoDownloadSongs && Loader.GetLevelByHash(hash.ToUpper()) == null) {
                             Logger.Info($"Downloading {songName}");
                             DisplayNotification($"Downloading {songName}");
