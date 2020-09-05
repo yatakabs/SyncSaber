@@ -413,7 +413,7 @@ namespace SyncSaber
 
             string mapperId = String.Empty;
             try {
-                var res = await WebClient.GetAsync($"https://beatsaver.com/api/search/advanced/0?q=uploader.username:{mapperId}", new CancellationTokenSource().Token);
+                var res = await WebClient.GetAsync($"https://beatsaver.com/api/search/advanced/0?q=uploader.username:{author}", new CancellationTokenSource().Token);
                 if (res.IsSuccessStatusCode) {
                     Logger.Info($"{res.StatusCode}");
                     _downloaderRunning = false;
