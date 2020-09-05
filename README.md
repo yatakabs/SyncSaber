@@ -31,4 +31,4 @@ SyncSaber settings are stored in the modprefs.ini which you can find in the User
 | **MaxCuratorRecommendedPages**| The maximum number of curator recommended pages to scan for new songs on BeastSaber, 0 is unlimited. |
 
 # Download
-[Click here to download the latest version of SyncSaber!](https://github.com/brian91292/SyncSaber/releases)
+[Click here to download the latest version of SyncSaber!](https://github.com/denpadokei/SyncSaber/releases/latest)
