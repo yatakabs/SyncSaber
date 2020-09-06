@@ -42,7 +42,7 @@ namespace SyncSaber
         private string _historyPath = null;
         private int _beastSaberFeedIndex = 0;
 
-        private Stack<string> _authorDownloadQueue = new Stack<string>();
+        private Stack<string> AuthorDownloadQueue { get; } = new Stack<string>();
         private ConcurrentStack<KeyValuePair<JSONObject, KeyValuePair<string, CustomPreviewBeatmapLevel>>> _updateQueue = new ConcurrentStack<KeyValuePair<JSONObject, KeyValuePair<string, CustomPreviewBeatmapLevel>>>();
         private List<string> SongDownloadHistory { get; } = new List<string>();
         private Playlist _syncSaberSongs = new Playlist("SyncSaberPlaylist", "SyncSaber Playlist", "brian91292", "1");
@@ -95,9 +95,9 @@ namespace SyncSaber
             context = SynchronizationContext.Current;
             DontDestroyOnLoad(gameObject);
 
-            if (PluginConfig.Instance.SyncFollowingsFeed)
+            if (PluginConfig.Instance.SyncFollowingsFeed && !string.IsNullOrWhiteSpace(PluginConfig.Instance.BeastSaberUsername))
                 _beastSaberFeeds.Add("followings", $"https://bsaber.com/members/{PluginConfig.Instance.BeastSaberUsername}/wall/followings");
-            if (PluginConfig.Instance.SyncBookmarksFeed)
+            if (PluginConfig.Instance.SyncBookmarksFeed && !string.IsNullOrWhiteSpace(PluginConfig.Instance.BeastSaberUsername))
                 _beastSaberFeeds.Add("bookmarks", $"https://bsaber.com/members/{PluginConfig.Instance.BeastSaberUsername}/bookmarks");
             if (PluginConfig.Instance.SyncCuratorRecommendedFeed)
                 _beastSaberFeeds.Add("curator recommended", $"https://bsaber.com/members/curatorrecommended/bookmarks");
@@ -120,12 +120,17 @@ namespace SyncSaber
             }
 
             string favoriteMappersPath = Path.Combine(Environment.CurrentDirectory, "UserData", "FavoriteMappers.ini");
-            if (!File.Exists(favoriteMappersPath))
-                File.WriteAllLines(favoriteMappersPath, new string[] { "" }); // "freeek", "purphoros", "bennydabeast", "rustic", "greatyazer"
+            if (!File.Exists(favoriteMappersPath)) {
+#if DEBUG
+                File.WriteAllLines(favoriteMappersPath, new string[] { "denpadokei", "ejiejidayo", "fefy" });
+#else
+                File.WriteAllLines(favoriteMappersPath, new string[] { "" });
+#endif
+            }
 
             foreach (string mapper in File.ReadAllLines(favoriteMappersPath)) {
                 Logger.Info($"Mapper: {mapper}");
-                _authorDownloadQueue.Push(mapper);
+                AuthorDownloadQueue.Push(mapper);
             }
 
             StartCoroutine(FinishInitialization());
@@ -145,6 +150,7 @@ namespace SyncSaber
 
         private void DisplayNotification(string text)
         {
+            Logger.Info(text);
             context.Post(d =>
             {
                 _uiResetTime = DateTime.Now.AddSeconds(5);
@@ -165,20 +171,18 @@ namespace SyncSaber
                             await UpdateSong(songUpdateInfo);
                         }
                     }
-                    else
-                    if (_authorDownloadQueue.Any()) {
-                        await DownloadAllSongsByAuthor(_authorDownloadQueue.Pop());
+                    while (AuthorDownloadQueue.Any()) {
+                        await DownloadAllSongsByAuthor(AuthorDownloadQueue.Pop());
                     }
-                    else if (!string.IsNullOrWhiteSpace(PluginConfig.Instance.BeastSaberUsername) && _beastSaberFeedIndex < _beastSaberFeeds.Count) {
+                    if (!string.IsNullOrWhiteSpace(PluginConfig.Instance.BeastSaberUsername) && _beastSaberFeedIndex < _beastSaberFeeds.Count) {
                         await DownloadBeastSaberFeeds(_beastSaberFeedIndex);
                         _beastSaberFeedIndex++;
                     }
-                    else if (!_authorDownloadQueue.Any() && !_downloaderComplete) {
+                    else if (!AuthorDownloadQueue.Any() && !_downloaderComplete) {
                         if (!Loader.AreSongsLoading) {
                             if (_didDownloadAnySong) {
                                 StartCoroutine(SongListUtils.RefreshSongs(false, false));
                             }
-                            Logger.Info("Finished checking for updates!");
                             DisplayNotification("Finished checking for new songs!");
                             _downloaderComplete = true;
                         }
@@ -342,15 +346,15 @@ namespace SyncSaber
                 var level = Loader.CustomLevels.FirstOrDefault(x => x.Value.levelID.ToUpper() == levelId.ToUpper());
 
                 bool zippedSong = false;
-                string _songPath = level.Key;
-                if (!string.IsNullOrEmpty(_songPath) && _songPath.Contains("/.cache/"))
+                string songPath = level.Key;
+                if (!string.IsNullOrEmpty(songPath) && songPath.Contains("/.cache/"))
                     zippedSong = true;
 
-                if (string.IsNullOrEmpty(_songPath)) {
+                if (string.IsNullOrEmpty(songPath)) {
                     Logger.Info("Song path is null or empty!");
                     return;
                 }
-                if (!Directory.Exists(_songPath)) {
+                if (!Directory.Exists(songPath)) {
                     Logger.Info("Song folder does not exist!");
                     return;
                 }
@@ -400,87 +404,53 @@ namespace SyncSaber
         private async Task DownloadAllSongsByAuthor(string author)
         {
             Logger.Info($"Downloading all songs from {author}");
-            JSONArray result = null;
-            _downloaderRunning = true;
+            JSONNode result = null;
             var startTime = DateTime.Now;
             TimeSpan idleTime = new TimeSpan();
+            var pageCount = 0;
+            var lastPage = 0;
 
-            string mapperId = String.Empty;
             try {
-                var res = await WebClient.GetAsync($"https://beatsaver.com/api/search/advanced/0?q=uploader.username:{author}", new CancellationTokenSource().Token);
-                if (res.IsSuccessStatusCode) {
-                    Logger.Info($"{res.StatusCode}");
-                    _downloaderRunning = false;
-                    return;
-                }
-                result = JSON.Parse(res.ContentToString())["docs"].AsArray;
-                Logger.log.Notice($"docs count : {result.Count}");
-                if (result.Count == 0) {
-                    _downloaderRunning = false;
-                    return;
-                }
-
-                foreach (var song in result) {
-                    mapperId = song.Value["uploader"].AsObject["username"];
-                    Logger.Info($"mapperID : {mapperId}");
-                    break;
-                }
-
-                if (string.IsNullOrEmpty(mapperId)) {
-                    Logger.Info($"Failed to find mapper \"{author}\"");
-                    _downloaderRunning = false;
-                    return;
-                }
-                DisplayNotification($"Checking for new songs from \"{author}\"");
-                Logger.Info($"Checking for new songs from \"{author}\"");
-            }
-            catch (Exception e) {
-                Logger.Error($"{e}");
-            }
-
-            int pageCount = 0;
-
-
-            do {
-                try {
-                    var res = await WebClient.GetAsync($"https://beatsaver.com/api/search/advanced/{pageCount}?q=uploader.username:{mapperId}", new CancellationTokenSource().Token);
-                    if (res.IsSuccessStatusCode) {
+                _downloaderRunning = true;
+                do {
+                    DisplayNotification($"Checking {author}'s maps. ({pageCount} page)");
+                    var res = await WebClient.GetAsync($"https://beatsaver.com/api/search/advanced/{pageCount}?q=uploader.username:{author}", new CancellationTokenSource().Token);
+                    if (!res.IsSuccessStatusCode) {
                         Logger.Info($"{res.StatusCode}");
-                        _downloaderRunning = false;
+                        return;
+                    }
+                    result = JSON.Parse(res.ContentToString());
+                    var docs = result["docs"].AsArray;
+                    lastPage = result["lastPage"].AsInt;
+                    if (docs.Count == 0) {
+                        Logger.Info($"docs is empty. ({docs.Count})");
                         return;
                     }
 
-                    result = JSON.Parse(res.ContentToString())["docs"].AsArray;
-                    Logger.Debug($"{result}");
-                    if (result.Count == 0) {
-                        _downloaderRunning = false;
-                        break;
-                    }
-
-                    foreach (var keyvalue in result) {
-                        var song = keyvalue.Value as JSONObject;
+                    foreach (var keyvalue in docs) {
                         while (_isInGame || Loader.AreSongsLoading) {
                             Logger.Debug($"{_isInGame}");
                             Logger.Debug($"{Loader.AreSongsLoading}");
                             await Task.Delay(200);
                         }
-
+                        var song = keyvalue.Value as JSONObject;
                         Logger.Debug($"{song}");
                         var hash = song["hash"].Value;
                         var key = song["key"].Value;
                         var songName = song["name"].Value;
-                        var metaData = song["metadata"].AsObject;
-                        Logger.Debug($"{hash} : {songName}");
-                        string currentSongDirectory = Path.Combine(Environment.CurrentDirectory, "Beat Saber_Data", "CustomLevels", $"{key} ({songName} - {metaData["songAuthorName"].Value})");
-                        bool downloadFailed = false;
-                        Logger.Debug($"{songName} : {currentSongDirectory}");
+                        var downloadFailed = false;
                         if (PluginConfig.Instance.AutoDownloadSongs && Loader.GetLevelByHash(hash.ToUpper()) == null) {
-                            Logger.Info($"Downloading {songName}");
+                            var metaData = song["metadata"].AsObject;
+                            Logger.Debug($"{hash} : {songName}");
+                            string currentSongDirectory = Path.Combine(Environment.CurrentDirectory, "Beat Saber_Data", "CustomLevels", $"{key} ({songName} - {metaData["songAuthorName"].Value})");
+                            
+                            Logger.Debug($"{songName} : {currentSongDirectory}");
                             DisplayNotification($"Downloading {songName}");
                             string localPath = Path.Combine(Path.GetTempPath(), $"{hash}.zip");
                             var url = $"https://beatsaver.com{song["downloadURL"].Value}";
                             Logger.Info(url);
                             Logger.Info(localPath);
+                            DisplayNotification($"Download - {songName}");
                             await Utilities.DownloadFile(url, localPath);
                             if (File.Exists(localPath)) {
                                 await Utilities.ExtractZip(localPath, currentSongDirectory);
@@ -502,12 +472,15 @@ namespace SyncSaber
                         }
                     }
                     pageCount++;
-                }
-                catch (Exception e) {
-                    Logger.Error(e);
-                }
-
-            } while (result?.Count != 0);
+                    Logger.Info($"pageCount : {pageCount} lastPage : {lastPage} [{pageCount < lastPage}]");
+                } while (pageCount < lastPage);
+            }
+            catch (Exception e) {
+                Logger.Error(e);
+            }
+            finally {
+                _downloaderRunning = false;
+            }
 
             // Write our download history to file
             Utilities.WriteStringListSafe(_historyPath, SongDownloadHistory.Distinct().ToList());
