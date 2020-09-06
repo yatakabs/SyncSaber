@@ -76,39 +76,38 @@ namespace SyncSaber
             instance = this;
             SongBrowserPluginPresent = PluginManager.GetPlugin("Song Browser") != null;
             
-            //BSEvents.earlyMenuSceneLoadedFresh += this.BSEvents_earlyMenuSceneLoadedFresh;
-            SceneManager.sceneLoaded += SceneManager_sceneLoaded;
+            BSEvents.earlyMenuSceneLoadedFresh += this.BSEvents_earlyMenuSceneLoadedFresh;
+            BSEvents.lateMenuSceneLoadedFresh += this.BSEvents_lateMenuSceneLoadedFresh;
             SceneManager.activeSceneChanged += SceneManagerOnActiveSceneChanged;
             _ = DelayedStartup();
-            //SharedCoroutineStarter.instance.StartCoroutine(DelayedStartup());
         }
 
-        //private void BSEvents_earlyMenuSceneLoadedFresh(ScenesTransitionSetupDataSO obj)
-        //{
-        //    try {
-        //        BSMLSettings.instance.AddSettingsMenu("SYNC SABER", SettingViewController.instance.ResourceName, SettingViewController.instance);
-        //        var button = new MenuButton("SyncSaber", "", SyncSaber.Instance.FixedUpdate);
-        //        MenuButtons.instance.RegisterButton(button);
-        //    }
-        //    catch (Exception e) {
-        //        Logger.Error(e);
-        //    }
-        //    throw new NotImplementedException();
-        //}
+        private async void BSEvents_lateMenuSceneLoadedFresh(ScenesTransitionSetupDataSO obj)
+        {
+            SyncSaber.Instance.DelayedActiveSceneChanged();
+            await Task.Delay(1000);
+            while (Loader.AreSongsLoading) {
+                await Task.Delay(200);
+            }
+            await SyncSaber.Instance.Sync();
+        }
+
+        private void BSEvents_earlyMenuSceneLoadedFresh(ScenesTransitionSetupDataSO obj)
+        {
+            try {
+                BSMLSettings.instance.AddSettingsMenu("SYNC SABER", SettingViewController.instance.ResourceName, SettingViewController.instance);
+            }
+            catch (Exception e) {
+                Logger.Error(e);
+            }
+        }
+
 
         [OnExit]
         public void OnApplicationQuit()
         {
-            SceneManager.sceneLoaded -= SceneManager_sceneLoaded;
             SceneManager.activeSceneChanged -= SceneManagerOnActiveSceneChanged;
-        }
-
-        private void SceneManager_sceneLoaded(Scene arg0, LoadSceneMode arg1)
-        {
-            //if (arg0.name == "MenuCore")
-            //{
-            //    Settings.OnLoad();
-            //}
+            BSEvents.earlyMenuSceneLoadedFresh -= this.BSEvents_earlyMenuSceneLoadedFresh;
         }
 
         void SceneManagerOnActiveSceneChanged(Scene arg0, Scene scene)
@@ -121,22 +120,6 @@ namespace SyncSaber
                     _mapperFeedNotification = null;
                 }
             }
-        }
-
-        public void OnLevelWasLoaded(int level)
-        {
-        }
-
-        public void OnLevelWasInitialized(int level)
-        {
-        }
-
-        public void OnUpdate()
-        {
-        }
-
-        public void OnFixedUpdate()
-        {
         }
 
         public static void SongBrowserCancelFilter()
