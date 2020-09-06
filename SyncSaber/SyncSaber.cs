@@ -44,7 +44,7 @@ namespace SyncSaber
 
         private Stack<string> _authorDownloadQueue = new Stack<string>();
         private ConcurrentStack<KeyValuePair<JSONObject, KeyValuePair<string, CustomPreviewBeatmapLevel>>> _updateQueue = new ConcurrentStack<KeyValuePair<JSONObject, KeyValuePair<string, CustomPreviewBeatmapLevel>>>();
-        private List<string> _songDownloadHistory = new List<string>();
+        private List<string> SongDownloadHistory { get; } = new List<string>();
         private Playlist _syncSaberSongs = new Playlist("SyncSaberPlaylist", "SyncSaber Playlist", "brian91292", "1");
         private Playlist _curatorRecommendedSongs = new Playlist("SyncSaberCuratorRecommendedPlaylist", "BeastSaber Curator Recommended", "brian91292", "1");
         private Playlist _followingsSongs = new Playlist("SyncSaberFollowingsPlaylist", "BeastSaber Followings", "brian91292", "1");
@@ -111,9 +111,10 @@ namespace SyncSaber
                 if (File.Exists(_historyPath)) File.Delete(_historyPath);
                 File.Move(_historyPath + ".bak", _historyPath);
             }
-            if (File.Exists(_historyPath))
-                _songDownloadHistory = File.ReadAllLines(_historyPath).ToList();
-
+            if (File.Exists(_historyPath)) {
+                SongDownloadHistory.Clear();
+                SongDownloadHistory.AddRange(File.ReadAllLines(_historyPath));
+            }
             if (!Directory.Exists(Path.Combine(Environment.CurrentDirectory, "Beat Saber_Data", "CustomLevels"))) {
                 Directory.CreateDirectory(Path.Combine(Environment.CurrentDirectory, "Beat Saber_Data", "CustomLevels"));
             }
@@ -281,20 +282,13 @@ namespace SyncSaber
             // Download and extract the update
             await Utilities.DownloadFile($"https://beatsaver.com{song["downloadURL"].Value}", localPath);
             await Utilities.ExtractZip(localPath, currentSongDirectory);
-            await Task.Run(async () =>
-            {
-                while (Loader.AreSongsLoaded && !Loader.AreSongsLoading) {
-                    await Task.Delay(200);
-                }
-            });
+            while (Loader.AreSongsLoaded && !Loader.AreSongsLoading) {
+                await Task.Delay(200);
+            }
             Loader.Instance.RefreshSongs(false);
-            await Task.Run(async () =>
-            {
-                while (Loader.AreSongsLoaded && !Loader.AreSongsLoading) {
-                    await Task.Delay(200);
-                }
-            });
-
+            while (Loader.AreSongsLoaded && !Loader.AreSongsLoading) {
+                await Task.Delay(200);
+            }
             bool success = false;
             // Try to scroll to the newly updated level, if it exists in the list
             var levels = Loader.CustomLevels.Where(l => l.Value.levelID.Split('_').Last().ToUpper() == songHash).Select(x => x.Value);
@@ -311,8 +305,8 @@ namespace SyncSaber
             }
 
             // Write our download history to file
-            if (!_songDownloadHistory.Contains(songkey)) _songDownloadHistory.Add(songkey);
-            Utilities.WriteStringListSafe(_historyPath, _songDownloadHistory.Distinct().ToList());
+            if (!SongDownloadHistory.Contains(songkey)) SongDownloadHistory.Add(songkey);
+            Utilities.WriteStringListSafe(_historyPath, SongDownloadHistory.Distinct().ToList());
 
             DisplayNotification("Song update complete!");
             Logger.Info($"Success updating song {songkey}");
@@ -473,10 +467,11 @@ namespace SyncSaber
 
                         Logger.Debug($"{song}");
                         var hash = song["hash"].Value;
+                        var key = song["key"].Value;
                         var songName = song["name"].Value;
                         var metaData = song["metadata"].AsObject;
                         Logger.Debug($"{hash} : {songName}");
-                        string currentSongDirectory = Path.Combine(Environment.CurrentDirectory, "Beat Saber_Data", "CustomLevels", $"{song["key"].Value} ({songName} - {metaData["songAuthorName"].Value})");
+                        string currentSongDirectory = Path.Combine(Environment.CurrentDirectory, "Beat Saber_Data", "CustomLevels", $"{key} ({songName} - {metaData["songAuthorName"].Value})");
                         bool downloadFailed = false;
                         Logger.Debug($"{songName} : {currentSongDirectory}");
                         if (PluginConfig.Instance.AutoDownloadSongs && Loader.GetLevelByHash(hash.ToUpper()) == null) {
@@ -496,8 +491,8 @@ namespace SyncSaber
                         }
                         Logger.Info("Finish download");
                         // Keep a history of all the songs we download- count it as downloaded even if the user already had it downloaded previously so if they delete it it doesn't get redownloaded
-                        if (!downloadFailed && !_songDownloadHistory.Contains(hash)) {
-                            _songDownloadHistory.Add(hash);
+                        if (!downloadFailed && !SongDownloadHistory.Contains(key)) {
+                            SongDownloadHistory.Add(key);
 
                             // Update our playlist with the latest song info
                             UpdatePlaylist(_syncSaberSongs, hash, songName);
@@ -515,7 +510,7 @@ namespace SyncSaber
             } while (result?.Count != 0);
 
             // Write our download history to file
-            Utilities.WriteStringListSafe(_historyPath, _songDownloadHistory.Distinct().ToList());
+            Utilities.WriteStringListSafe(_historyPath, SongDownloadHistory.Distinct().ToList());
 
             // Write to the SyncSaber playlist
             _syncSaberSongs.WritePlaylist();
@@ -580,7 +575,7 @@ namespace SyncSaber
                             string hash = node["Hash"].InnerText;
                             string currentSongDirectory = Path.Combine(Environment.CurrentDirectory, "Beat Saber_Data", "CustomLevels", $"{key} ({songName} - {node["LevelAuthorName"].InnerText})");
                             bool downloadFailed = false;
-                            if (PluginConfig.Instance.AutoDownloadSongs && !_songDownloadHistory.Contains(hash) && Loader.GetLevelByHash(hash) == null) {
+                            if (PluginConfig.Instance.AutoDownloadSongs && !SongDownloadHistory.Contains(key) && Loader.GetLevelByHash(hash) == null) {
                                 DisplayNotification($"Downloading {songName}");
 
                                 string localPath = Path.Combine(Path.GetTempPath(), $"{hash}.zip");
@@ -596,8 +591,8 @@ namespace SyncSaber
                             }
 
                             // Keep a history of all the songs we download- count it as downloaded even if the user already had it downloaded previously so if they delete it it doesn't get redownloaded
-                            if (!downloadFailed && !_songDownloadHistory.Contains(key)) {
-                                _songDownloadHistory.Add(key);
+                            if (!downloadFailed && !SongDownloadHistory.Contains(key)) {
+                                SongDownloadHistory.Add(key);
 
                                 // Update our playlist with the latest song info
                                 UpdatePlaylist(_syncSaberSongs, hash, songName);
@@ -624,7 +619,7 @@ namespace SyncSaber
                 }
 
                 // Write our download history to file
-                Utilities.WriteStringListSafe(_historyPath, _songDownloadHistory.Distinct().ToList());
+                Utilities.WriteStringListSafe(_historyPath, SongDownloadHistory.Distinct().ToList());
 
                 // Write to the SynCSaber playlist
                 _syncSaberSongs.WritePlaylist();
