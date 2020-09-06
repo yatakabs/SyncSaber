@@ -575,7 +575,7 @@ namespace SyncSaber
                             string hash = node["Hash"].InnerText;
                             string currentSongDirectory = Path.Combine(Environment.CurrentDirectory, "Beat Saber_Data", "CustomLevels", $"{key} ({songName} - {node["LevelAuthorName"].InnerText})");
                             bool downloadFailed = false;
-                            if (PluginConfig.Instance.AutoDownloadSongs && !SongDownloadHistory.Contains(key) && Loader.GetLevelByHash(hash) == null) {
+                            if (PluginConfig.Instance.AutoDownloadSongs && !SongDownloadHistory.Contains(key) && Loader.GetLevelByHash(hash.ToUpper()) == null) {
                                 DisplayNotification($"Downloading {songName}");
 
                                 string localPath = Path.Combine(Path.GetTempPath(), $"{hash}.zip");
