@@ -275,7 +275,7 @@ namespace SyncSaber
                 Loader.Instance.RemoveSongWithLevelID(oldLevel.Value.levelID);
             }
 
-            string currentSongDirectory = Path.Combine(Environment.CurrentDirectory, "CustomSongs", $"{songkey} ({oldLevel.Value.songName} - {oldLevel.Value.levelAuthorName})");
+            string currentSongDirectory = Path.Combine(Environment.CurrentDirectory, "Beat Saber_Data", "CustomLevels", $"{songkey} ({oldLevel.Value.songName} - {oldLevel.Value.levelAuthorName})");
             string localPath = Path.Combine(Path.GetTempPath(), $"{songHash}.zip");
 
             // Download and extract the update
@@ -536,10 +536,10 @@ namespace SyncSaber
                 int totalSongsForPage = 0;
                 int downloadCountForPage = 0;
 
-                DisplayNotification($"Checking page {pageIndex.ToString()} of {_beastSaberFeeds.ElementAt(feedToDownload).Key} feed from BeastSaber!");
+                DisplayNotification($"Checking page {pageIndex} of {_beastSaberFeeds.ElementAt(feedToDownload).Key} feed from BeastSaber!");
 
                 try {
-                    var res = await WebClient.GetAsync($"{_beastSaberFeeds.ElementAt(feedToDownload).Value}/feed/?acpage={pageIndex.ToString()}", new CancellationTokenSource().Token);
+                    var res = await WebClient.GetAsync($"{_beastSaberFeeds.ElementAt(feedToDownload).Value}/feed/?acpage={pageIndex}", new CancellationTokenSource().Token);
                     if (!res.IsSuccessStatusCode) {
                         return;
                     }

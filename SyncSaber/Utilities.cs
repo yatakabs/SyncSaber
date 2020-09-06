@@ -124,7 +124,7 @@ namespace SyncSaber
                 }
                 catch (Exception e)
                 {
-                    Logger.Info($"An exception occured while trying to move files into their final directory! {e.ToString()}");
+                    Logger.Info($"An exception occured while trying to move files into their final directory! {e}");
                 }
                 EmptyDirectory(".syncsabertemp");
             }

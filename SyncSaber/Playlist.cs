@@ -49,7 +49,7 @@ namespace SyncSaber
             }
             catch (Exception e)
             {
-                Logger.Info($"Exception parsing playlist: {e.ToString()}");
+                Logger.Info($"Exception parsing playlist: {e}");
             }
             return null;
         }
@@ -76,7 +76,7 @@ namespace SyncSaber
             }
             catch (Exception e)
             {
-                Logger.Info($"{e.ToString()}");
+                Logger.Error(e);
             }
 
             playlistNode.Add("fileLoc", new JSONString("1"));
