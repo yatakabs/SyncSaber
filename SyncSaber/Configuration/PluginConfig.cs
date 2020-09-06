@@ -9,16 +9,16 @@ namespace SyncSaber.Configuration
     {
         public static PluginConfig Instance { get; set; }
 
-        public virtual bool AutoDownloadSongs { get; set; }
-        public virtual bool AutoUpdateSongs{ get; set; }
-        public virtual string BeastSaberUsername{ get; set; }
-        public virtual int MaxFollowingsPages{ get; set; }
-        public virtual int MaxBookmarksPages{ get; set; }
-        public virtual int MaxCuratorRecommendedPages{ get; set; }
-        public virtual bool DeleteOldVersions{ get; set; }
-        public virtual bool SyncBookmarksFeed{ get; set; }
-        public virtual bool SyncCuratorRecommendedFeed{ get; set; }
-        public virtual bool SyncFollowingsFeed{ get; set; }
+        public virtual bool AutoDownloadSongs { get; set; } = true;
+        public virtual bool AutoUpdateSongs { get; set; } = false;
+        public virtual string BeastSaberUsername { get; set; } = "";
+        public virtual int MaxFollowingsPages { get; set; } = 3;
+        public virtual int MaxBookmarksPages { get; set; } = 3;
+        public virtual int MaxCuratorRecommendedPages { get; set; } = 3;
+        public virtual bool DeleteOldVersions { get; set; } = false;
+        public virtual bool SyncBookmarksFeed { get; set; } = true;
+        public virtual bool SyncCuratorRecommendedFeed { get; set; } = false;
+        public virtual bool SyncFollowingsFeed { get; set; } = true;
 
 
         /// <summary>

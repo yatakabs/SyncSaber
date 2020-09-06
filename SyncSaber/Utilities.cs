@@ -77,8 +77,9 @@ namespace SyncSaber
                     {
                         File.Delete(newFilePath);
                     }
-                    catch(Exception)
+                    catch(Exception e)
                     {
+                        Logger.Error(e);
                         //Logger.Info($"Failed to delete file {Path.GetFileName(newFilePath)}! File is in use!");
                         string filesToDelete = Path.Combine(Environment.CurrentDirectory, "FilesToDelete");
                         if (!Directory.Exists(filesToDelete))
@@ -116,15 +117,16 @@ namespace SyncSaber
                 {
                     if (extracted)
                     {
-                        if (!Directory.Exists(extractPath))
+                        if (!Directory.Exists(extractPath)) {
+                            Logger.Debug($"temp directory : {extractPath}");
                             Directory.CreateDirectory(extractPath);
-
+                        }
                         MoveFilesRecursively(new DirectoryInfo(Path.Combine(Environment.CurrentDirectory, ".syncsabertemp")), new DirectoryInfo(extractPath));
                     }
                 }
                 catch (Exception e)
                 {
-                    Logger.Info($"An exception occured while trying to move files into their final directory! {e.ToString()}");
+                    Logger.Info($"An exception occured while trying to move files into their final directory! {e}");
                 }
                 EmptyDirectory(".syncsabertemp");
             }
