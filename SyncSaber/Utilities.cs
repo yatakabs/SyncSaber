@@ -27,17 +27,17 @@ namespace SyncSaber
             gameObject.transform.eulerAngles = new Vector3(0, 0, 0);
             gameObject.transform.localScale = new Vector3(0.01f, 0.01f, 0.01f);
 
-            var _canvas = gameObject.AddComponent<Canvas>();
-            _canvas.renderMode = RenderMode.WorldSpace;
-            var rectTransform = _canvas.transform as RectTransform;
+            var canvas = gameObject.AddComponent<Canvas>();
+            canvas.renderMode = RenderMode.WorldSpace;
+            var rectTransform = canvas.transform as RectTransform;
             rectTransform.sizeDelta = new Vector2(200, 50);
 
-            var _notificationText = BeatSaberUI.CreateText(_canvas.transform as RectTransform, text, new Vector2(0, -20), new Vector2(400, 20));
+            var notificationText = BeatSaberUI.CreateText(canvas.transform as RectTransform, text, new Vector2(0f, -50f), new Vector2(400f, 20f));
 
-            _notificationText.text = text;
-            _notificationText.fontSize = 10f;
-            _notificationText.alignment = TextAlignmentOptions.Center;
-            return _notificationText;
+            notificationText.text = text;
+            notificationText.fontSize = 10f;
+            notificationText.alignment = TextAlignmentOptions.Center;
+            return notificationText;
         }
 
         public static async Task DownloadFile(string url, string path)
