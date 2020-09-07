@@ -26,6 +26,7 @@ namespace SyncSaber
     public class Plugin
     {
         public static bool SongBrowserPluginPresent { get; set; }
+        public bool IsInGame { get; private set; }
 
         internal static Plugin instance { get; private set; }
         public string Name => "SyncSaber";
@@ -78,18 +79,19 @@ namespace SyncSaber
             
             BSEvents.earlyMenuSceneLoadedFresh += this.BSEvents_earlyMenuSceneLoadedFresh;
             BSEvents.lateMenuSceneLoadedFresh += this.BSEvents_lateMenuSceneLoadedFresh;
+            
             SceneManager.activeSceneChanged += SceneManagerOnActiveSceneChanged;
             _ = DelayedStartup();
         }
 
         private async void BSEvents_lateMenuSceneLoadedFresh(ScenesTransitionSetupDataSO obj)
         {
-            SyncSaber.Instance.DelayedActiveSceneChanged();
             await Task.Delay(1000);
             while (Loader.AreSongsLoading) {
                 await Task.Delay(200);
             }
             await SyncSaber.Instance.Sync();
+            SyncSaber.Instance._timer.Start();
         }
 
         private void BSEvents_earlyMenuSceneLoadedFresh(ScenesTransitionSetupDataSO obj)
@@ -112,29 +114,7 @@ namespace SyncSaber
 
         void SceneManagerOnActiveSceneChanged(Scene arg0, Scene scene)
         {
-            if (scene.name == "GameCore")
-            {
-                if (_mapperFeedNotification != null)
-                {
-                    GameObject.Destroy(_mapperFeedNotification);
-                    _mapperFeedNotification = null;
-                }
-            }
-        }
-
-        public static void SongBrowserCancelFilter()
-        {
-            if (SongBrowserPluginPresent) {
-                var songBrowserUI = SongBrowser.SongBrowserApplication.Instance.GetField<SongBrowser.UI.SongBrowserUI, SongBrowser.SongBrowserApplication>("_songBrowserUI");
-                if (songBrowserUI) {
-                    if (songBrowserUI.Model.Settings.filterMode != SongBrowser.DataAccess.SongFilterMode.None && songBrowserUI.Model.Settings.sortMode != SongBrowser.DataAccess.SongSortMode.Original) {
-                        songBrowserUI.CancelFilter();
-                    }
-                }
-                else {
-                    Logger.Info("There was a problem obtaining SongBrowserUI object, unable to reset filters");
-                }
-            }
+            this.IsInGame = scene.name == "GameCore";
         }
     }
 }

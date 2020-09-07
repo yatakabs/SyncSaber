@@ -10,7 +10,6 @@ namespace SyncSaber.Configuration
         public static PluginConfig Instance { get; set; }
 
         public virtual bool AutoDownloadSongs { get; set; } = true;
-        public virtual bool AutoUpdateSongs { get; set; } = false;
         public virtual string BeastSaberUsername { get; set; } = "";
         public virtual int MaxFollowingsPages { get; set; } = 3;
         public virtual int MaxBookmarksPages { get; set; } = 3;
@@ -45,7 +44,6 @@ namespace SyncSaber.Configuration
             // This instance's members populated from other
 
             AutoDownloadSongs = other.AutoDownloadSongs;
-            AutoUpdateSongs = other.AutoUpdateSongs;
             BeastSaberUsername = other.BeastSaberUsername;
             MaxFollowingsPages = other.MaxFollowingsPages;
             MaxBookmarksPages = other.MaxBookmarksPages;
