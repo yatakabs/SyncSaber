@@ -111,7 +111,7 @@ namespace SyncSaber
 
         private void FixedUpdate()
         {
-            if (!string.IsNullOrEmpty(_notificationText.text) && _uiResetTime <= DateTime.Now)
+            if (!string.IsNullOrEmpty(_notificationText?.text) && _uiResetTime <= DateTime.Now)
                 _notificationText.text = "";
         }
         #endregion
