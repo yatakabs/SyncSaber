@@ -164,7 +164,7 @@ namespace SyncSaber
                 while (AuthorDownloadQueue.TryPop(out var author)) {
                     await DownloadAllSongsByAuthor(author);
                 }
-                while (!string.IsNullOrWhiteSpace(PluginConfig.Instance.BeastSaberUsername) && _beastSaberFeedIndex < _beastSaberFeeds.Count) {
+                while (_beastSaberFeedIndex < _beastSaberFeeds.Count) {
                     if (_beastSaberFeedIndex == 0 && (!PluginConfig.Instance.SyncFollowingsFeed || string.IsNullOrWhiteSpace(PluginConfig.Instance.BeastSaberUsername))) {
                         _beastSaberFeedIndex++;
                         continue;

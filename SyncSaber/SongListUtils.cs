@@ -22,6 +22,7 @@ namespace SyncSaber
         {
             yield return new WaitWhile(() => !Loader.AreSongsLoaded && Loader.AreSongsLoading);
             Loader.Instance.RefreshSongs(fullRefresh);
+            yield return new WaitWhile(() => Loader.AreSongsLoading);
             try {
                 PlaylistCollectionOverride.refreshPlaylists();
             }
