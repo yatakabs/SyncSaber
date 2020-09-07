@@ -23,12 +23,6 @@ namespace SyncSaber.UI
             get => PluginConfig.Instance.AutoDownloadSongs;
             set => PluginConfig.Instance.AutoDownloadSongs = value;
         }
-        [UIValue("auto-update-songs")]
-        public virtual bool AutoUpdateSongs
-        {
-            get => PluginConfig.Instance.AutoUpdateSongs;
-            set => PluginConfig.Instance.AutoUpdateSongs = value;
-        }
         [UIValue("beastsaber-user-name")]
         public virtual string BeastSaberUsername
         {
