@@ -15,6 +15,7 @@ namespace SyncSaber.NetWorks
     {
         private static readonly HttpClient client;
         private static readonly int RETRY_COUNT = 5;
+        private static readonly SemaphoreSlim semaphoreSlim = new SemaphoreSlim(2, 2);
 
         static WebClient()
         {
@@ -77,6 +78,8 @@ namespace SyncSaber.NetWorks
 
             // send request
             try {
+                await semaphoreSlim.WaitAsync();
+
                 HttpResponseMessage resp = null;
                 var retryCount = 0;
                 do {
@@ -130,6 +133,9 @@ namespace SyncSaber.NetWorks
             catch (Exception e) {
                 Logger.Error($"{e}");
                 throw;
+            }
+            finally {
+                semaphoreSlim.Release();
             }
         }
     }

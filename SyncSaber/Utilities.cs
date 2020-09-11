@@ -132,6 +132,22 @@ namespace SyncSaber
             }
         }
 
+        public static void ExtractZip(Stream stream, string extractPath)
+        {
+            if (stream == null || string.IsNullOrWhiteSpace(extractPath)) {
+                return;
+            }
+            try {
+                using (var archaive = new ZipArchive(stream, ZipArchiveMode.Read)) {
+                    archaive.ExtractToDirectory(extractPath);
+                }
+            }
+            catch (Exception e) {
+                Logger.Info($"{e}");
+                return;
+            }
+        }
+
         public static bool IsModInstalled(string modName)
         {
             return PluginManager.GetPlugin(modName) != null;

@@ -141,16 +141,17 @@ namespace SyncSaber
                 return;
             }
             Logger.Info(text);
-            context.Post(d =>
+            HMMainThreadDispatcher.instance?.Enqueue(() =>
             {
                 _uiResetTime = DateTime.Now.AddSeconds(5);
                 if (_notificationText)
                     _notificationText.text = "SyncSaber - " + text;
-            }, null);
+            });
         }
 
         public async Task Sync()
         {
+            var tasks = new List<Task>();
             foreach (string mapper in File.ReadAllLines(_favoriteMappersPath)) {
                 Logger.Info($"Mapper: {mapper}");
                 AuthorDownloadQueue.Push(mapper);
@@ -162,7 +163,7 @@ namespace SyncSaber
                 }
 
                 while (AuthorDownloadQueue.TryPop(out var author)) {
-                    await DownloadAllSongsByAuthor(author);
+                    tasks.Add(DownloadAllSongsByAuthor(author));
                 }
                 while (_beastSaberFeedIndex < _beastSaberFeeds.Count) {
                     if (_beastSaberFeedIndex == 0 && (!PluginConfig.Instance.SyncFollowingsFeed || string.IsNullOrWhiteSpace(PluginConfig.Instance.BeastSaberUsername))) {
@@ -177,12 +178,13 @@ namespace SyncSaber
                         _beastSaberFeedIndex++;
                         continue;
                     }
-                    await DownloadBeastSaberFeeds(_beastSaberFeedIndex);
+                    tasks.Add(DownloadBeastSaberFeeds(_beastSaberFeedIndex));
                     _beastSaberFeedIndex++;
                 }
                 while (Loader.AreSongsLoading) {
                     await Task.Delay(200);
                 }
+                await Task.WhenAll(tasks);
                 if (_didDownloadAnySong) {
                     StartCoroutine(SongListUtils.RefreshSongs(false));
                     _didDownloadAnySong = false;
@@ -272,7 +274,7 @@ namespace SyncSaber
             try {
                 do {
                     DisplayNotification($"Checking {author}'s maps. ({pageCount} page)");
-                    var res = await WebClient.GetAsync($"https://beatsaver.com/api/search/advanced/{pageCount}?q=uploader.username:{author}", new CancellationTokenSource().Token);
+                    var res = await WebClient.GetAsync($"https://beatsaver.com/api/search/advanced/{pageCount}?q=uploader.username:{author}", new CancellationTokenSource().Token).ConfigureAwait(false);
                     if (!res.IsSuccessStatusCode) {
                         Logger.Info($"{res.StatusCode}");
                         return;
@@ -297,18 +299,17 @@ namespace SyncSaber
                                 string currentSongDirectory = Path.Combine(_customLevelsPath, Regex.Replace($"{key} ({songName} - {metaData["songAuthorName"].Value})", "[:*/?\"<>|]", ""));
                                 Logger.Debug($"{songName} : {currentSongDirectory}");
                                 DisplayNotification($"Downloading {songName}");
-                                string localPath = Path.Combine(Path.GetTempPath(), $"{hash}.zip");
                                 var url = $"https://beatsaver.com{song["downloadURL"].Value}";
                                 Logger.Info(url);
-                                Logger.Info(localPath);
                                 DisplayNotification($"Download - {songName}");
-                                await Utilities.DownloadFile(url, localPath);
-                                if (File.Exists(localPath)) {
-                                    await Utilities.ExtractZip(localPath, currentSongDirectory);
+                                var buff = await WebClient.DownloadSong(url, new CancellationTokenSource().Token);
+                                if (buff == null) {
+                                    continue;
+                                }
+                                using (var st = new MemoryStream(buff)) {
+                                    Utilities.ExtractZip(st, currentSongDirectory);
                                     _didDownloadAnySong = true;
                                 }
-                                else
-                                    downloadFailed = true;
                             }
                             catch (Exception e) {
                                 Logger.Error(e);
@@ -401,15 +402,16 @@ namespace SyncSaber
                                 DisplayNotification($"Downloading {songName}");
 
                                 string localPath = Path.Combine(Path.GetTempPath(), $"{hash}.zip");
-                                await Utilities.DownloadFile($"{downloadUrl}", localPath);
-                                if (File.Exists(localPath)) {
-                                    await Utilities.ExtractZip(localPath, currentSongDirectory);
+                                var buff = await WebClient.DownloadSong(downloadUrl, new CancellationTokenSource().Token);
+                                if (buff == null) {
+                                    continue;
+                                }
+                                using (var st = new MemoryStream(buff)) {
+                                    Utilities.ExtractZip(st, currentSongDirectory);
                                     downloadCount++;
                                     downloadCountForPage++;
                                     _didDownloadAnySong = true;
                                 }
-                                else
-                                    downloadFailed = true;
                             }
 
                             // Keep a history of all the songs we download- count it as downloaded even if the user already had it downloaded previously so if they delete it it doesn't get redownloaded
