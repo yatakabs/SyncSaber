@@ -137,6 +137,9 @@ namespace SyncSaber
             if (stream == null || string.IsNullOrWhiteSpace(extractPath)) {
                 return;
             }
+            if (File.Exists(extractPath)) {
+                return;
+            }
             try {
                 using (var archaive = new ZipArchive(stream, ZipArchiveMode.Read)) {
                     archaive.ExtractToDirectory(extractPath);
