@@ -33,7 +33,7 @@ namespace SyncSaber.NetWorks
             }
             catch (Exception e) {
                 Logger.Error($"{e}");
-                throw;
+                return null;
             }
         }
 
@@ -41,14 +41,14 @@ namespace SyncSaber.NetWorks
         {
             try {
                 var response = await SendAsync(HttpMethod.Get, url, token);
-                if (response.IsSuccessStatusCode) {
+                if (response?.IsSuccessStatusCode != true) {
                     return response.ContentToBytes();
                 }
                 return null;
             }
             catch (Exception e) {
                 Logger.Error($"{e}");
-                throw;
+                return null;
             }
         }
 
@@ -61,14 +61,14 @@ namespace SyncSaber.NetWorks
             try {
                 var response = await SendAsync(HttpMethod.Get, url, token, progress: progress);
 
-                if (response.IsSuccessStatusCode) {
+                if (response?.IsSuccessStatusCode != true) {
                     return response.ContentToBytes();
                 }
                 return null;
             }
             catch (Exception e) {
                 Logger.Error($"{e}");
-                throw;
+                return null;
             }
         }
 
