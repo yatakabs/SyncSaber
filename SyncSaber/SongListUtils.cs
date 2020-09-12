@@ -20,9 +20,9 @@ namespace SyncSaber
     {
         public static IEnumerator RefreshSongs(bool fullRefresh = false)
         {
-            yield return new WaitWhile(() => !Loader.AreSongsLoaded && Loader.AreSongsLoading);
+            yield return new WaitWhile(() => Plugin.instance?.IsInGame == false && !Loader.AreSongsLoaded && Loader.AreSongsLoading);
             Loader.Instance.RefreshSongs(fullRefresh);
-            yield return new WaitWhile(() => Loader.AreSongsLoading);
+            yield return new WaitWhile(() => Plugin.instance?.IsInGame == false && Loader.AreSongsLoading);
             try {
                 PlaylistCollectionOverride.refreshPlaylists();
             }

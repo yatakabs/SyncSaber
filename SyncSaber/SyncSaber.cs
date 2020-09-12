@@ -273,6 +273,9 @@ namespace SyncSaber
 
             try {
                 do {
+                    while (Plugin.instance?.IsInGame == true) {
+                        await Task.Delay(200);
+                    }
                     DisplayNotification($"Checking {author}'s maps. ({pageCount} page)");
                     var res = await WebClient.GetAsync($"https://beatsaver.com/api/search/advanced/{pageCount}?q=uploader.username:{author}", new CancellationTokenSource().Token).ConfigureAwait(false);
                     if (!res.IsSuccessStatusCode) {
@@ -284,9 +287,6 @@ namespace SyncSaber
                     lastPage = result["lastPage"].AsInt;
 
                     foreach (var keyvalue in docs) {
-                        while (Plugin.instance?.IsInGame != false || Loader.AreSongsLoading) {
-                            await Task.Delay(200);
-                        }
                         var song = keyvalue.Value as JSONObject;
                         var hash = song["hash"].Value;
                         var key = song["key"].Value;
@@ -302,14 +302,20 @@ namespace SyncSaber
                                 var url = $"https://beatsaver.com{song["downloadURL"].Value}";
                                 Logger.Info(url);
                                 DisplayNotification($"Download - {songName}");
+                                while (Plugin.instance?.IsInGame == true) {
+                                    await Task.Delay(200);
+                                }
                                 var buff = await WebClient.DownloadSong(url, new CancellationTokenSource().Token);
                                 if (buff == null) {
                                     continue;
                                 }
+                                while (Plugin.instance?.IsInGame == true) {
+                                    await Task.Delay(200);
+                                }
                                 using (var st = new MemoryStream(buff)) {
                                     Utilities.ExtractZip(st, currentSongDirectory);
-                                    _didDownloadAnySong = true;
                                 }
+                                _didDownloadAnySong = true;
                             }
                             catch (Exception e) {
                                 Logger.Error(e);
@@ -358,6 +364,9 @@ namespace SyncSaber
                 DisplayNotification($"Checking page {pageIndex} of {_beastSaberFeeds.ElementAt(feedToDownload).Key} feed from BeastSaber!");
 
                 try {
+                    while (Plugin.instance?.IsInGame == true) {
+                        await Task.Delay(200);
+                    }
                     var res = await WebClient.GetAsync($"{_beastSaberFeeds.ElementAt(feedToDownload).Value.Replace("%BeastSaberUserName%", PluginConfig.Instance.BeastSaberUsername)}/feed/?acpage={pageIndex}", new CancellationTokenSource().Token);
                     if (!res.IsSuccessStatusCode) {
                         return;
@@ -402,16 +411,22 @@ namespace SyncSaber
                                 DisplayNotification($"Downloading {songName}");
 
                                 string localPath = Path.Combine(Path.GetTempPath(), $"{hash}.zip");
+                                while (Plugin.instance?.IsInGame == true) {
+                                    await Task.Delay(200);
+                                }
                                 var buff = await WebClient.DownloadSong(downloadUrl, new CancellationTokenSource().Token);
                                 if (buff == null) {
                                     continue;
                                 }
+                                while (Plugin.instance?.IsInGame == true) {
+                                    await Task.Delay(200);
+                                }
                                 using (var st = new MemoryStream(buff)) {
                                     Utilities.ExtractZip(st, currentSongDirectory);
-                                    downloadCount++;
-                                    downloadCountForPage++;
-                                    _didDownloadAnySong = true;
                                 }
+                                downloadCount++;
+                                downloadCountForPage++;
+                                _didDownloadAnySong = true;
                             }
 
                             // Keep a history of all the songs we download- count it as downloaded even if the user already had it downloaded previously so if they delete it it doesn't get redownloaded
@@ -428,8 +443,6 @@ namespace SyncSaber
 
                             totalSongs++;
                             totalSongsForPage++;
-
-                            await Task.Delay(200);
                         }
                     }
 
