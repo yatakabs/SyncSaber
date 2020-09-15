@@ -40,30 +40,30 @@ namespace SyncSaber
             return notificationText;
         }
 
-        public static async Task DownloadFile(string url, string path)
-        {
-            var res = await WebClient.DownloadSong(url, new System.Threading.CancellationToken());
-            try {
-                if (!Directory.Exists(Path.GetDirectoryName(path)))
-                    Directory.CreateDirectory(Path.GetDirectoryName(path));
-                File.WriteAllBytes(path, res);
-            }
-            catch (Exception e) {
-                Logger.Info($"Exception when writing file! {e}");
-            }
-        }
+        //public static async Task DownloadFile(string url, string path)
+        //{
+        //    var res = await WebClient.DownloadSong(url, new System.Threading.CancellationToken());
+        //    try {
+        //        if (!Directory.Exists(Path.GetDirectoryName(path)))
+        //            Directory.CreateDirectory(Path.GetDirectoryName(path));
+        //        File.WriteAllBytes(path, res);
+        //    }
+        //    catch (Exception e) {
+        //        Logger.Info($"Exception when writing file! {e}");
+        //    }
+        //}
 
-        public static void EmptyDirectory(string directory, bool delete = true)
-        {
-            if (Directory.Exists(directory))
-            {
-                var directoryInfo = new DirectoryInfo(directory);
-                foreach (System.IO.FileInfo file in directoryInfo.GetFiles()) file.Delete();
-                foreach (System.IO.DirectoryInfo subDirectory in directoryInfo.GetDirectories()) subDirectory.Delete(true);
+        //public static void EmptyDirectory(string directory, bool delete = true)
+        //{
+        //    if (Directory.Exists(directory))
+        //    {
+        //        var directoryInfo = new DirectoryInfo(directory);
+        //        foreach (System.IO.FileInfo file in directoryInfo.GetFiles()) file.Delete();
+        //        foreach (System.IO.DirectoryInfo subDirectory in directoryInfo.GetDirectories()) subDirectory.Delete(true);
 
-                if (delete) Directory.Delete(directory, true);
-            }
-        }
+        //        if (delete) Directory.Delete(directory, true);
+        //    }
+        //}
 
         public static void MoveFilesRecursively(DirectoryInfo source, DirectoryInfo target)
         {
@@ -92,45 +92,45 @@ namespace SyncSaber
             }
         }
 
-        public static async Task ExtractZip(string zipPath, string extractPath)
-        {
-            if (File.Exists(zipPath))
-            {
-                bool extracted = false;
-                try
-                {
-                    if (Directory.Exists(".syncsabertemp"))
-                        Directory.CreateDirectory(".syncsabertemp");
+        //public static async Task ExtractZip(string zipPath, string extractPath)
+        //{
+        //    if (File.Exists(zipPath))
+        //    {
+        //        bool extracted = false;
+        //        try
+        //        {
+        //            if (Directory.Exists(".syncsabertemp"))
+        //                Directory.CreateDirectory(".syncsabertemp");
 
-                    ZipFile.ExtractToDirectory(zipPath, ".syncsabertemp");
-                    extracted = true;
-                }
-                catch (Exception)
-                {
-                    Logger.Info($"An error occured while trying to extract \"{zipPath}\"!");
-                    return;
-                }
-                await Task.Delay(500);
-                File.Delete(zipPath);
+        //            ZipFile.ExtractToDirectory(zipPath, ".syncsabertemp");
+        //            extracted = true;
+        //        }
+        //        catch (Exception)
+        //        {
+        //            Logger.Info($"An error occured while trying to extract \"{zipPath}\"!");
+        //            return;
+        //        }
+        //        await Task.Delay(500);
+        //        File.Delete(zipPath);
 
-                try
-                {
-                    if (extracted)
-                    {
-                        if (!Directory.Exists(extractPath)) {
-                            Logger.Debug($"temp directory : {extractPath}");
-                            Directory.CreateDirectory(extractPath);
-                        }
-                        MoveFilesRecursively(new DirectoryInfo(Path.Combine(Environment.CurrentDirectory, ".syncsabertemp")), new DirectoryInfo(extractPath));
-                    }
-                }
-                catch (Exception e)
-                {
-                    Logger.Info($"An exception occured while trying to move files into their final directory! {e}");
-                }
-                EmptyDirectory(".syncsabertemp");
-            }
-        }
+        //        try
+        //        {
+        //            if (extracted)
+        //            {
+        //                if (!Directory.Exists(extractPath)) {
+        //                    Logger.Debug($"temp directory : {extractPath}");
+        //                    Directory.CreateDirectory(extractPath);
+        //                }
+        //                MoveFilesRecursively(new DirectoryInfo(Path.Combine(Environment.CurrentDirectory, ".syncsabertemp")), new DirectoryInfo(extractPath));
+        //            }
+        //        }
+        //        catch (Exception e)
+        //        {
+        //            Logger.Info($"An exception occured while trying to move files into their final directory! {e}");
+        //        }
+        //        EmptyDirectory(".syncsabertemp");
+        //    }
+        //}
 
         public static void ExtractZip(Stream stream, string extractPath)
         {
