@@ -23,12 +23,7 @@ namespace SyncSaber
             yield return new WaitWhile(() => Plugin.instance?.IsInGame == false && !Loader.AreSongsLoaded && Loader.AreSongsLoading);
             Loader.Instance.RefreshSongs(fullRefresh);
             yield return new WaitWhile(() => Plugin.instance?.IsInGame == false && Loader.AreSongsLoading);
-            try {
-                PlaylistCollectionOverride.refreshPlaylists();
-            }
-            catch (Exception e) {
-                Logger.Error(e);
-            }
+            PlaylistCollectionOverride.RefreshPlaylists();
             yield return new WaitWhile(() => Loader.AreSongsLoading);
         }
     }

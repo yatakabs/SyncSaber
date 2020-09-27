@@ -181,6 +181,9 @@ namespace SyncSaber
                     tasks.Add(DownloadBeastSaberFeeds(_beastSaberFeedIndex));
                     _beastSaberFeedIndex++;
                 }
+                if (PluginConfig.Instance.SyncPPSongs) {
+                    tasks.Add(DownloadPPSongs());
+                }
                 while (Loader.AreSongsLoading) {
                     await Task.Delay(200);
                 }
@@ -469,6 +472,59 @@ namespace SyncSaber
                     break;
             }
             Logger.Info($"Downloaded {downloadCount} songs from BeastSaber {_beastSaberFeeds.ElementAt(feedToDownload).Key} feed in {((DateTime.Now - startTime).Seconds)} seconds. Checked {(pageIndex + 1)} page{(pageIndex > 0 ? "s" : "")}, skipped {(totalSongs - downloadCount)} songs.");
+        }
+
+        private async Task DownloadPPSongs()
+        {
+            DisplayNotification("Download PPSongs.");
+            var songlist = SongDataCore.Plugin.Songs.Data.Songs.Where(x => x.Value.diffs.Max(y => y.pp) > 0d).OrderByDescending(x => x.Value.diffs.Max(y => y.pp)).ToList();
+            var soungCount = 0;
+            foreach (var ppMap in songlist) {
+                if (PluginConfig.Instance.MaxPPSongsCount <= soungCount) {
+                    break;
+                }
+                if (Loader.GetLevelByHash(ppMap.Key) != null) {
+                    Logger.Info("Skip pp song.");
+                    soungCount++;
+                    continue;
+                }
+                while (Plugin.instance?.IsInGame == true) {
+                    await Task.Delay(200);
+                }
+                var songInfo = await WebClient.GetAsync($"https://beatsaver.com/api/maps/by-hash/{ppMap.Key}", new CancellationTokenSource().Token);
+                try {
+                    var jsonObject = JSON.Parse(songInfo.ContentToString());
+                    if (jsonObject == null) {
+                        Logger.Info($"missing pp song : https://beatsaver.com/api/maps/by-hash/{ppMap.Key}");
+                        continue;
+                    }
+                    DisplayNotification($"Downloading {jsonObject["name"].Value}");
+                    var buff = await WebClient.DownloadSong($"https://beatsaver.com/api/download/key/{ppMap.Value.key}", new CancellationTokenSource().Token);
+                    if (buff == null) {
+                        Logger.Info($"missing download song : {jsonObject["name"].Value}");
+                        continue;
+                    }
+                    while (Plugin.instance?.IsInGame == true) {
+                        await Task.Delay(200);
+                    }
+                    var songDirectory = Path.Combine(_customLevelsPath, Regex.Replace($"{ppMap.Value.key} ({jsonObject["name"].Value} - {jsonObject["LevelAuthorName"].Value})", "[:*/?\"<>|]", "")); ;
+                    using (var st = new MemoryStream(buff)) {
+                        Utilities.ExtractZip(st, songDirectory);
+                    }
+                    _didDownloadAnySong = true;
+                    SongDownloadHistory.Add(ppMap.Value.key);
+                    UpdatePlaylist(_syncSaberSongs, ppMap.Key, jsonObject["name"]);
+                    soungCount++;
+                }
+                catch (Exception e) {
+                    Logger.Error(e);
+                }
+            }
+            // Write our download history to file
+            Utilities.WriteStringListSafe(_historyPath, SongDownloadHistory.Distinct().ToList());
+
+            // Write to the SynCSaber playlist
+            _syncSaberSongs.WritePlaylist();
         }
     }
 }

@@ -14,10 +14,12 @@ namespace SyncSaber.Configuration
         public virtual int MaxFollowingsPages { get; set; } = 3;
         public virtual int MaxBookmarksPages { get; set; } = 3;
         public virtual int MaxCuratorRecommendedPages { get; set; } = 3;
+        public virtual int MaxPPSongsCount { get; set; } = 50;
         public virtual bool DeleteOldVersions { get; set; } = false;
         public virtual bool SyncBookmarksFeed { get; set; } = true;
         public virtual bool SyncCuratorRecommendedFeed { get; set; } = false;
         public virtual bool SyncFollowingsFeed { get; set; } = true;
+        public virtual bool SyncPPSongs { get; set; } = true;
 
 
         /// <summary>
