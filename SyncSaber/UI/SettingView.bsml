@@ -6,5 +6,6 @@
     <checkbox text='Sync bookmarks feed' value='sync-bookmarks-feed'/>
     <checkbox text='Sync creator recomended feed' value='sync-creator-recomended-feed'/>
     <checkbox text='Sync Followings feed' value='sync-followings-feed'/>
+    <checkbox text='Sync PP songs' value='sync-pp-songs'/>
   </settings-container>
 </bg>

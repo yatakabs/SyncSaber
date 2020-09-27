@@ -71,6 +71,13 @@ namespace SyncSaber.UI
             get => PluginConfig.Instance.SyncFollowingsFeed;
             set => PluginConfig.Instance.SyncFollowingsFeed = value;
         }
+
+        [UIValue("sync-pp-songs")]
+        public virtual bool SyncPPSongs
+        {
+            get => PluginConfig.Instance.SyncPPSongs;
+            set => PluginConfig.Instance.SyncPPSongs = value;
+        }
         #endregion
         //ﾟ+｡*ﾟ+｡｡+ﾟ*｡+ﾟ ﾟ+｡*ﾟ+｡｡+ﾟ*｡+ﾟ ﾟ+｡*ﾟ+｡*ﾟ+｡｡+ﾟ*｡+ﾟ ﾟ+｡*ﾟ+｡｡+ﾟ*｡+ﾟ ﾟ+｡*ﾟ+｡*ﾟ+｡｡+ﾟ*｡+ﾟ ﾟ+｡*ﾟ+｡｡+ﾟ*｡+ﾟ ﾟ+｡*
         #region // コマンド
