@@ -159,7 +159,7 @@ namespace SyncSaber
             try {
                 await this.semaphoreSlim.WaitAsync();
                 this._didDownloadAnySong = false;
-                while (!_initialized  && !Loader.AreSongsLoaded) {
+                while (!_initialized  || !Loader.AreSongsLoaded) {
                     await Task.Delay(200);
                 }
 
