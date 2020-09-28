@@ -298,6 +298,12 @@ namespace SyncSaber
                         var downloadSucess = false;
                         if (SongDownloadHistory.Contains(key.ToLower()) || Loader.GetLevelByHash(hash.ToUpper()) != null) {
                             SongDownloadHistory.Add(key.ToLower());
+
+                            // Update our playlist with the latest song info
+                            UpdatePlaylist(_syncSaberSongs, hash, songName);
+
+                            // Delete any duplicate songs that we've downloaded
+                            RemoveOldVersions(hash);
                             continue;
                         }
 
@@ -420,6 +426,12 @@ namespace SyncSaber
                             bool downloadSucess = false;
                             if (SongDownloadHistory.Contains(key.ToLower()) || Loader.GetLevelByHash(hash.ToUpper()) != null) {
                                 SongDownloadHistory.Add(key.ToLower());
+                                // Update our playlist with the latest song info
+                                UpdatePlaylist(_syncSaberSongs, hash, songName);
+                                UpdatePlaylist(GetPlaylistForFeed(feedToDownload), hash, songName);
+
+                                // Delete any duplicate songs that we've downloaded
+                                RemoveOldVersions(hash);
                                 continue;
                             }
                             if (PluginConfig.Instance.AutoDownloadSongs) {
@@ -472,19 +484,17 @@ namespace SyncSaber
                     Logger.Error(e);
                 }
 
-                // Write our download history to file
-                Utilities.WriteStringListSafe(_historyPath, SongDownloadHistory.ToList());
-
-                // Write to the SynCSaber playlist
-                _syncSaberSongs.WritePlaylist();
-                GetPlaylistForFeed(feedToDownload).WritePlaylist();
-
                 //Logger.Info($"Reached end of page! Found {totalSongsForPage.ToString()} songs total, downloaded {downloadCountForPage.ToString()}!");
                 pageIndex++;
 
                 if (pageIndex > GetMaxBeastSaberPages(feedToDownload) + 1 && GetMaxBeastSaberPages(feedToDownload) != 0)
                     break;
             }
+            // Write our download history to file
+            Utilities.WriteStringListSafe(_historyPath, SongDownloadHistory.ToList());
+            // Write to the SynCSaber playlist
+            _syncSaberSongs.WritePlaylist();
+            GetPlaylistForFeed(feedToDownload).WritePlaylist();
             Logger.Info($"Downloaded {downloadCount} songs from BeastSaber {_beastSaberFeeds.ElementAt(feedToDownload).Key} feed in {((DateTime.Now - startTime).Seconds)} seconds. Checked {(pageIndex + 1)} page{(pageIndex > 0 ? "s" : "")}, skipped {(totalSongs - downloadCount)} songs.");
         }
 
@@ -535,11 +545,16 @@ namespace SyncSaber
                     Logger.Error(e);
                 }
             }
-            // Write our download history to file
-            Utilities.WriteStringListSafe(_historyPath, SongDownloadHistory.ToList());
+            try {
+                // Write our download history to file
+                Utilities.WriteStringListSafe(_historyPath, SongDownloadHistory.ToList());
 
-            // Write to the SynCSaber playlist
-            _syncSaberSongs.WritePlaylist();
+                // Write to the SyncSaber playlist
+                _syncSaberSongs.WritePlaylist();
+            }
+            catch (Exception e) {
+                Logger.Error(e);
+            }
         }
     }
 }
