@@ -19,6 +19,8 @@ namespace SyncSaber
 {
     class Utilities
     {
+        private static readonly object _lockObject = new object();
+
         public static TextMeshProUGUI CreateNotificationText(string text)
         {
             var gameObject = new GameObject();
@@ -158,14 +160,16 @@ namespace SyncSaber
 
         public static void WriteStringListSafe(string path, List<string> data, bool sort = true)
         {
-            if (File.Exists(path))
-                File.Copy(path, path + ".bak", true);
+            lock (_lockObject) {
+                if (File.Exists(path))
+                    File.Copy(path, path + ".bak", true);
 
-            if(sort) 
-                data.Sort();
+                if (sort)
+                    data.Sort();
 
-            File.WriteAllLines(path, data);
-            File.Delete(path + ".bak");
+                File.WriteAllLines(path, data);
+                File.Delete(path + ".bak");
+            }
         }
     }
 }

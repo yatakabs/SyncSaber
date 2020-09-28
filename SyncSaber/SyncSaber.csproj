@@ -164,6 +164,7 @@
   <ItemGroup>
     <Compile Include="BeatSaberUI.cs" />
     <Compile Include="Configuration\PluginConfig.cs" />
+    <Compile Include="Extentions\HashSetExtention.cs" />
     <Compile Include="Extentions\LoaderExtention.cs" />
     <Compile Include="Logger.cs" />
     <Compile Include="NetWorks\WebClient.cs" />
