@@ -34,6 +34,15 @@ namespace SyncSaber
 #endif
         }
 
+        public static void Notice(string log, [CallerFilePath]string filepath = "", [CallerMemberName]string member = "", [CallerLineNumber]int? linenum = 0)
+        {
+#if DEBUG
+            Logger.log.Notice($"[{filepath}] [{member}:({linenum})] : {log}");
+#else
+            Logger.log.Notice($"[{member}:({linenum})] : {log}");
+#endif
+        }
+
         public static void Debug(string log, [CallerFilePath]string filepath = "", [CallerMemberName]string member = "", [CallerLineNumber]int? linenum = 0)
         {
 #if DEBUG

@@ -41,7 +41,7 @@ namespace SyncSaber.NetWorks
         {
             try {
                 var response = await SendAsync(HttpMethod.Get, url, token);
-                if (response?.IsSuccessStatusCode != true) {
+                if (response?.IsSuccessStatusCode == true) {
                     return response.ContentToBytes();
                 }
                 return null;
@@ -61,7 +61,7 @@ namespace SyncSaber.NetWorks
             try {
                 var response = await SendAsync(HttpMethod.Get, url, token, progress: progress);
 
-                if (response?.IsSuccessStatusCode != true) {
+                if (response?.IsSuccessStatusCode == true) {
                     return response.ContentToBytes();
                 }
                 return null;

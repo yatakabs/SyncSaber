@@ -23,66 +23,65 @@ namespace SyncSaber
 
     public class PlaylistIO
     {
+        private static readonly object _lockObject = new object();
 
         public static Playlist ReadPlaylistSongs(Playlist playlist)
         {
-            try
-            {
-                string playlistPath = $"Playlists\\{playlist.fileName}{(playlist.oldFormat ? ".json" : ".bplist")}";
-                String json = File.ReadAllText(playlistPath);
+            lock (_lockObject) {
+                try {
+                    string playlistPath = $"Playlists\\{playlist.fileName}{(playlist.oldFormat ? ".json" : ".bplist")}";
+                    String json = File.ReadAllText(playlistPath);
 
-                JSONNode playlistNode = JSON.Parse(json);
+                    JSONNode playlistNode = JSON.Parse(json);
 
-                playlist.Image = playlistNode["image"];
-                playlist.Title = playlistNode["playlistTitle"];
-                playlist.Author = playlistNode["playlistAuthor"];
-                playlist.Songs = new List<PlaylistSong>();
+                    playlist.Image = playlistNode["image"];
+                    playlist.Title = playlistNode["playlistTitle"];
+                    playlist.Author = playlistNode["playlistAuthor"];
+                    playlist.Songs = new List<PlaylistSong>();
 
-                foreach (JSONNode node in playlistNode["songs"].AsArray)
-                {
-                    playlist.Songs.Add(new PlaylistSong(node["hash"], node["songName"]));
+                    foreach (JSONNode node in playlistNode["songs"].AsArray) {
+                        playlist.Songs.Add(new PlaylistSong(node["hash"], node["songName"]));
+                    }
+
+                    playlist.fileLoc = null;
+
+                    return playlist;
                 }
-
-                playlist.fileLoc = null;
-
-                return playlist;
+                catch (Exception e) {
+                    Logger.Info($"Exception parsing playlist: {e}");
+                }
+                return null;
             }
-            catch (Exception e)
-            {
-                Logger.Info($"Exception parsing playlist: {e}");
-            }
-            return null;
         }
 
         public static void WritePlaylist(Playlist playlist)
         {
-            JSONNode playlistNode = new JSONObject();
+            lock (_lockObject) {
+                JSONNode playlistNode = new JSONObject();
 
-            playlistNode.Add("playlistTitle", new JSONString(playlist.Title));
-            playlistNode.Add("playlistAuthor", new JSONString(playlist.Author));
-            playlistNode.Add("image", new JSONString(playlist.Image));
+                playlistNode.Add("playlistTitle", new JSONString(playlist.Title));
+                playlistNode.Add("playlistAuthor", new JSONString(playlist.Author));
+                playlistNode.Add("image", new JSONString(playlist.Image));
 
-            JSONArray songArray = new JSONArray();
-            try
-            {
-                foreach (PlaylistSong s in playlist.Songs)
-                {
-                    JSONObject songObject = new JSONObject();
-                    songObject.Add("hash", new JSONString(s.hash));
-                    songObject.Add("songName", new JSONString(s.songName));
-                    songArray.Add(songObject);
+                JSONArray songArray = new JSONArray();
+                try {
+                    foreach (PlaylistSong s in playlist.Songs) {
+                        JSONObject songObject = new JSONObject();
+                        songObject.Add("hash", new JSONString(s.hash));
+                        songObject.Add("songName", new JSONString(s.songName));
+                        songArray.Add(songObject);
+                    }
+                    playlistNode.Add("songs", songArray);
                 }
-                playlistNode.Add("songs", songArray);
-            }
-            catch (Exception e)
-            {
-                Logger.Error(e);
-            }
+                catch (Exception e) {
+                    Logger.Error(e);
+                }
 
-            playlistNode.Add("fileLoc", new JSONString("1"));
+                playlistNode.Add("fileLoc", new JSONString("1"));
 
-            if (!Directory.Exists("Playlists")) Directory.CreateDirectory("Playlists");
-            File.WriteAllText($"Playlists\\{playlist.fileName}{(playlist.oldFormat ? ".json" : ".bplist")}", playlistNode.ToString());
+                if (!Directory.Exists("Playlists")) Directory.CreateDirectory("Playlists");
+                File.WriteAllText($"Playlists\\{playlist.fileName}{(playlist.oldFormat ? ".json" : ".bplist")}", playlistNode.ToString());
+            }
         }
     }
 
@@ -122,7 +121,7 @@ namespace SyncSaber
         {
             string oldPlaylistPath = $"Playlists\\{this.fileName}.json";
             string newPlaylistPath = $"Playlists\\{this.fileName}.bplist";
-            oldFormat = !File.Exists(newPlaylistPath);
+            oldFormat = File.Exists(oldPlaylistPath);
             Logger.Info($"Playlist \"{Title}\" found in {(oldFormat?"old":"new")} playlist format.");
 
             string playlistPath = oldFormat ? oldPlaylistPath : newPlaylistPath;
