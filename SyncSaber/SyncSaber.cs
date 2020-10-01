@@ -197,7 +197,7 @@ namespace SyncSaber
                 }
                 DisplayNotification("Finished checking for new songs!");
                 if (PluginManager.GetPlugin("PlaylistDownLoader") != null) {
-                    _ = PlaylistDownLoaderController.instance.CheckPlaylistsSong();
+                    this.CheckPlaylistSongs();
                 }
             }
             catch (Exception e) {
@@ -219,6 +219,16 @@ namespace SyncSaber
                     return PluginConfig.Instance.MaxCuratorRecommendedPages;
             }
             return 0;
+        }
+
+        private void CheckPlaylistSongs()
+        {
+            try {
+                _ = PlaylistDownLoaderController.instance.CheckPlaylistsSong();
+            }
+            catch (Exception e) {
+                Logger.Error(e);
+            }
         }
 
         private Playlist GetPlaylistForFeed(int feedToDownload)
@@ -513,7 +523,7 @@ namespace SyncSaber
                     break;
                 }
                 
-                while (Plugin.instance?.IsInGame == true) {
+                while (Plugin.instance?.IsInGame == true || !SongDataCore.Plugin.Instance.DatabasesLoaded) {
                     await Task.Delay(200);
                 }
                 if (SongDownloadHistory.Contains(ppMap.Value.key) || Loader.GetLevelByHash(ppMap.Key) != null) {
