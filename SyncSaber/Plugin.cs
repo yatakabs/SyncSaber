@@ -87,7 +87,7 @@ namespace SyncSaber
         private async void BSEvents_lateMenuSceneLoadedFresh(ScenesTransitionSetupDataSO obj)
         {
             await Task.Delay(1000);
-            while (Loader.AreSongsLoading) {
+            while (!Loader.AreSongsLoaded || Loader.AreSongsLoading) {
                 await Task.Delay(200);
             }
             await SyncSaber.Instance.Sync();
