@@ -27,6 +27,8 @@ using SyncSaber.Configuration;
 using SyncSaber.NetWorks;
 using System.Threading;
 using BS_Utils.Utilities;
+using IPA.Loader;
+using PlaylistDownLoader;
 
 namespace SyncSaber
 {
@@ -194,6 +196,9 @@ namespace SyncSaber
                     _didDownloadAnySong = false;
                 }
                 DisplayNotification("Finished checking for new songs!");
+                if (PluginManager.GetPlugin("PlaylistDownLoader") != null) {
+                    _ = PlaylistDownLoaderController.instance.CheckPlaylistsSong();
+                }
             }
             catch (Exception e) {
                 Logger.Error(e);
