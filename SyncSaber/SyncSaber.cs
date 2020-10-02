@@ -29,6 +29,7 @@ using System.Threading;
 using BS_Utils.Utilities;
 using IPA.Loader;
 using PlaylistDownLoader;
+using PlaylistLoaderLite.HarmonyPatches;
 
 namespace SyncSaber
 {
@@ -231,6 +232,9 @@ namespace SyncSaber
             yield return null;
             if (PluginManager.GetPlugin("PlaylistDownLoader") != null) {
                 yield return StartCoroutine(this.CheckPlaylistSongs());
+            }
+            else {
+                PlaylistCollectionOverride.RefreshPlaylists();
             }
 
         }
