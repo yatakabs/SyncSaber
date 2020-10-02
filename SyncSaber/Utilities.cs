@@ -17,7 +17,7 @@ using UnityEngine.Networking;
 
 namespace SyncSaber
 {
-    class Utilities
+    public class Utilities
     {
         private static readonly object _lockObject = new object();
 
