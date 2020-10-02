@@ -30,12 +30,6 @@ namespace SyncSaber
                     while (!Loader.AreSongsLoaded || Loader.AreSongsLoading || Plugin.instance.IsInGame) {
                         await Task.Delay(1000);
                     }
-                },
-                () =>
-                {
-                    if (PluginManager.GetPlugin("PlaylistDownLoader") == null) {
-                        PlaylistCollectionOverride.RefreshPlaylists();
-                    }
                 }).Run();
             yield return new WaitWhile(() => !Loader.AreSongsLoaded || Loader.AreSongsLoading || Plugin.instance.IsInGame);
         }
