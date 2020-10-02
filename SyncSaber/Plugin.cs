@@ -27,7 +27,7 @@ namespace SyncSaber
     {
         public static bool SongBrowserPluginPresent { get; set; }
         public bool IsInGame { get; private set; }
-
+        public static HashSet<string> SongDownloadHistory { get; } = new HashSet<string>();
         internal static Plugin instance { get; private set; }
         public string Name => "SyncSaber";
 

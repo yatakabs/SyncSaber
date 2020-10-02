@@ -44,7 +44,7 @@ namespace SyncSaber
         private int _beastSaberFeedIndex = 0;
 
         private Stack<string> AuthorDownloadQueue { get; } = new Stack<string>();
-        private HashSet<string> SongDownloadHistory { get; } = new HashSet<string>();
+        public static HashSet<string> SongDownloadHistory => Plugin.SongDownloadHistory;
         private Playlist _syncSaberSongs = new Playlist("SyncSaberPlaylist", "SyncSaber Playlist", "brian91292", "1");
         private Playlist _curatorRecommendedSongs = new Playlist("SyncSaberCuratorRecommendedPlaylist", "BeastSaber Curator Recommended", "brian91292", "1");
         private Playlist _followingsSongs = new Playlist("SyncSaberFollowingsPlaylist", "BeastSaber Followings", "brian91292", "1");
@@ -191,14 +191,12 @@ namespace SyncSaber
                     await Task.Delay(200);
                 }
                 await Task.WhenAll(tasks);
-                if (_didDownloadAnySong) {
-                    StartCoroutine(SongListUtils.RefreshSongs(false));
-                    _didDownloadAnySong = false;
-                }
-                DisplayNotification("Finished checking for new songs!");
-                if (PluginManager.GetPlugin("PlaylistDownLoader") != null) {
-                    this.CheckPlaylistSongs();
-                }
+
+                new HMTask(
+                    () =>
+                    {
+                        StartCoroutine(this.BeforeDownloadSongs());
+                    }).Run();
             }
             catch (Exception e) {
                 Logger.Error(e);
@@ -221,8 +219,25 @@ namespace SyncSaber
             return 0;
         }
 
-        private void CheckPlaylistSongs()
+        private IEnumerator BeforeDownloadSongs()
         {
+            yield return new WaitWhile(() => !Loader.AreSongsLoaded || Loader.AreSongsLoading || Plugin.instance.IsInGame);
+            if (_didDownloadAnySong) {
+                yield return StartCoroutine(SongListUtils.RefreshSongs(true));
+                _didDownloadAnySong = false;
+            }
+            yield return new WaitWhile(() => !Loader.AreSongsLoaded || Loader.AreSongsLoading || Plugin.instance.IsInGame);
+            DisplayNotification("Finished checking for new songs!");
+            yield return null;
+            if (PluginManager.GetPlugin("PlaylistDownLoader") != null) {
+                yield return StartCoroutine(this.CheckPlaylistSongs());
+            }
+
+        }
+
+        private IEnumerator CheckPlaylistSongs()
+        {
+            yield return new WaitWhile(() => !Loader.AreSongsLoaded || Loader.AreSongsLoading || Plugin.instance.IsInGame);
             try {
                 _ = PlaylistDownLoaderController.instance.CheckPlaylistsSong();
             }
@@ -516,7 +531,11 @@ namespace SyncSaber
         private async Task DownloadPPSongs()
         {
             DisplayNotification("Download PPSongs.");
-            var songlist = SongDataCore.Plugin.Songs.Data.Songs.Where(x => x.Value.diffs.Max(y => y.pp) > 0d).OrderByDescending(x => x.Value.diffs.Max(y => y.pp)).ToList();
+            var songlist = SongDataCore.Plugin.Songs.Data.Songs?.Where(x => x.Value.diffs.Max(y => y.pp) > 0d).OrderByDescending(x => x.Value.diffs.Max(y => y.pp))?.ToList();
+            if (songlist == null) {
+                return;
+            }
+
             var songCount = 0;
             foreach (var ppMap in songlist) {
                 if (PluginConfig.Instance.MaxPPSongsCount <= songCount) {
@@ -533,7 +552,7 @@ namespace SyncSaber
                 }
                 var songInfo = await WebClient.GetAsync($"https://beatsaver.com/api/maps/by-hash/{ppMap.Key}", new CancellationTokenSource().Token);
                 try {
-                    var jsonObject = JSON.Parse(songInfo.ContentToString());
+                    var jsonObject = JSON.Parse(songInfo?.ContentToString());
                     if (jsonObject == null) {
                         Logger.Info($"missing pp song : https://beatsaver.com/api/maps/by-hash/{ppMap.Key}");
                         continue;

@@ -1,6 +1,7 @@
 ﻿using BeatSaverDownloader.UI;
 using BS_Utils.Utilities;
 using HMUI;
+using IPA.Loader;
 using IPA.Utilities;
 using PlaylistLoaderLite.HarmonyPatches;
 using SongBrowser;
@@ -20,11 +21,23 @@ namespace SyncSaber
     {
         public static IEnumerator RefreshSongs(bool fullRefresh = false)
         {
-            yield return new WaitWhile(() => Plugin.instance?.IsInGame == false && !Loader.AreSongsLoaded && Loader.AreSongsLoading);
-            Loader.Instance.RefreshSongs(fullRefresh);
-            yield return new WaitWhile(() => Plugin.instance?.IsInGame == false && Loader.AreSongsLoading);
-            PlaylistCollectionOverride.RefreshPlaylists();
-            yield return new WaitWhile(() => Loader.AreSongsLoading);
+            yield return new WaitWhile(() => !Loader.AreSongsLoaded || Loader.AreSongsLoading || Plugin.instance.IsInGame);
+            new HMTask(
+                async () =>
+                {
+                    Loader.Instance.RefreshSongs(fullRefresh);
+                    await Task.Delay(1000);
+                    while (!Loader.AreSongsLoaded || Loader.AreSongsLoading || Plugin.instance.IsInGame) {
+                        await Task.Delay(1000);
+                    }
+                },
+                () =>
+                {
+                    if (PluginManager.GetPlugin("PlaylistDownLoader") == null) {
+                        PlaylistCollectionOverride.RefreshPlaylists();
+                    }
+                }).Run();
+            yield return new WaitWhile(() => !Loader.AreSongsLoaded || Loader.AreSongsLoading || Plugin.instance.IsInGame);
         }
     }
 }
