@@ -30,6 +30,7 @@ using BS_Utils.Utilities;
 using IPA.Loader;
 using PlaylistDownLoader;
 using PlaylistLoaderLite.HarmonyPatches;
+using SyncSaber.ScoreSabers;
 
 namespace SyncSaber
 {
@@ -330,8 +331,8 @@ namespace SyncSaber
                         var key = song["key"].Value;
                         var songName = song["name"].Value;
                         var downloadSucess = false;
-                        if (SongDownloadHistory.Contains(key.ToLower()) || Loader.GetLevelByHash(hash.ToUpper()) != null) {
-                            SongDownloadHistory.Add(key.ToLower());
+                        if (SongDownloadHistory.Contains(hash.ToLower()) || Loader.GetLevelByHash(hash.ToUpper()) != null) {
+                            SongDownloadHistory.Add(hash.ToLower());
 
                             // Update our playlist with the latest song info
                             UpdatePlaylist(_syncSaberSongs, hash, songName);
@@ -374,8 +375,8 @@ namespace SyncSaber
                         }
                         Logger.Info("Finish download");
                         // Keep a history of all the songs we download- count it as downloaded even if the user already had it downloaded previously so if they delete it it doesn't get redownloaded
-                        if (downloadSucess && !SongDownloadHistory.Contains(key)) {
-                            SongDownloadHistory.Add(key);
+                        if (downloadSucess && !SongDownloadHistory.Contains(hash.ToLower())) {
+                            SongDownloadHistory.Add(hash.ToLower());
 
                             // Update our playlist with the latest song info
                             UpdatePlaylist(_syncSaberSongs, hash, songName);
@@ -458,8 +459,8 @@ namespace SyncSaber
                             string hash = node["Hash"].InnerText;
                             string currentSongDirectory = Path.Combine(_customLevelsPath, Regex.Replace($"{key} ({songName} - {node["LevelAuthorName"].InnerText})", "[:*/?\"<>|]", "_"));
                             bool downloadSucess = false;
-                            if (SongDownloadHistory.Contains(key.ToLower()) || Loader.GetLevelByHash(hash.ToUpper()) != null) {
-                                SongDownloadHistory.Add(key.ToLower());
+                            if (SongDownloadHistory.Contains(hash.ToLower()) || Loader.GetLevelByHash(hash.ToUpper()) != null) {
+                                SongDownloadHistory.Add(hash.ToLower());
                                 // Update our playlist with the latest song info
                                 UpdatePlaylist(_syncSaberSongs, hash, songName);
                                 UpdatePlaylist(GetPlaylistForFeed(feedToDownload), hash, songName);
@@ -494,7 +495,7 @@ namespace SyncSaber
 
                             // Keep a history of all the songs we download- count it as downloaded even if the user already had it downloaded previously so if they delete it it doesn't get redownloaded
                             if (downloadSucess) {
-                                SongDownloadHistory.Add(key);
+                                SongDownloadHistory.Add(hash.ToLower());
 
                                 // Update our playlist with the latest song info
                                 UpdatePlaylist(_syncSaberSongs, hash, songName);
@@ -535,34 +536,32 @@ namespace SyncSaber
         private async Task DownloadPPSongs()
         {
             DisplayNotification("Download PPSongs.");
-            var songlist = SongDataCore.Plugin.Songs.Data.Songs?.Where(x => x.Value.diffs.Max(y => y.pp) > 0d).OrderByDescending(x => x.Value.diffs.Max(y => y.pp))?.ToList();
+
+            var songlist = await ScoreSaberManager.Ranked(PluginConfig.Instance.MaxPPSongsCount); //SongDataCore.Plugin.Songs.Data.Songs?.Where(x => x.Value.diffs.Max(y => y.pp) > 0d).OrderByDescending(x => x.Value.diffs.Max(y => y.pp))?.ToList();
             if (songlist == null) {
                 return;
             }
-
-            var songCount = 0;
-            foreach (var ppMap in songlist) {
-                if (PluginConfig.Instance.MaxPPSongsCount <= songCount) {
-                    break;
-                }
-                
+            foreach (var ppMap in songlist.Values) {
                 while (Plugin.instance?.IsInGame == true || !SongDataCore.Plugin.Instance.DatabasesLoaded) {
                     await Task.Delay(200);
                 }
-                if (SongDownloadHistory.Contains(ppMap.Value.key) || Loader.GetLevelByHash(ppMap.Key) != null) {
-                    SongDownloadHistory.Add(ppMap.Value.key.ToLower());
-                    songCount++;
+                var hash = ppMap["id"].Value;
+                if (SongDownloadHistory.Contains(hash.ToLower()) || Loader.GetLevelByHash(hash) != null) {
+                    SongDownloadHistory.Add(hash.ToLower());
                     continue;
                 }
-                var songInfo = await WebClient.GetAsync($"https://beatsaver.com/api/maps/by-hash/{ppMap.Key}", new CancellationTokenSource().Token);
+                var songInfo = await WebClient.GetAsync($"https://beatsaver.com/api/maps/by-hash/{hash}", new CancellationTokenSource().Token);
+                
                 try {
                     var jsonObject = JSON.Parse(songInfo?.ContentToString());
                     if (jsonObject == null) {
-                        Logger.Info($"missing pp song : https://beatsaver.com/api/maps/by-hash/{ppMap.Key}");
+                        Logger.Info($"missing pp song : https://beatsaver.com/api/maps/by-hash/{hash}");
                         continue;
                     }
+                    var key = jsonObject["key"].Value.ToLower();
+                    var chara = jsonObject["characteristics"].AsObject;
                     DisplayNotification($"Downloading {jsonObject["name"].Value}");
-                    var buff = await WebClient.DownloadSong($"https://beatsaver.com/api/download/key/{ppMap.Value.key}", new CancellationTokenSource().Token);
+                    var buff = await WebClient.DownloadSong($"https://beatsaver.com/api/download/key/{key}", new CancellationTokenSource().Token);
                     if (buff == null) {
                         Logger.Notice($"Failed to download song : {jsonObject["name"].Value}");
                         continue;
@@ -570,14 +569,13 @@ namespace SyncSaber
                     while (Plugin.instance?.IsInGame == true) {
                         await Task.Delay(200);
                     }
-                    var songDirectory = Path.Combine(_customLevelsPath, Regex.Replace($"{ppMap.Value.key} ({jsonObject["name"].Value} - {jsonObject["LevelAuthorName"].Value})", "[:*/?\"<>|]", "_")); ;
+                    var songDirectory = Path.Combine(_customLevelsPath, Regex.Replace($"{key} ({jsonObject["name"].Value} - {chara["LevelAuthorName"].Value})", "[:*/?\"<>|]", "_")); ;
                     using (var st = new MemoryStream(buff)) {
                         Utilities.ExtractZip(st, songDirectory);
                     }
                     _didDownloadAnySong = true;
-                    SongDownloadHistory.Add(ppMap.Value.key);
-                    UpdatePlaylist(_syncSaberSongs, ppMap.Key, jsonObject["name"]);
-                    songCount++;
+                    SongDownloadHistory.Add(hash.ToLower());
+                    UpdatePlaylist(_syncSaberSongs, key, jsonObject["name"]);
                 }
                 catch (Exception e) {
                     Logger.Error(e);
