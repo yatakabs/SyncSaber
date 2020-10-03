@@ -542,7 +542,7 @@ namespace SyncSaber
                 return;
             }
             foreach (var ppMap in songlist.Values) {
-                while (Plugin.instance?.IsInGame == true || !SongDataCore.Plugin.Instance.DatabasesLoaded) {
+                while (Plugin.instance?.IsInGame == true) {
                     await Task.Delay(200);
                 }
                 var hash = ppMap["id"].Value;
