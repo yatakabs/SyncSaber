@@ -177,6 +177,7 @@
     <Compile Include="Playlist.cs" />
     <Compile Include="Plugin.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="ScoreSabers\ScoreSaberManager.cs" />
     <Compile Include="SimpleJSON\SimpleJSON.cs" />
     <Compile Include="SongListUtils.cs" />
     <Compile Include="SyncSaber.cs" />
