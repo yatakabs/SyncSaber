@@ -25,7 +25,6 @@ namespace SyncSaber
     [Plugin(RuntimeOptions.SingleStartInit)]
     public class Plugin
     {
-        public static bool SongBrowserPluginPresent { get; set; }
         public bool IsInGame { get; private set; }
         public static HashSet<string> SongDownloadHistory { get; } = new HashSet<string>();
         internal static Plugin instance { get; private set; }
@@ -75,7 +74,6 @@ namespace SyncSaber
         public void OnApplicationStart()
         {
             instance = this;
-            SongBrowserPluginPresent = PluginManager.GetPlugin("Song Browser") != null;
             
             BSEvents.earlyMenuSceneLoadedFresh += this.BSEvents_earlyMenuSceneLoadedFresh;
             BSEvents.lateMenuSceneLoadedFresh += this.BSEvents_lateMenuSceneLoadedFresh;

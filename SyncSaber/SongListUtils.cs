@@ -22,15 +22,8 @@ namespace SyncSaber
         public static IEnumerator RefreshSongs(bool fullRefresh = false)
         {
             yield return new WaitWhile(() => !Loader.AreSongsLoaded || Loader.AreSongsLoading || Plugin.instance.IsInGame);
-            new HMTask(
-                async () =>
-                {
-                    Loader.Instance.RefreshSongs(fullRefresh);
-                    await Task.Delay(1000);
-                    while (!Loader.AreSongsLoaded || Loader.AreSongsLoading || Plugin.instance.IsInGame) {
-                        await Task.Delay(1000);
-                    }
-                }).Run();
+            Loader.Instance.RefreshSongs(fullRefresh);
+            yield return new WaitForSeconds(1f);
             yield return new WaitWhile(() => !Loader.AreSongsLoaded || Loader.AreSongsLoading || Plugin.instance.IsInGame);
         }
     }

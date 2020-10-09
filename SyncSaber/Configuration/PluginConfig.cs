@@ -54,6 +54,7 @@ namespace SyncSaber.Configuration
             SyncBookmarksFeed = other.SyncBookmarksFeed;
             SyncCuratorRecommendedFeed = other.SyncCuratorRecommendedFeed;
             SyncFollowingsFeed = other.SyncFollowingsFeed;
+            MaxPPSongsCount = other.MaxPPSongsCount;
         }
     }
 }
