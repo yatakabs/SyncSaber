@@ -1,4 +1,5 @@
 ﻿using BeatSaberMarkupLanguage.Components;
+using BeatSaberMarkupLanguage.FloatingScreen;
 using IPA.Loader;
 using IPA.Old;
 using SyncSaber.NetWorks;
@@ -21,20 +22,20 @@ namespace SyncSaber
     {
         private static readonly object _lockObject = new object();
 
-        public static TextMeshProUGUI CreateNotificationText(string text)
+        public static TextMeshProUGUI CreateNotificationText(string text, FloatingScreen screen)
         {
-            var gameObject = new GameObject();
-            GameObject.DontDestroyOnLoad(gameObject);
-            gameObject.transform.position = new Vector3(0, 0f, 2.5f);
-            gameObject.transform.eulerAngles = new Vector3(0, 0, 0);
-            gameObject.transform.localScale = new Vector3(0.01f, 0.01f, 0.01f);
+            //var gameObject = new GameObject();
+            //GameObject.DontDestroyOnLoad(gameObject);
+            //gameObject.transform.position = new Vector3(0, 0f, 2.5f);
+            //gameObject.transform.eulerAngles = new Vector3(0, 0, 0);
+            //gameObject.transform.localScale = new Vector3(0.01f, 0.01f, 0.01f);
 
-            var canvas = gameObject.AddComponent<Canvas>();
-            canvas.renderMode = RenderMode.WorldSpace;
-            var rectTransform = canvas.transform as RectTransform;
-            rectTransform.sizeDelta = new Vector2(200, 50);
+            //var canvas = gameObject.AddComponent<Canvas>();
+            //canvas.renderMode = RenderMode.WorldSpace;
+            //var rectTransform = canvas.transform as RectTransform;
+            //rectTransform.sizeDelta = new Vector2(200, 50);
 
-            var notificationText = BeatSaberUI.CreateText(canvas.transform as RectTransform, text, new Vector2(0f, -50f), new Vector2(400f, 20f));
+            var notificationText = BeatSaberUI.CreateText(screen.transform as RectTransform, text, new Vector2(0f, 0f), new Vector2(0f, 0f));
 
             notificationText.text = text;
             notificationText.fontSize = 10f;

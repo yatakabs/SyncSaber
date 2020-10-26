@@ -19,6 +19,8 @@ using BeatSaberMarkupLanguage.Settings;
 using SyncSaber.UI;
 using System.Threading.Tasks;
 using BeatSaberMarkupLanguage.MenuButtons;
+using SiraUtil.Zenject;
+using SyncSaber.Installers;
 
 namespace SyncSaber
 {
@@ -36,11 +38,12 @@ namespace SyncSaber
         /// [Init] methods that use a Constructor or called before regular methods like InitWithConfig.
         /// Only use [Init] with one Constructor.
         /// </summary>
-        public void Init(IPALogger logger)
+        public void Init(IPALogger logger, Zenjector zenjector)
         {
             instance = this;
             Logger.log = logger;
             Logger.log.Debug("Logger initialized.");
+            zenjector.OnMenu<SyncSaberInstaller>();
         }
 
         #region BSIPA Config
@@ -64,10 +67,10 @@ namespace SyncSaber
             if (Utilities.IsModInstalled("MapperFeed"))
             {
                 File.Move("Plugins\\BeatSaberMapperFeed.dll", "Plugins\\BeatSaberMapperFeed.dll.delete-me");
-                _mapperFeedNotification = Utilities.CreateNotificationText("Old version of MapperFeed detected! Restart the game now to enable SyncSaber!");
+                //_mapperFeedNotification = Utilities.CreateNotificationText("Old version of MapperFeed detected! Restart the game now to enable SyncSaber!");
                 Logger.Info("Old MapperFeed detected!");
             }
-            SyncSaber.OnLoad();
+            //SyncSaber.OnLoad();
         }
 
         [OnStart]
@@ -88,8 +91,6 @@ namespace SyncSaber
             while (!Loader.AreSongsLoaded || Loader.AreSongsLoading) {
                 await Task.Delay(200);
             }
-            await SyncSaber.Instance.Sync();
-            SyncSaber.Instance._timer.Start();
         }
 
         private void BSEvents_earlyMenuSceneLoadedFresh(ScenesTransitionSetupDataSO obj)

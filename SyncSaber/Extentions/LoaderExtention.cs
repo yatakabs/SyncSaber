@@ -17,7 +17,7 @@ namespace SyncSaber.Extentions
             }
             try {
                 loader.DeleteSong(path);
-                Loader.CustomLevels.Remove(path);
+                Loader.CustomLevels.TryRemove(path, out _);
             }
             catch (Exception e) {
                 Logger.Error(e);
