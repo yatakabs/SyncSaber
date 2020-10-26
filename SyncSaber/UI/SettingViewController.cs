@@ -10,7 +10,7 @@ using SyncSaber.Configuration;
 
 namespace SyncSaber.UI
 {
-    internal class SettingViewController : NotifiableSingleton<SettingViewController>
+    internal class SettingViewController : PersistentSingleton<SettingViewController>
     {
         // For this method of setting the ResourceName, this class must be the first class in the file.
         public string ResourceName => string.Join(".", GetType().Namespace, "SettingView.bsml");

@@ -31,13 +31,17 @@ using IPA.Loader;
 using PlaylistDownLoader;
 using PlaylistLoaderLite.HarmonyPatches;
 using SyncSaber.ScoreSabers;
+using BeatSaberMarkupLanguage.FloatingScreen;
+using BeatSaberMarkupLanguage.ViewControllers;
+using BeatSaberMarkupLanguage;
+using BeatSaberMarkupLanguage.Attributes;
+using Zenject;
 
 namespace SyncSaber
 {
-    class SyncSaber : MonoBehaviour
+    public class SyncSaber : MonoBehaviour
     {
         private readonly SemaphoreSlim semaphoreSlim = new SemaphoreSlim(1, 1);
-        private SynchronizationContext context;
         internal readonly System.Timers.Timer _timer = new System.Timers.Timer(new TimeSpan(0, 30, 0).TotalMilliseconds);
 
         private static readonly string _historyPath = Path.Combine(Environment.CurrentDirectory, "UserData", "SyncSaberHistory.txt");
@@ -52,32 +56,26 @@ namespace SyncSaber
         private Playlist _followingsSongs = new Playlist("SyncSaberFollowingsPlaylist", "BeastSaber Followings", "brian91292", "1");
         private Playlist _bookmarksSongs = new Playlist("SyncSaberBookmarksPlaylist", "BeastSaber Bookmarks", "brian91292", "1");
 
-        private TMP_Text _notificationText;
-        private DateTime _uiResetTime;
-
+        public event Action<string> NotificationTextChange;
         private bool _initialized = false;
         private volatile bool _didDownloadAnySong = false;
 
         Dictionary<string, string> _beastSaberFeeds = new Dictionary<string, string>();
 
-        public static SyncSaber Instance = null;
-
-        public static void OnLoad()
-        {
-            Logger.Info("Start OnLoad.");
-            if (Instance) {
-                Logger.Info($"Instance is null.");
-                return;
-            }
-            new GameObject("SyncSaber").AddComponent<SyncSaber>();
-        }
+        //public static void OnLoad()
+        //{
+        //    Logger.Info("Start OnLoad.");
+        //    if (Instance) {
+        //        Logger.Info($"Instance is null.");
+        //        return;
+        //    }
+        //    new GameObject().AddComponent<SyncSaber>();
+        //}
 
         #region UinityMethod
         private void Awake()
         {
             Logger.Info("Start Awake.");
-            Instance = this;
-            context = SynchronizationContext.Current;
             DontDestroyOnLoad(gameObject);
 
             _beastSaberFeeds.Add("followings", $"https://bsaber.com/members/%BeastSaberUserName%/wall/followings");
@@ -112,12 +110,6 @@ namespace SyncSaber
 
             Logger.Info("Finish Awake.");
         }
-
-        private void FixedUpdate()
-        {
-            if (!string.IsNullOrEmpty(_notificationText?.text) && _uiResetTime <= DateTime.Now)
-                _notificationText.text = "";
-        }
         #endregion
 
         private async void Timer_Elapsed(object sender, System.Timers.ElapsedEventArgs e)
@@ -132,8 +124,7 @@ namespace SyncSaber
         private IEnumerator FinishInitialization()
         {
             yield return new WaitUntil(() => Resources.FindObjectsOfTypeAll<TMP_FontAsset>().Any(t => t.name == "Teko-Medium SDF No Glow"));
-
-            _notificationText = Utilities.CreateNotificationText(String.Empty);
+            //_notificationText = Utilities.CreateNotificationText(String.Empty, this.Screen);
             DisplayNotification("SyncSaber Initialized!");
 
             _initialized = true;
@@ -147,9 +138,7 @@ namespace SyncSaber
             Logger.Info(text);
             HMMainThreadDispatcher.instance?.Enqueue(() =>
             {
-                _uiResetTime = DateTime.Now.AddSeconds(5);
-                if (_notificationText)
-                    _notificationText.text = "SyncSaber - " + text;
+                NotificationTextChange?.Invoke("SyncSaber - " + text);
             });
         }
 
@@ -231,24 +220,10 @@ namespace SyncSaber
             yield return new WaitWhile(() => !Loader.AreSongsLoaded || Loader.AreSongsLoading || Plugin.instance.IsInGame);
             DisplayNotification("Finished checking for new songs!");
             yield return null;
-            if (PluginManager.GetPlugin("PlaylistDownLoader") != null) {
-                yield return StartCoroutine(this.CheckPlaylistSongs());
-            }
-            else {
+            if (PluginManager.GetPlugin("PlaylistDownLoader") == null) {
                 PlaylistCollectionOverride.RefreshPlaylists();
             }
 
-        }
-
-        private IEnumerator CheckPlaylistSongs()
-        {
-            yield return new WaitWhile(() => !Loader.AreSongsLoaded || Loader.AreSongsLoading || Plugin.instance.IsInGame);
-            try {
-                _ = PlaylistDownLoaderController.instance.CheckPlaylistsSong();
-            }
-            catch (Exception e) {
-                Logger.Error(e);
-            }
         }
 
         private Playlist GetPlaylistForFeed(int feedToDownload)
@@ -587,6 +562,15 @@ namespace SyncSaber
             }
             catch (Exception e) {
                 Logger.Error(e);
+            }
+        }
+        public class SyncSaberFactory : IFactory<SyncSaber>
+        {
+            [Inject]
+            DiContainer diContainer;
+            public SyncSaber Create()
+            {
+                return diContainer.InstantiateComponentOnNewGameObject<SyncSaber>();
             }
         }
     }
