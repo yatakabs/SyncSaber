@@ -1,11 +1,8 @@
 ﻿using SiraUtil;
-using SyncSaber.Services;
+using SyncSaber.Utilities;
 using SyncSaber.Views;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using UnityEngine;
 using Zenject;
 
 namespace SyncSaber.Installers
@@ -14,9 +11,14 @@ namespace SyncSaber.Installers
     {
         public override void InstallBindings()
         {
-            this.Container.Bind<SyncSaber.SyncSaberFactory>().AsSingle();
-            this.Container.BindViewController<SyncSaberController>();
-            this.Container.Bind<SyncSaberService>().FromNewComponentOnNewGameObject().AsCached().NonLazy();
+            try {
+                this.Container.BindInterfacesAndSelfTo<SyncSaber>().FromNewComponentOnNewGameObject().AsSingle();
+                this.Container.BindViewController<SyncSaberController>();
+                this.Container.BindInterfacesAndSelfTo<RootViewController>().FromNewComponentOnNewGameObject().AsSingle();
+            }
+            catch (Exception e) {
+                Logger.Error(e);
+            }
         }
     }
 }

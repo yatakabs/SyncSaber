@@ -2,6 +2,7 @@
 using BeatSaberMarkupLanguage.FloatingScreen;
 using IPA.Loader;
 using IPA.Old;
+using PlaylistDownLoader.Interfaces;
 using SyncSaber.NetWorks;
 using System;
 using System.Collections;
@@ -15,10 +16,11 @@ using System.Threading.Tasks;
 using TMPro;
 using UnityEngine;
 using UnityEngine.Networking;
+using Zenject;
 
-namespace SyncSaber
+namespace SyncSaber.Utilities
 {
-    public class Utilities
+    public class Utility
     {
         private static readonly object _lockObject = new object();
 
@@ -171,6 +173,14 @@ namespace SyncSaber
                 File.WriteAllLines(path, data);
                 File.Delete(path + ".bak");
             }
+        }
+
+        public static IPlaylistDownloader GetPlaylistDownloader(DiContainer container)
+        {
+            if (!Plugin.instance.IsPlaylistDownlaoderInstalled) {
+                return null;
+            }
+            return container.Resolve<IPlaylistDownloader>();
         }
     }
 }

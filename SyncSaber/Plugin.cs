@@ -1,26 +1,19 @@
-﻿using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.Linq;
-using IPA;
-using IPA.Config;
-using IPA.Config.Stores;
-using UnityEngine.SceneManagement;
-using UnityEngine;
-using IPALogger = IPA.Logging.Logger;
+﻿using BeatSaberMarkupLanguage.Settings;
 using BS_Utils.Utilities;
-using SongCore;
-using System.Reflection;
-using System.IO;
-using TMPro;
+using IPA;
+using IPA.Config.Stores;
 using IPA.Loader;
-using IPA.Utilities;
-using BeatSaberMarkupLanguage.Settings;
-using SyncSaber.UI;
-using System.Threading.Tasks;
-using BeatSaberMarkupLanguage.MenuButtons;
+using PlaylistDownLoader.Interfaces;
 using SiraUtil.Zenject;
 using SyncSaber.Installers;
+using SyncSaber.UI;
+using SyncSaber.Utilities;
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Threading.Tasks;
+using UnityEngine.SceneManagement;
+using IPALogger = IPA.Logging.Logger;
 
 namespace SyncSaber
 {
@@ -28,6 +21,8 @@ namespace SyncSaber
     public class Plugin
     {
         public bool IsInGame { get; private set; }
+
+        public bool IsPlaylistDownlaoderInstalled => PluginManager.GetPlugin("PlaylistDownLoader") != null;
         public static HashSet<string> SongDownloadHistory { get; } = new HashSet<string>();
         internal static Plugin instance { get; private set; }
         public string Name => "SyncSaber";
@@ -38,34 +33,20 @@ namespace SyncSaber
         /// [Init] methods that use a Constructor or called before regular methods like InitWithConfig.
         /// Only use [Init] with one Constructor.
         /// </summary>
-        public void Init(IPALogger logger, Zenjector zenjector)
+        public void Init(IPALogger logger, IPA.Config.Config conf, Zenjector zenjector)
         {
             instance = this;
             Logger.log = logger;
             Logger.log.Debug("Logger initialized.");
-            zenjector.OnMenu<SyncSaberInstaller>();
-        }
-
-        #region BSIPA Config
-        //Uncomment to use BSIPA's config
-        [Init]
-        public void InitWithConfig(IPA.Config.Config conf)
-        {
             Configuration.PluginConfig.Instance = conf.Generated<Configuration.PluginConfig>();
             Logger.log.Debug("Config loaded");
+            zenjector.OnMenu<SyncSaberInstaller>();
         }
-        #endregion
-
-        
-        
-
-        private TextMeshProUGUI _mapperFeedNotification = null;
 
         private async Task DelayedStartup()
         {
             await Task.Delay(500);
-            if (Utilities.IsModInstalled("MapperFeed"))
-            {
+            if (Utility.IsModInstalled("MapperFeed")) {
                 File.Move("Plugins\\BeatSaberMapperFeed.dll", "Plugins\\BeatSaberMapperFeed.dll.delete-me");
                 //_mapperFeedNotification = Utilities.CreateNotificationText("Old version of MapperFeed detected! Restart the game now to enable SyncSaber!");
                 Logger.Info("Old MapperFeed detected!");
@@ -77,20 +58,10 @@ namespace SyncSaber
         public void OnApplicationStart()
         {
             instance = this;
-            
+
             BSEvents.earlyMenuSceneLoadedFresh += this.BSEvents_earlyMenuSceneLoadedFresh;
-            BSEvents.lateMenuSceneLoadedFresh += this.BSEvents_lateMenuSceneLoadedFresh;
-            
             SceneManager.activeSceneChanged += SceneManagerOnActiveSceneChanged;
             _ = DelayedStartup();
-        }
-
-        private async void BSEvents_lateMenuSceneLoadedFresh(ScenesTransitionSetupDataSO obj)
-        {
-            await Task.Delay(1000);
-            while (!Loader.AreSongsLoaded || Loader.AreSongsLoading) {
-                await Task.Delay(200);
-            }
         }
 
         private void BSEvents_earlyMenuSceneLoadedFresh(ScenesTransitionSetupDataSO obj)
