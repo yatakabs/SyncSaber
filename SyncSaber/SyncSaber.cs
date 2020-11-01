@@ -1,48 +1,33 @@
-﻿using HMUI;
+﻿using IPA.Loader;
+using PlaylistLoaderLite.HarmonyPatches;
+using SongCore;
+using SyncSaber.Configuration;
+using SyncSaber.Extentions;
+using SyncSaber.Interfaces;
+using SyncSaber.NetWorks;
+using SyncSaber.ScoreSabers;
+using SyncSaber.SimpleJSON;
+using SyncSaber.Utilities;
 using System;
 using System.Collections;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
-using System.IO.Compression;
 using System.Linq;
-//using System.Net;
-using System.Reflection;
-using System.Runtime.InteropServices;
-using System.Text;
 using System.Text.RegularExpressions;
+using System.Threading;
 using System.Threading.Tasks;
-using System.Web;
 using System.Xml;
-using System.Xml.Linq;
 using TMPro;
 using UnityEngine;
-using UnityEngine.Networking;
-using UnityEngine.SceneManagement;
-using SyncSaber.SimpleJSON;
-using SongCore;
-using SyncSaber.Extentions;
-using SyncSaber.Configuration;
-using SyncSaber.NetWorks;
-using System.Threading;
-using BS_Utils.Utilities;
-using IPA.Loader;
-using PlaylistDownLoader;
-using PlaylistLoaderLite.HarmonyPatches;
-using SyncSaber.ScoreSabers;
-using BeatSaberMarkupLanguage.FloatingScreen;
-using BeatSaberMarkupLanguage.ViewControllers;
-using BeatSaberMarkupLanguage;
-using BeatSaberMarkupLanguage.Attributes;
 using Zenject;
 
 namespace SyncSaber
 {
-    public class SyncSaber : MonoBehaviour
+    public class SyncSaber : MonoBehaviour, ISyncSaber
     {
-        private readonly SemaphoreSlim semaphoreSlim = new SemaphoreSlim(1, 1);
-        internal readonly System.Timers.Timer _timer = new System.Timers.Timer(new TimeSpan(0, 30, 0).TotalMilliseconds);
+        private static SemaphoreSlim _semaphoreSlim;
+        private static System.Timers.Timer SyncTimer { get; set; }
 
         private static readonly string _historyPath = Path.Combine(Environment.CurrentDirectory, "UserData", "SyncSaberHistory.txt");
         private static readonly string _favoriteMappersPath = Path.Combine(Environment.CurrentDirectory, "UserData", "FavoriteMappers.ini");
@@ -61,23 +46,20 @@ namespace SyncSaber
         private volatile bool _didDownloadAnySong = false;
 
         Dictionary<string, string> _beastSaberFeeds = new Dictionary<string, string>();
-
-        //public static void OnLoad()
-        //{
-        //    Logger.Info("Start OnLoad.");
-        //    if (Instance) {
-        //        Logger.Info($"Instance is null.");
-        //        return;
-        //    }
-        //    new GameObject().AddComponent<SyncSaber>();
-        //}
+        [Inject]
+        DiContainer _diContainer;
 
         #region UinityMethod
         private void Awake()
         {
             Logger.Info("Start Awake.");
-            DontDestroyOnLoad(gameObject);
-
+            DontDestroyOnLoad(this);
+            if (_semaphoreSlim == null) {
+                _semaphoreSlim = new SemaphoreSlim(1, 1);
+            }
+            if (SyncTimer == null) {
+                SyncTimer = new System.Timers.Timer(new TimeSpan(0, 30, 0).TotalMilliseconds);
+            }
             _beastSaberFeeds.Add("followings", $"https://bsaber.com/members/%BeastSaberUserName%/wall/followings");
             _beastSaberFeeds.Add("bookmarks", $"https://bsaber.com/members/%BeastSaberUserName%/bookmarks");
             _beastSaberFeeds.Add("curator recommended", $"https://bsaber.com/members/curatorrecommended/bookmarks");
@@ -102,15 +84,20 @@ namespace SyncSaber
                 File.WriteAllLines(_favoriteMappersPath, new string[] { "" });
 #endif
             }
-
-            this._timer.Elapsed -= this.Timer_Elapsed;
-            this._timer.Elapsed += this.Timer_Elapsed;
-
-            StartCoroutine(FinishInitialization());
-
+            SyncTimer.Elapsed -= this.Timer_Elapsed;
+            SyncTimer.Elapsed += this.Timer_Elapsed;
             Logger.Info("Finish Awake.");
         }
+        void OnDestory()
+        {
+            SyncTimer.Elapsed -= this.Timer_Elapsed;
+        }
         #endregion
+        public void Initialize()
+        {
+            Logger.Debug("initialize call.");
+            StartCoroutine(FinishInitialization());
+        }
 
         private async void Timer_Elapsed(object sender, System.Timers.ElapsedEventArgs e)
         {
@@ -124,9 +111,7 @@ namespace SyncSaber
         private IEnumerator FinishInitialization()
         {
             yield return new WaitUntil(() => Resources.FindObjectsOfTypeAll<TMP_FontAsset>().Any(t => t.name == "Teko-Medium SDF No Glow"));
-            //_notificationText = Utilities.CreateNotificationText(String.Empty, this.Screen);
             DisplayNotification("SyncSaber Initialized!");
-
             _initialized = true;
         }
 
@@ -150,9 +135,9 @@ namespace SyncSaber
                 AuthorDownloadQueue.Push(mapper);
             }
             try {
-                await this.semaphoreSlim.WaitAsync();
+                await _semaphoreSlim.WaitAsync();
                 this._didDownloadAnySong = false;
-                while (!_initialized  || !Loader.AreSongsLoaded) {
+                while (!_initialized || !Loader.AreSongsLoaded) {
                     await Task.Delay(200);
                 }
 
@@ -182,19 +167,22 @@ namespace SyncSaber
                     await Task.Delay(200);
                 }
                 await Task.WhenAll(tasks);
-
-                new HMTask(
-                    () =>
-                    {
-                        StartCoroutine(this.BeforeDownloadSongs());
-                    }).Run();
+                this.StartCoroutine(this.BeforeDownloadSongs());
+                if (Plugin.instance.IsPlaylistDownlaoderInstalled) {
+                    this.StartCoroutine(this.CheckPlaylist());
+                }
             }
             catch (Exception e) {
                 Logger.Error(e);
             }
             finally {
-                this.semaphoreSlim.Release();
+                _semaphoreSlim.Release();
             }
+        }
+
+        public void StartTimer()
+        {
+            SyncTimer.Start();
         }
 
         private int GetMaxBeastSaberPages(int feedToDownload)
@@ -223,7 +211,6 @@ namespace SyncSaber
             if (PluginManager.GetPlugin("PlaylistDownLoader") == null) {
                 PlaylistCollectionOverride.RefreshPlaylists();
             }
-
         }
 
         private Playlist GetPlaylistForFeed(int feedToDownload)
@@ -256,7 +243,7 @@ namespace SyncSaber
             }
         }
 
-        
+
 
         private void RemoveOldVersions(string hash)
         {
@@ -335,7 +322,7 @@ namespace SyncSaber
                                     await Task.Delay(200);
                                 }
                                 using (var st = new MemoryStream(buff)) {
-                                    Utilities.ExtractZip(st, currentSongDirectory);
+                                    Utility.ExtractZip(st, currentSongDirectory);
                                 }
                                 downloadSucess = true;
                                 _didDownloadAnySong = true;
@@ -368,7 +355,7 @@ namespace SyncSaber
             }
 
             // Write our download history to file
-            Utilities.WriteStringListSafe(_historyPath, SongDownloadHistory.ToList());
+            Utility.WriteStringListSafe(_historyPath, SongDownloadHistory.ToList());
 
             // Write to the SyncSaber playlist
             _syncSaberSongs.WritePlaylist();
@@ -455,7 +442,7 @@ namespace SyncSaber
                                     await Task.Delay(200);
                                 }
                                 using (var st = new MemoryStream(buff)) {
-                                    Utilities.ExtractZip(st, currentSongDirectory);
+                                    Utility.ExtractZip(st, currentSongDirectory);
                                 }
                                 downloadCount++;
                                 downloadCountForPage++;
@@ -496,7 +483,7 @@ namespace SyncSaber
                     break;
             }
             // Write our download history to file
-            Utilities.WriteStringListSafe(_historyPath, SongDownloadHistory.ToList());
+            Utility.WriteStringListSafe(_historyPath, SongDownloadHistory.ToList());
             // Write to the SynCSaber playlist
             _syncSaberSongs.WritePlaylist();
             GetPlaylistForFeed(feedToDownload).WritePlaylist();
@@ -543,7 +530,7 @@ namespace SyncSaber
                     }
                     var songDirectory = Path.Combine(_customLevelsPath, Regex.Replace($"{key} ({jsonObject["name"].Value} - {author})", "[\\\\:*/?\"<>|]", "_")); ;
                     using (var st = new MemoryStream(buff)) {
-                        Utilities.ExtractZip(st, songDirectory);
+                        Utility.ExtractZip(st, songDirectory);
                     }
                     _didDownloadAnySong = true;
                     SongDownloadHistory.Add(hash.ToLower());
@@ -556,7 +543,7 @@ namespace SyncSaber
             }
             try {
                 // Write our download history to file
-                Utilities.WriteStringListSafe(_historyPath, SongDownloadHistory.ToList());
+                Utility.WriteStringListSafe(_historyPath, SongDownloadHistory.ToList());
                 // Write to the SyncSaber playlist
                 _syncSaberSongs.WritePlaylist();
             }
@@ -564,14 +551,35 @@ namespace SyncSaber
                 Logger.Error(e);
             }
         }
-        public class SyncSaberFactory : IFactory<SyncSaber>
+        public void SetEvent()
         {
-            [Inject]
-            DiContainer diContainer;
-            public SyncSaber Create()
-            {
-                return diContainer.InstantiateComponentOnNewGameObject<SyncSaber>();
+            try {
+                Utility.GetPlaylistDownloader(this._diContainer).ChangeNotificationText -= this.NotificationTextChange;
+                Utility.GetPlaylistDownloader(this._diContainer).ChangeNotificationText += this.NotificationTextChange;
             }
+            catch (Exception e) {
+                Logger.Error(e);
+            }
+        }
+
+        private IEnumerator CheckPlaylist()
+        {
+            yield return new WaitWhile(() => !Loader.AreSongsLoaded || Loader.AreSongsLoading);
+            try {
+                _ = Utility.GetPlaylistDownloader(this._diContainer).CheckPlaylistsSong();
+            }
+            catch (Exception e) {
+                Logger.Error(e);
+            }
+        }
+
+        public void Dispose()
+        {
+            Logger.Debug("Dispose call!");
+            ((IDisposable)SyncTimer).Dispose();
+            SyncTimer = null;
+            _semaphoreSlim.Dispose();
+            _semaphoreSlim = null;
         }
     }
 }
