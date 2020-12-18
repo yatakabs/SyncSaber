@@ -27,7 +27,7 @@ namespace SyncSaber
     public class SyncSaber : MonoBehaviour, ISyncSaber
     {
         private static SemaphoreSlim _semaphoreSlim;
-        private static System.Timers.Timer SyncTimer { get; set; }
+        private System.Timers.Timer SyncTimer { get; set; }
 
         private static readonly string _historyPath = Path.Combine(Environment.CurrentDirectory, "UserData", "SyncSaberHistory.txt");
         private static readonly string _favoriteMappersPath = Path.Combine(Environment.CurrentDirectory, "UserData", "FavoriteMappers.ini");
@@ -58,7 +58,11 @@ namespace SyncSaber
                 _semaphoreSlim = new SemaphoreSlim(1, 1);
             }
             if (SyncTimer == null) {
+#if DEBUG
+                SyncTimer = new System.Timers.Timer(new TimeSpan(0, 0, 30).TotalMilliseconds);
+#else
                 SyncTimer = new System.Timers.Timer(new TimeSpan(0, 30, 0).TotalMilliseconds);
+#endif
             }
             _beastSaberFeeds.Add("followings", $"https://bsaber.com/members/%BeastSaberUserName%/wall/followings");
             _beastSaberFeeds.Add("bookmarks", $"https://bsaber.com/members/%BeastSaberUserName%/bookmarks");
@@ -87,10 +91,6 @@ namespace SyncSaber
             SyncTimer.Elapsed -= this.Timer_Elapsed;
             SyncTimer.Elapsed += this.Timer_Elapsed;
             Logger.Info("Finish Awake.");
-        }
-        void OnDestory()
-        {
-            SyncTimer.Elapsed -= this.Timer_Elapsed;
         }
         #endregion
         public void Initialize()
@@ -163,7 +163,7 @@ namespace SyncSaber
                 if (PluginConfig.Instance.SyncPPSongs) {
                     tasks.Add(DownloadPPSongs());
                 }
-                while (Loader.AreSongsLoading) {
+                while (!Loader.AreSongsLoaded || Loader.AreSongsLoading) {
                     await Task.Delay(200);
                 }
                 await Task.WhenAll(tasks);
@@ -201,16 +201,16 @@ namespace SyncSaber
         private IEnumerator BeforeDownloadSongs()
         {
             yield return new WaitWhile(() => !Loader.AreSongsLoaded || Loader.AreSongsLoading || Plugin.instance.IsInGame);
-            if (_didDownloadAnySong) {
-                yield return StartCoroutine(SongListUtils.RefreshSongs(true));
-                _didDownloadAnySong = false;
+            if (this._didDownloadAnySong) {
+                yield return StartCoroutine(SongListUtils.RefreshSongs());
             }
             yield return new WaitWhile(() => !Loader.AreSongsLoaded || Loader.AreSongsLoading || Plugin.instance.IsInGame);
             DisplayNotification("Finished checking for new songs!");
             yield return null;
-            if (PluginManager.GetPlugin("PlaylistDownLoader") == null) {
+            if (this._didDownloadAnySong && PluginManager.GetPlugin("PlaylistDownLoader") == null) {
                 PlaylistCollectionOverride.RefreshPlaylists();
             }
+            this._didDownloadAnySong = false;
         }
 
         private Playlist GetPlaylistForFeed(int feedToDownload)
@@ -500,7 +500,7 @@ namespace SyncSaber
             }
             foreach (var ppMap in songlist.Values) {
                 try {
-                    while (Plugin.instance?.IsInGame == true) {
+                    while (Plugin.instance?.IsInGame != false) {
                         await Task.Delay(200);
                     }
                     var hash = ppMap["id"].Value;
@@ -576,6 +576,7 @@ namespace SyncSaber
         public void Dispose()
         {
             Logger.Debug("Dispose call!");
+            SyncTimer.Elapsed -= this.Timer_Elapsed;
             ((IDisposable)SyncTimer).Dispose();
             SyncTimer = null;
             _semaphoreSlim.Dispose();
