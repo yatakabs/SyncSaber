@@ -28,9 +28,11 @@ SyncSaber settings are stored in the modprefs.ini which you can find in the User
 | **SyncBookmarksFeed**| Whether or not to automatically sync your bookmarks feed from BeastSaber. |
 | **SyncFollowingsFeed**| Whether or not to automatically sync your followings feed from BeastSaber. |
 | **SyncCuratorRecommendedFeed**| Whether or not to automatically sync the curator recommended feed from BeastSaber. |
+| **SyncPPSongs**| Whether or not to automatically sync rank maps. |
 | **MaxBookmarksPages**| The maximum number of bookmarks pages to scan for new songs on BeastSaber, 0 is unlimited. |
 | **MaxFollowingsPages**| The maximum number of followings pages to scan for new songs on BeastSaber, 0 is unlimited. |
 | **MaxCuratorRecommendedPages**| The maximum number of curator recommended pages to scan for new songs on BeastSaber, 0 is unlimited. |
+| **MaxPPSongsCount**| The maximum number of curator ranked songs. |
 
 # Download
 [Click here to download the latest version of SyncSaber!](https://github.com/denpadokei/SyncSaber/releases/latest)
