@@ -7,5 +7,6 @@
     <checkbox text='Sync creator recomended feed' value='sync-creator-recomended-feed'/>
     <checkbox text='Sync Followings feed' value='sync-followings-feed'/>
     <checkbox text='Sync PP songs' value='sync-pp-songs'/>
+    <dropdown-list-setting id ='rank-sort' choices='sort-modes' value='current-mode' text='Rank sort'></dropdown-list-setting>
   </settings-container>
 </bg>
