@@ -15,7 +15,7 @@ namespace SyncSaber.ScoreSabers
 
         public static async Task<JSONArray> Ranked(int songcouts)
         {
-            var url = $"/api.php?function=get-leaderboards&cat=3&ranked=1&limit={songcouts}&page=1&unique=1";
+            var url = $"/api.php?function=get-leaderboards&cat=1&ranked=1&limit={songcouts}&page=1&unique=1";
             var buff = await WebClient.GetAsync($"{BASEURL}{url}", new CancellationTokenSource().Token);
             if (buff == null) {
                 return null;
