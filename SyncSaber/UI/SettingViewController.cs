@@ -78,6 +78,34 @@ namespace SyncSaber.UI
             get => PluginConfig.Instance.SyncPPSongs;
             set => PluginConfig.Instance.SyncPPSongs = value;
         }
+        [UIValue("sort-modes")]
+        public List<object> SortModes { get; set; } = new List<object>() { "DateRanked", "Difficurity" };
+        [UIValue("current-mode")]
+        public object CurrentMode {
+            get
+            {
+                switch (PluginConfig.Instance.RankSort) {
+                    case ScoreSabers.ScoreSaberManager.RankSort.DateRanked:
+                        return SortModes[0];
+                        break;
+                    case ScoreSabers.ScoreSaberManager.RankSort.Difficurity:
+                        return SortModes[1];
+                        break;
+                    default:
+                        return SortModes[0];
+                        break;
+                }
+            }
+            set
+            {
+                if (value == SortModes[0]) {
+                    PluginConfig.Instance.RankSort = ScoreSabers.ScoreSaberManager.RankSort.DateRanked;
+                }
+                else {
+                    PluginConfig.Instance.RankSort = ScoreSabers.ScoreSaberManager.RankSort.Difficurity;
+                }
+            }
+        }
         #endregion
         //ﾟ+｡*ﾟ+｡｡+ﾟ*｡+ﾟ ﾟ+｡*ﾟ+｡｡+ﾟ*｡+ﾟ ﾟ+｡*ﾟ+｡*ﾟ+｡｡+ﾟ*｡+ﾟ ﾟ+｡*ﾟ+｡｡+ﾟ*｡+ﾟ ﾟ+｡*ﾟ+｡*ﾟ+｡｡+ﾟ*｡+ﾟ ﾟ+｡*ﾟ+｡｡+ﾟ*｡+ﾟ ﾟ+｡*
         #region // コマンド

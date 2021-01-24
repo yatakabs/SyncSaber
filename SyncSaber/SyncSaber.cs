@@ -494,7 +494,7 @@ namespace SyncSaber
         {
             DisplayNotification("Download PPSongs.");
 
-            var songlist = await ScoreSaberManager.Ranked(PluginConfig.Instance.MaxPPSongsCount); //SongDataCore.Plugin.Songs.Data.Songs?.Where(x => x.Value.diffs.Max(y => y.pp) > 0d).OrderByDescending(x => x.Value.diffs.Max(y => y.pp))?.ToList();
+            var songlist = await ScoreSaberManager.Ranked(PluginConfig.Instance.MaxPPSongsCount, PluginConfig.Instance.RankSort); //SongDataCore.Plugin.Songs.Data.Songs?.Where(x => x.Value.diffs.Max(y => y.pp) > 0d).OrderByDescending(x => x.Value.diffs.Max(y => y.pp))?.ToList();
             if (songlist == null) {
                 return;
             }

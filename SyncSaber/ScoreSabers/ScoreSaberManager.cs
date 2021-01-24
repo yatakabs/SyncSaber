@@ -13,9 +13,9 @@ namespace SyncSaber.ScoreSabers
     {
         public const string BASEURL = "https://scoresaber.com/api.php";
 
-        public static async Task<JSONArray> Ranked(int songcouts)
+        public static async Task<JSONArray> Ranked(int songcouts, RankSort sort)
         {
-            var url = $"/api.php?function=get-leaderboards&cat=1&ranked=1&limit={songcouts}&page=1&unique=1";
+            var url = $"/api.php?function=get-leaderboards&cat={(int)sort}&ranked=1&limit={songcouts}&page=1&unique=1";
             var buff = await WebClient.GetAsync($"{BASEURL}{url}", new CancellationTokenSource().Token);
             if (buff == null) {
                 return null;
@@ -26,6 +26,12 @@ namespace SyncSaber.ScoreSabers
             }
 
             return json["songs"] as JSONArray;
+        }
+
+        public enum RankSort
+        {
+            DateRanked = 1,
+            Difficurity = 3
         }
     }
 }
