@@ -84,11 +84,6 @@
       <HintPath>$(BeatSaberDir)\Plugins\PlaylistDownLoader.dll</HintPath>
       <SpecificVersion>False</SpecificVersion>
     </Reference>
-    <Reference Include="PlaylistLoaderLite, Version=1.2.1.0, Culture=neutral, processorArchitecture=MSIL">
-      <Private>False</Private>
-      <HintPath>$(BeatSaberDir)\Plugins\PlaylistLoaderLite.dll</HintPath>
-      <SpecificVersion>False</SpecificVersion>
-    </Reference>
     <Reference Include="SiraUtil, Version=2.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <Private>False</Private>
       <HintPath>$(BeatSaberDir)\Plugins\SiraUtil.dll</HintPath>

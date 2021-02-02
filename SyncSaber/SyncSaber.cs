@@ -1,6 +1,4 @@
-﻿using IPA.Loader;
-using PlaylistLoaderLite.HarmonyPatches;
-using SongCore;
+﻿using SongCore;
 using SyncSaber.Configuration;
 using SyncSaber.Extentions;
 using SyncSaber.Interfaces;
@@ -207,9 +205,6 @@ namespace SyncSaber
             yield return new WaitWhile(() => !Loader.AreSongsLoaded || Loader.AreSongsLoading || Plugin.instance.IsInGame);
             DisplayNotification("Finished checking for new songs!");
             yield return null;
-            if (this._didDownloadAnySong && PluginManager.GetPlugin("PlaylistDownLoader") == null) {
-                PlaylistCollectionOverride.RefreshPlaylists();
-            }
             this._didDownloadAnySong = false;
         }
 

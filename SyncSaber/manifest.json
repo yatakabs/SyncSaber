@@ -3,7 +3,7 @@
     "id": "SyncSaber",
     "name": "SyncSaber",
     "author": "denpadokei",
-    "version": "3.1.0",
+    "version": "3.1.1",
     "description": "",
     "gameVersion": "1.13.2",
   "dependsOn": {
@@ -11,7 +11,6 @@
     "SiraUtil": "^2.0.0",
     "BeatSaberMarkupLanguage": "^1.4.0",
     "BS Utils": "^1.6.1",
-    "PlaylistLoaderLite": "^1.2.2",
     "SongCore": "^3.0.0"
   },
     "features": [],

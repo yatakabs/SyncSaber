@@ -1,18 +1,5 @@
-﻿using BeatSaverDownloader.UI;
-using BS_Utils.Utilities;
-using HMUI;
-using IPA.Loader;
-using IPA.Utilities;
-using PlaylistLoaderLite.HarmonyPatches;
-using SongBrowser;
-using SongBrowser.DataAccess;
-using SongCore;
-using System;
+﻿using SongCore;
 using System.Collections;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using UnityEngine;
 
 namespace SyncSaber
