@@ -1,7 +1,6 @@
 ﻿using BeatSaberMarkupLanguage.Attributes;
 using BeatSaberMarkupLanguage.FloatingScreen;
 using BeatSaberMarkupLanguage.ViewControllers;
-using BS_Utils.Utilities;
 using SyncSaber.Interfaces;
 using System;
 using UnityEngine;
@@ -27,14 +26,13 @@ namespace SyncSaber.Views
             }
         }
         [Inject]
-        private ISyncSaber _syncSaber;
+        private readonly ISyncSaber _syncSaber;
         [Inject]
-        DiContainer _diContainer;
+        private readonly DiContainer _diContainer;
         private DateTime _uiResetTime;
-        FloatingScreen _floatingScreen;
+        private FloatingScreen _floatingScreen;
 
-
-        void Awake()
+        private void Awake()
         {
             Logger.Debug("Awake call");
             DontDestroyOnLoad(this);
@@ -52,9 +50,9 @@ namespace SyncSaber.Views
             this._uiResetTime = DateTime.Now.AddSeconds(5);
         }
 
-        void Update()
+        private void Update()
         {
-            if (!string.IsNullOrEmpty(this.NotificationText) && _uiResetTime <= DateTime.Now)
+            if (!string.IsNullOrEmpty(this.NotificationText) && this._uiResetTime <= DateTime.Now)
                 this.NotificationText = "";
         }
 
@@ -69,12 +67,12 @@ namespace SyncSaber.Views
                 Logger.Error(e);
             }
             try {
-                _syncSaber.NotificationTextChange -= this.NotificationTextChange;
-                _syncSaber.NotificationTextChange += this.NotificationTextChange;
+                this._syncSaber.NotificationTextChange -= this.NotificationTextChange;
+                this._syncSaber.NotificationTextChange += this.NotificationTextChange;
                 if (Plugin.instance.IsPlaylistDownlaoderInstalled) {
                     this._syncSaber.SetEvent();
                 }
-                await _syncSaber.Sync();
+                await this._syncSaber.Sync();
             }
             catch (Exception e) {
                 Logger.Error(e);

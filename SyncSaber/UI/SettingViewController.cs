@@ -1,25 +1,19 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-
-using BeatSaberMarkupLanguage;
-using BeatSaberMarkupLanguage.Attributes;
-using BeatSaberMarkupLanguage.Components;
-using BeatSaberMarkupLanguage.ViewControllers;
+﻿using BeatSaberMarkupLanguage.Attributes;
 using SyncSaber.Configuration;
+using System.Collections.Generic;
 
 namespace SyncSaber.UI
 {
     internal class SettingViewController : PersistentSingleton<SettingViewController>
     {
         // For this method of setting the ResourceName, this class must be the first class in the file.
-        public string ResourceName => string.Join(".", GetType().Namespace, "SettingView.bsml");
+        public string ResourceName => string.Join(".", this.GetType().Namespace, "SettingView.bsml");
 
         //ﾟ+｡*ﾟ+｡｡+ﾟ*｡+ﾟ ﾟ+｡*ﾟ+｡｡+ﾟ*｡+ﾟ ﾟ+｡*ﾟ+｡*ﾟ+｡｡+ﾟ*｡+ﾟ ﾟ+｡*ﾟ+｡｡+ﾟ*｡+ﾟ ﾟ+｡*ﾟ+｡*ﾟ+｡｡+ﾟ*｡+ﾟ ﾟ+｡*ﾟ+｡｡+ﾟ*｡+ﾟ ﾟ+｡*
         #region // プロパティ
         [UIValue("auto-download-songs")]
         public virtual bool AutoDownloadSongs
-        { 
+        {
             get => PluginConfig.Instance.AutoDownloadSongs;
             set => PluginConfig.Instance.AutoDownloadSongs = value;
         }
@@ -81,24 +75,25 @@ namespace SyncSaber.UI
         [UIValue("sort-modes")]
         public List<object> SortModes { get; set; } = new List<object>() { "DateRanked", "Difficurity" };
         [UIValue("current-mode")]
-        public object CurrentMode {
+        public object CurrentMode
+        {
             get
             {
                 switch (PluginConfig.Instance.RankSort) {
                     case ScoreSabers.ScoreSaberManager.RankSort.DateRanked:
-                        return SortModes[0];
+                        return this.SortModes[0];
                         break;
                     case ScoreSabers.ScoreSaberManager.RankSort.Difficurity:
-                        return SortModes[1];
+                        return this.SortModes[1];
                         break;
                     default:
-                        return SortModes[0];
+                        return this.SortModes[0];
                         break;
                 }
             }
             set
             {
-                if (value == SortModes[0]) {
+                if (value == this.SortModes[0]) {
                     PluginConfig.Instance.RankSort = ScoreSabers.ScoreSaberManager.RankSort.DateRanked;
                 }
                 else {

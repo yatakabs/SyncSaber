@@ -1,6 +1,5 @@
-﻿using System.IO;
+﻿using IPA.Config.Stores;
 using System.Runtime.CompilerServices;
-using IPA.Config.Stores;
 
 [assembly: InternalsVisibleTo(GeneratedStore.AssemblyVisibilityTarget)]
 namespace SyncSaber.Configuration
@@ -46,17 +45,17 @@ namespace SyncSaber.Configuration
         {
             // This instance's members populated from other
 
-            AutoDownloadSongs = other.AutoDownloadSongs;
-            BeastSaberUsername = other.BeastSaberUsername;
-            MaxFollowingsPages = other.MaxFollowingsPages;
-            MaxBookmarksPages = other.MaxBookmarksPages;
-            MaxCuratorRecommendedPages = other.MaxCuratorRecommendedPages;
-            DeleteOldVersions = other.DeleteOldVersions;
-            SyncBookmarksFeed = other.SyncBookmarksFeed;
-            SyncCuratorRecommendedFeed = other.SyncCuratorRecommendedFeed;
-            SyncFollowingsFeed = other.SyncFollowingsFeed;
-            MaxPPSongsCount = other.MaxPPSongsCount;
-            RankSort = other.RankSort;
+            this.AutoDownloadSongs = other.AutoDownloadSongs;
+            this.BeastSaberUsername = other.BeastSaberUsername;
+            this.MaxFollowingsPages = other.MaxFollowingsPages;
+            this.MaxBookmarksPages = other.MaxBookmarksPages;
+            this.MaxCuratorRecommendedPages = other.MaxCuratorRecommendedPages;
+            this.DeleteOldVersions = other.DeleteOldVersions;
+            this.SyncBookmarksFeed = other.SyncBookmarksFeed;
+            this.SyncCuratorRecommendedFeed = other.SyncCuratorRecommendedFeed;
+            this.SyncFollowingsFeed = other.SyncFollowingsFeed;
+            this.MaxPPSongsCount = other.MaxPPSongsCount;
+            this.RankSort = other.RankSort;
         }
     }
 }

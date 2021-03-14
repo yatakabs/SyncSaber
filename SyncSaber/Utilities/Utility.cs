@@ -1,21 +1,12 @@
-﻿using BeatSaberMarkupLanguage.Components;
-using BeatSaberMarkupLanguage.FloatingScreen;
+﻿using BeatSaberMarkupLanguage.FloatingScreen;
 using IPA.Loader;
-using IPA.Old;
 using PlaylistDownLoader.Interfaces;
-using SyncSaber.NetWorks;
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
-using System.Linq;
-using System.Reflection;
-using System.Text;
-using System.Threading.Tasks;
 using TMPro;
 using UnityEngine;
-using UnityEngine.Networking;
 using Zenject;
 
 namespace SyncSaber.Utilities
@@ -74,16 +65,13 @@ namespace SyncSaber.Utilities
         {
             foreach (DirectoryInfo dir in source.GetDirectories())
                 MoveFilesRecursively(dir, target.CreateSubdirectory(dir.Name));
-            foreach (FileInfo file in source.GetFiles())
-            {
+            foreach (FileInfo file in source.GetFiles()) {
                 string newFilePath = Path.Combine(target.FullName, file.Name);
                 if (File.Exists(newFilePath)) {
-                    try
-                    {
+                    try {
                         File.Delete(newFilePath);
                     }
-                    catch(Exception e)
-                    {
+                    catch (Exception e) {
                         Logger.Error(e);
                         //Logger.Info($"Failed to delete file {Path.GetFileName(newFilePath)}! File is in use!");
                         string filesToDelete = Path.Combine(Environment.CurrentDirectory, "FilesToDelete");

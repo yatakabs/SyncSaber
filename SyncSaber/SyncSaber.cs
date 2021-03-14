@@ -16,7 +16,6 @@ using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Xml;
-using TMPro;
 using UnityEngine;
 using Zenject;
 
@@ -34,18 +33,17 @@ namespace SyncSaber
 
         private Stack<string> AuthorDownloadQueue { get; } = new Stack<string>();
         public static HashSet<string> SongDownloadHistory => Plugin.SongDownloadHistory;
-        private Playlist _syncSaberSongs = new Playlist("SyncSaberPlaylist", "SyncSaber Playlist", "brian91292", "1");
-        private Playlist _curatorRecommendedSongs = new Playlist("SyncSaberCuratorRecommendedPlaylist", "BeastSaber Curator Recommended", "brian91292", "1");
-        private Playlist _followingsSongs = new Playlist("SyncSaberFollowingsPlaylist", "BeastSaber Followings", "brian91292", "1");
-        private Playlist _bookmarksSongs = new Playlist("SyncSaberBookmarksPlaylist", "BeastSaber Bookmarks", "brian91292", "1");
+        private readonly Playlist _syncSaberSongs = new Playlist("SyncSaberPlaylist", "SyncSaber Playlist", "brian91292", "1");
+        private readonly Playlist _curatorRecommendedSongs = new Playlist("SyncSaberCuratorRecommendedPlaylist", "BeastSaber Curator Recommended", "brian91292", "1");
+        private readonly Playlist _followingsSongs = new Playlist("SyncSaberFollowingsPlaylist", "BeastSaber Followings", "brian91292", "1");
+        private readonly Playlist _bookmarksSongs = new Playlist("SyncSaberBookmarksPlaylist", "BeastSaber Bookmarks", "brian91292", "1");
 
         public event Action<string> NotificationTextChange;
         private bool _initialized = false;
         private volatile bool _didDownloadAnySong = false;
-
-        Dictionary<string, string> _beastSaberFeeds = new Dictionary<string, string>();
+        private readonly Dictionary<string, string> _beastSaberFeeds = new Dictionary<string, string>();
         [Inject]
-        DiContainer _diContainer;
+        private readonly DiContainer _diContainer;
 
         #region UinityMethod
         private void Awake()
@@ -55,16 +53,16 @@ namespace SyncSaber
             if (_semaphoreSlim == null) {
                 _semaphoreSlim = new SemaphoreSlim(1, 1);
             }
-            if (SyncTimer == null) {
+            if (this.SyncTimer == null) {
 #if DEBUG
                 SyncTimer = new System.Timers.Timer(new TimeSpan(0, 0, 30).TotalMilliseconds);
 #else
-                SyncTimer = new System.Timers.Timer(new TimeSpan(0, 30, 0).TotalMilliseconds);
+                this.SyncTimer = new System.Timers.Timer(new TimeSpan(0, 30, 0).TotalMilliseconds);
 #endif
             }
-            _beastSaberFeeds.Add("followings", $"https://bsaber.com/members/%BeastSaberUserName%/wall/followings");
-            _beastSaberFeeds.Add("bookmarks", $"https://bsaber.com/members/%BeastSaberUserName%/bookmarks");
-            _beastSaberFeeds.Add("curator recommended", $"https://bsaber.com/members/curatorrecommended/bookmarks");
+            this._beastSaberFeeds.Add("followings", $"https://bsaber.com/members/%BeastSaberUserName%/wall/followings");
+            this._beastSaberFeeds.Add("bookmarks", $"https://bsaber.com/members/%BeastSaberUserName%/bookmarks");
+            this._beastSaberFeeds.Add("curator recommended", $"https://bsaber.com/members/curatorrecommended/bookmarks");
 
             if (File.Exists(_historyPath + ".bak")) {
                 // Something went wrong when the history file was being written previously, restore it from backup
@@ -86,15 +84,15 @@ namespace SyncSaber
                 File.WriteAllLines(_favoriteMappersPath, new string[] { "" });
 #endif
             }
-            SyncTimer.Elapsed -= this.Timer_Elapsed;
-            SyncTimer.Elapsed += this.Timer_Elapsed;
+            this.SyncTimer.Elapsed -= this.Timer_Elapsed;
+            this.SyncTimer.Elapsed += this.Timer_Elapsed;
             Logger.Info("Finish Awake.");
         }
         #endregion
         public void Initialize()
         {
             Logger.Debug("initialize call.");
-            StartCoroutine(FinishInitialization());
+            this.FinishInitialization();
         }
 
         private async void Timer_Elapsed(object sender, System.Timers.ElapsedEventArgs e)
@@ -106,11 +104,10 @@ namespace SyncSaber
             }
         }
 
-        private IEnumerator FinishInitialization()
+        private void FinishInitialization()
         {
-            yield return new WaitUntil(() => Resources.FindObjectsOfTypeAll<TMP_FontAsset>().Any(t => t.name == "Teko-Medium SDF No Glow"));
-            DisplayNotification("SyncSaber Initialized!");
-            _initialized = true;
+            this.DisplayNotification("SyncSaber Initialized!");
+            this._initialized = true;
         }
 
         private void DisplayNotification(string text)
@@ -130,36 +127,36 @@ namespace SyncSaber
             var tasks = new List<Task>();
             foreach (string mapper in File.ReadAllLines(_favoriteMappersPath)) {
                 Logger.Info($"Mapper: {mapper}");
-                AuthorDownloadQueue.Push(mapper);
+                this.AuthorDownloadQueue.Push(mapper);
             }
             try {
                 await _semaphoreSlim.WaitAsync();
                 this._didDownloadAnySong = false;
-                while (!_initialized || !Loader.AreSongsLoaded) {
+                while (!this._initialized || !Loader.AreSongsLoaded) {
                     await Task.Delay(200);
                 }
 
-                while (AuthorDownloadQueue.TryPop(out var author)) {
-                    tasks.Add(DownloadAllSongsByAuthor(author));
+                while (this.AuthorDownloadQueue.TryPop(out var author)) {
+                    tasks.Add(this.DownloadAllSongsByAuthor(author));
                 }
-                while (_beastSaberFeedIndex < _beastSaberFeeds.Count) {
-                    if (_beastSaberFeedIndex == 0 && (!PluginConfig.Instance.SyncFollowingsFeed || string.IsNullOrWhiteSpace(PluginConfig.Instance.BeastSaberUsername))) {
-                        _beastSaberFeedIndex++;
+                while (this._beastSaberFeedIndex < this._beastSaberFeeds.Count) {
+                    if (this._beastSaberFeedIndex == 0 && (!PluginConfig.Instance.SyncFollowingsFeed || string.IsNullOrWhiteSpace(PluginConfig.Instance.BeastSaberUsername))) {
+                        this._beastSaberFeedIndex++;
                         continue;
                     }
-                    else if (_beastSaberFeedIndex == 1 && (!PluginConfig.Instance.SyncBookmarksFeed || string.IsNullOrWhiteSpace(PluginConfig.Instance.BeastSaberUsername))) {
-                        _beastSaberFeedIndex++;
+                    else if (this._beastSaberFeedIndex == 1 && (!PluginConfig.Instance.SyncBookmarksFeed || string.IsNullOrWhiteSpace(PluginConfig.Instance.BeastSaberUsername))) {
+                        this._beastSaberFeedIndex++;
                         continue;
                     }
-                    else if (_beastSaberFeedIndex == 2 && !PluginConfig.Instance.SyncCuratorRecommendedFeed) {
-                        _beastSaberFeedIndex++;
+                    else if (this._beastSaberFeedIndex == 2 && !PluginConfig.Instance.SyncCuratorRecommendedFeed) {
+                        this._beastSaberFeedIndex++;
                         continue;
                     }
-                    tasks.Add(DownloadBeastSaberFeeds(_beastSaberFeedIndex));
-                    _beastSaberFeedIndex++;
+                    tasks.Add(this.DownloadBeastSaberFeeds(this._beastSaberFeedIndex));
+                    this._beastSaberFeedIndex++;
                 }
                 if (PluginConfig.Instance.SyncPPSongs) {
-                    tasks.Add(DownloadPPSongs());
+                    tasks.Add(this.DownloadPPSongs());
                 }
                 while (!Loader.AreSongsLoaded || Loader.AreSongsLoading) {
                     await Task.Delay(200);
@@ -180,12 +177,12 @@ namespace SyncSaber
 
         public void StartTimer()
         {
-            SyncTimer.Start();
+            this.SyncTimer.Start();
         }
 
         private int GetMaxBeastSaberPages(int feedToDownload)
         {
-            switch (_beastSaberFeeds.ElementAt(feedToDownload).Key) {
+            switch (this._beastSaberFeeds.ElementAt(feedToDownload).Key) {
                 case "followings":
                     return PluginConfig.Instance.MaxFollowingsPages;
                 case "bookmarks":
@@ -200,23 +197,23 @@ namespace SyncSaber
         {
             yield return new WaitWhile(() => !Loader.AreSongsLoaded || Loader.AreSongsLoading || Plugin.instance.IsInGame);
             if (this._didDownloadAnySong) {
-                yield return StartCoroutine(SongListUtils.RefreshSongs());
+                yield return this.StartCoroutine(SongListUtils.RefreshSongs());
             }
             yield return new WaitWhile(() => !Loader.AreSongsLoaded || Loader.AreSongsLoading || Plugin.instance.IsInGame);
-            DisplayNotification("Finished checking for new songs!");
+            this.DisplayNotification("Finished checking for new songs!");
             yield return null;
             this._didDownloadAnySong = false;
         }
 
         private Playlist GetPlaylistForFeed(int feedToDownload)
         {
-            switch (_beastSaberFeeds.ElementAt(feedToDownload).Key) {
+            switch (this._beastSaberFeeds.ElementAt(feedToDownload).Key) {
                 case "followings":
-                    return _followingsSongs;
+                    return this._followingsSongs;
                 case "bookmarks":
-                    return _bookmarksSongs;
+                    return this._bookmarksSongs;
                 case "curator recommended":
-                    return _curatorRecommendedSongs;
+                    return this._curatorRecommendedSongs;
             }
             return null;
         }
@@ -260,6 +257,10 @@ namespace SyncSaber
 
         private async Task DownloadAllSongsByAuthor(string author)
         {
+            if (string.IsNullOrEmpty(author)) {
+                return;
+            }
+
             Logger.Info($"Downloading all songs from {author}");
             JSONNode result = null;
             var stopWatch = new Stopwatch();
@@ -272,7 +273,7 @@ namespace SyncSaber
                     while (Plugin.instance?.IsInGame == true) {
                         await Task.Delay(200);
                     }
-                    DisplayNotification($"Checking {author}'s maps. ({pageCount} page)");
+                    this.DisplayNotification($"Checking {author}'s maps. ({pageCount} page)");
                     var res = await WebClient.GetAsync($"https://beatsaver.com/api/search/advanced/{pageCount}?q=uploader.username:{author}", new CancellationTokenSource().Token).ConfigureAwait(false);
                     if (!res.IsSuccessStatusCode) {
                         Logger.Info($"{res.StatusCode}");
@@ -291,7 +292,7 @@ namespace SyncSaber
                         if (SongDownloadHistory.Contains(hash.ToLower()) || Loader.GetLevelByHash(hash.ToUpper()) != null) {
                             SongDownloadHistory.Add(hash.ToLower());
                             // Update our playlist with the latest song info
-                            UpdatePlaylist(_syncSaberSongs, hash, songName);
+                            this.UpdatePlaylist(this._syncSaberSongs, hash, songName);
                             continue;
                         }
 
@@ -301,10 +302,10 @@ namespace SyncSaber
                                 Logger.Debug($"{hash} : {songName}");
                                 string currentSongDirectory = Path.Combine(_customLevelsPath, Regex.Replace($"{key} ({songName} - {metaData["songAuthorName"].Value})", "[\\\\:*/?\"<>|]", "_"));
                                 Logger.Debug($"{songName} : {currentSongDirectory}");
-                                DisplayNotification($"Downloading {songName}");
+                                this.DisplayNotification($"Downloading {songName}");
                                 var url = $"https://beatsaver.com{song["downloadURL"].Value}";
                                 Logger.Info(url);
-                                DisplayNotification($"Download - {songName}");
+                                this.DisplayNotification($"Download - {songName}");
                                 while (Plugin.instance?.IsInGame == true) {
                                     await Task.Delay(200);
                                 }
@@ -320,7 +321,7 @@ namespace SyncSaber
                                     Utility.ExtractZip(st, currentSongDirectory);
                                 }
                                 downloadSucess = true;
-                                _didDownloadAnySong = true;
+                                this._didDownloadAnySong = true;
                             }
                             catch (Exception e) {
                                 Logger.Error(e);
@@ -332,10 +333,10 @@ namespace SyncSaber
                             SongDownloadHistory.Add(hash.ToLower());
 
                             // Update our playlist with the latest song info
-                            UpdatePlaylist(_syncSaberSongs, hash, songName);
+                            this.UpdatePlaylist(this._syncSaberSongs, hash, songName);
 
                             // Delete any duplicate songs that we've downloaded
-                            RemoveOldVersions(hash);
+                            this.RemoveOldVersions(hash);
                         }
                     }
                     pageCount++;
@@ -353,7 +354,7 @@ namespace SyncSaber
             Utility.WriteStringListSafe(_historyPath, SongDownloadHistory.ToList());
 
             // Write to the SyncSaber playlist
-            _syncSaberSongs.WritePlaylist();
+            this._syncSaberSongs.WritePlaylist();
 
             Logger.Info($"Downloaded downloadCount songs from mapper \"{author}\" in {stopWatch.Elapsed.Seconds} seconds.");
         }
@@ -369,13 +370,13 @@ namespace SyncSaber
                 int totalSongsForPage = 0;
                 int downloadCountForPage = 0;
 
-                DisplayNotification($"Checking page {pageIndex} of {_beastSaberFeeds.ElementAt(feedToDownload).Key} feed from BeastSaber!");
+                this.DisplayNotification($"Checking page {pageIndex} of {this._beastSaberFeeds.ElementAt(feedToDownload).Key} feed from BeastSaber!");
 
                 try {
                     while (Plugin.instance?.IsInGame == true) {
                         await Task.Delay(200);
                     }
-                    var res = await WebClient.GetAsync($"{_beastSaberFeeds.ElementAt(feedToDownload).Value.Replace("%BeastSaberUserName%", PluginConfig.Instance.BeastSaberUsername)}/feed/?acpage={pageIndex}", new CancellationTokenSource().Token);
+                    var res = await WebClient.GetAsync($"{this._beastSaberFeeds.ElementAt(feedToDownload).Value.Replace("%BeastSaberUserName%", PluginConfig.Instance.BeastSaberUsername)}/feed/?acpage={pageIndex}", new CancellationTokenSource().Token);
                     if (!res.IsSuccessStatusCode) {
                         return;
                     }
@@ -418,12 +419,12 @@ namespace SyncSaber
                             if (SongDownloadHistory.Contains(hash.ToLower()) || Loader.GetLevelByHash(hash.ToUpper()) != null) {
                                 SongDownloadHistory.Add(hash.ToLower());
                                 // Update our playlist with the latest song info
-                                UpdatePlaylist(_syncSaberSongs, hash, songName);
-                                UpdatePlaylist(GetPlaylistForFeed(feedToDownload), hash, songName);
+                                this.UpdatePlaylist(this._syncSaberSongs, hash, songName);
+                                this.UpdatePlaylist(this.GetPlaylistForFeed(feedToDownload), hash, songName);
                                 continue;
                             }
                             if (PluginConfig.Instance.AutoDownloadSongs) {
-                                DisplayNotification($"Downloading {songName}");
+                                this.DisplayNotification($"Downloading {songName}");
 
                                 while (Plugin.instance?.IsInGame == true) {
                                     await Task.Delay(200);
@@ -441,7 +442,7 @@ namespace SyncSaber
                                 }
                                 downloadCount++;
                                 downloadCountForPage++;
-                                _didDownloadAnySong = true;
+                                this._didDownloadAnySong = true;
                                 downloadSucess = true;
                             }
 
@@ -450,11 +451,11 @@ namespace SyncSaber
                                 SongDownloadHistory.Add(hash.ToLower());
 
                                 // Update our playlist with the latest song info
-                                UpdatePlaylist(_syncSaberSongs, hash, songName);
-                                UpdatePlaylist(GetPlaylistForFeed(feedToDownload), hash, songName);
+                                this.UpdatePlaylist(this._syncSaberSongs, hash, songName);
+                                this.UpdatePlaylist(this.GetPlaylistForFeed(feedToDownload), hash, songName);
 
                                 // Delete any duplicate songs that we've downloaded
-                                RemoveOldVersions(hash);
+                                this.RemoveOldVersions(hash);
                             }
 
                             totalSongs++;
@@ -474,20 +475,20 @@ namespace SyncSaber
                 //Logger.Info($"Reached end of page! Found {totalSongsForPage.ToString()} songs total, downloaded {downloadCountForPage.ToString()}!");
                 pageIndex++;
 
-                if (pageIndex > GetMaxBeastSaberPages(feedToDownload) + 1 && GetMaxBeastSaberPages(feedToDownload) != 0)
+                if (pageIndex > this.GetMaxBeastSaberPages(feedToDownload) + 1 && this.GetMaxBeastSaberPages(feedToDownload) != 0)
                     break;
             }
             // Write our download history to file
             Utility.WriteStringListSafe(_historyPath, SongDownloadHistory.ToList());
             // Write to the SynCSaber playlist
-            _syncSaberSongs.WritePlaylist();
-            GetPlaylistForFeed(feedToDownload).WritePlaylist();
-            Logger.Info($"Downloaded {downloadCount} songs from BeastSaber {_beastSaberFeeds.ElementAt(feedToDownload).Key} feed in {((DateTime.Now - startTime).Seconds)} seconds. Checked {(pageIndex + 1)} page{(pageIndex > 0 ? "s" : "")}, skipped {(totalSongs - downloadCount)} songs.");
+            this._syncSaberSongs.WritePlaylist();
+            this.GetPlaylistForFeed(feedToDownload).WritePlaylist();
+            Logger.Info($"Downloaded {downloadCount} songs from BeastSaber {this._beastSaberFeeds.ElementAt(feedToDownload).Key} feed in {((DateTime.Now - startTime).Seconds)} seconds. Checked {(pageIndex + 1)} page{(pageIndex > 0 ? "s" : "")}, skipped {(totalSongs - downloadCount)} songs.");
         }
 
         private async Task DownloadPPSongs()
         {
-            DisplayNotification("Download PPSongs.");
+            this.DisplayNotification("Download PPSongs.");
 
             var songlist = await ScoreSaberManager.Ranked(PluginConfig.Instance.MaxPPSongsCount, PluginConfig.Instance.RankSort); //SongDataCore.Plugin.Songs.Data.Songs?.Where(x => x.Value.diffs.Max(y => y.pp) > 0d).OrderByDescending(x => x.Value.diffs.Max(y => y.pp))?.ToList();
             if (songlist == null) {
@@ -501,7 +502,7 @@ namespace SyncSaber
                     var hash = ppMap["id"].Value;
                     var beatmap = Loader.GetLevelByHash(hash);
                     if (SongDownloadHistory.Contains(hash.ToLower()) || beatmap != null) {
-                        UpdatePlaylist(_syncSaberSongs, hash, beatmap.songName);
+                        this.UpdatePlaylist(this._syncSaberSongs, hash, beatmap.songName);
                         SongDownloadHistory.Add(hash.ToLower());
                         continue;
                     }
@@ -514,7 +515,7 @@ namespace SyncSaber
                     var key = jsonObject["key"].Value.ToLower();
                     var chara = jsonObject["characteristics"].AsObject;
                     var author = ppMap["levelAuthorName"].Value;
-                    DisplayNotification($"Downloading {jsonObject["name"].Value}");
+                    this.DisplayNotification($"Downloading {jsonObject["name"].Value}");
                     var buff = await WebClient.DownloadSong($"https://beatsaver.com/api/download/key/{key}", new CancellationTokenSource().Token);
                     if (buff == null) {
                         Logger.Notice($"Failed to download song : {jsonObject["name"].Value}");
@@ -527,9 +528,9 @@ namespace SyncSaber
                     using (var st = new MemoryStream(buff)) {
                         Utility.ExtractZip(st, songDirectory);
                     }
-                    _didDownloadAnySong = true;
+                    this._didDownloadAnySong = true;
                     SongDownloadHistory.Add(hash.ToLower());
-                    UpdatePlaylist(_syncSaberSongs, hash, jsonObject["name"].Value);
+                    this.UpdatePlaylist(this._syncSaberSongs, hash, jsonObject["name"].Value);
                 }
                 catch (Exception e) {
                     Logger.Error($"{e}\r\n{ppMap["name"]} : {ppMap["id"]}");
@@ -540,7 +541,7 @@ namespace SyncSaber
                 // Write our download history to file
                 Utility.WriteStringListSafe(_historyPath, SongDownloadHistory.ToList());
                 // Write to the SyncSaber playlist
-                _syncSaberSongs.WritePlaylist();
+                this._syncSaberSongs.WritePlaylist();
             }
             catch (Exception e) {
                 Logger.Error(e);
@@ -571,9 +572,9 @@ namespace SyncSaber
         public void Dispose()
         {
             Logger.Debug("Dispose call!");
-            SyncTimer.Elapsed -= this.Timer_Elapsed;
-            ((IDisposable)SyncTimer).Dispose();
-            SyncTimer = null;
+            this.SyncTimer.Elapsed -= this.Timer_Elapsed;
+            ((IDisposable)this.SyncTimer).Dispose();
+            this.SyncTimer = null;
             _semaphoreSlim.Dispose();
             _semaphoreSlim = null;
         }

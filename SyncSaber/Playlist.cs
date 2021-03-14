@@ -2,10 +2,6 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using UnityEngine;
 
 namespace SyncSaber
 {
@@ -101,15 +97,15 @@ namespace SyncSaber
             this.Title = playlistTitle;
             this.Author = playlistAuthor;
             this.Image = image;
-            Songs = new List<PlaylistSong>();
-            fileLoc = "";
+            this.Songs = new List<PlaylistSong>();
+            this.fileLoc = "";
 
-            ReadPlaylist();
+            this.ReadPlaylist();
         }
 
         public void Add(string hash, string songName)
         {
-            Songs.Add(new PlaylistSong(hash, songName));
+            this.Songs.Add(new PlaylistSong(hash, songName));
         }
 
         public void WritePlaylist()
@@ -121,15 +117,13 @@ namespace SyncSaber
         {
             string oldPlaylistPath = $"Playlists\\{this.fileName}.json";
             string newPlaylistPath = $"Playlists\\{this.fileName}.bplist";
-            oldFormat = File.Exists(oldPlaylistPath);
-            Logger.Info($"Playlist \"{Title}\" found in {(oldFormat?"old":"new")} playlist format.");
+            this.oldFormat = File.Exists(oldPlaylistPath);
+            Logger.Info($"Playlist \"{this.Title}\" found in {(this.oldFormat ? "old" : "new")} playlist format.");
 
-            string playlistPath = oldFormat ? oldPlaylistPath : newPlaylistPath;
-            if (File.Exists(playlistPath))
-            {
+            string playlistPath = this.oldFormat ? oldPlaylistPath : newPlaylistPath;
+            if (File.Exists(playlistPath)) {
                 var playlist = PlaylistIO.ReadPlaylistSongs(this);
-                if (playlist != null)
-                {
+                if (playlist != null) {
                     this.Title = playlist.Title;
                     this.Author = playlist.Author;
                     this.Image = playlist.Image;

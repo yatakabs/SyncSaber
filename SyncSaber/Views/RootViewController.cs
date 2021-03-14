@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using UnityEngine;
+﻿using UnityEngine;
 using Zenject;
 
 namespace SyncSaber.Views
@@ -11,11 +6,11 @@ namespace SyncSaber.Views
     public class RootViewController : MonoBehaviour, IInitializable
     {
         [Inject]
-        SyncSaberController syncSaber;
+        private readonly SyncSaberController syncSaber;
 
         public void Initialize()
         {
-            syncSaber.Initialize();
+            this.syncSaber.Initialize();
         }
     }
 }
