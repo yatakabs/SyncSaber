@@ -112,7 +112,7 @@ namespace SyncSaber
 
         private void DisplayNotification(string text)
         {
-            if (Plugin.instance?.IsInGame == true && !string.IsNullOrEmpty(text)) {
+            if (Plugin.Instance?.IsInGame == true && !string.IsNullOrEmpty(text)) {
                 return;
             }
             Logger.Info(text);
@@ -163,7 +163,7 @@ namespace SyncSaber
                 }
                 await Task.WhenAll(tasks);
                 this.StartCoroutine(this.BeforeDownloadSongs());
-                if (Plugin.instance.IsPlaylistDownlaoderInstalled) {
+                if (Plugin.Instance.IsPlaylistDownlaoderInstalled) {
                     this.StartCoroutine(this.CheckPlaylist());
                 }
             }
@@ -195,11 +195,11 @@ namespace SyncSaber
 
         private IEnumerator BeforeDownloadSongs()
         {
-            yield return new WaitWhile(() => !Loader.AreSongsLoaded || Loader.AreSongsLoading || Plugin.instance.IsInGame);
+            yield return new WaitWhile(() => !Loader.AreSongsLoaded || Loader.AreSongsLoading || Plugin.Instance.IsInGame);
             if (this._didDownloadAnySong) {
                 yield return this.StartCoroutine(SongListUtils.RefreshSongs());
             }
-            yield return new WaitWhile(() => !Loader.AreSongsLoaded || Loader.AreSongsLoading || Plugin.instance.IsInGame);
+            yield return new WaitWhile(() => !Loader.AreSongsLoaded || Loader.AreSongsLoading || Plugin.Instance.IsInGame);
             this.DisplayNotification("Finished checking for new songs!");
             yield return null;
             this._didDownloadAnySong = false;
@@ -262,15 +262,15 @@ namespace SyncSaber
             }
 
             Logger.Info($"Downloading all songs from {author}");
-            JSONNode result = null;
+            JSONNode result;
             var stopWatch = new Stopwatch();
             var pageCount = 0;
-            var lastPage = 0;
+            int lastPage;
 
             try {
                 stopWatch.Start();
                 do {
-                    while (Plugin.instance?.IsInGame == true) {
+                    while (Plugin.Instance?.IsInGame == true) {
                         await Task.Delay(200);
                     }
                     this.DisplayNotification($"Checking {author}'s maps. ({pageCount} page)");
@@ -306,7 +306,7 @@ namespace SyncSaber
                                 var url = $"https://beatsaver.com{song["downloadURL"].Value}";
                                 Logger.Info(url);
                                 this.DisplayNotification($"Download - {songName}");
-                                while (Plugin.instance?.IsInGame == true) {
+                                while (Plugin.Instance?.IsInGame == true) {
                                     await Task.Delay(200);
                                 }
                                 var buff = await WebClient.DownloadSong(url, new CancellationTokenSource().Token);
@@ -314,7 +314,7 @@ namespace SyncSaber
                                     Logger.Notice($"Failed to download song : {songName}");
                                     continue;
                                 }
-                                while (Plugin.instance?.IsInGame == true) {
+                                while (Plugin.Instance?.IsInGame == true) {
                                     await Task.Delay(200);
                                 }
                                 using (var st = new MemoryStream(buff)) {
@@ -373,7 +373,7 @@ namespace SyncSaber
                 this.DisplayNotification($"Checking page {pageIndex} of {this._beastSaberFeeds.ElementAt(feedToDownload).Key} feed from BeastSaber!");
 
                 try {
-                    while (Plugin.instance?.IsInGame == true) {
+                    while (Plugin.Instance?.IsInGame == true) {
                         await Task.Delay(200);
                     }
                     var res = await WebClient.GetAsync($"{this._beastSaberFeeds.ElementAt(feedToDownload).Value.Replace("%BeastSaberUserName%", PluginConfig.Instance.BeastSaberUsername)}/feed/?acpage={pageIndex}", new CancellationTokenSource().Token);
@@ -393,7 +393,7 @@ namespace SyncSaber
                     XmlNodeList nodes = doc.DocumentElement.SelectNodes("/rss/channel/item");
                     if (nodes?.Count != 0) {
                         foreach (XmlNode node in nodes) {
-                            while (Plugin.instance?.IsInGame != false || Loader.AreSongsLoading) {
+                            while (Plugin.Instance?.IsInGame != false || Loader.AreSongsLoading) {
                                 await Task.Delay(200);
                             }
 
@@ -426,7 +426,7 @@ namespace SyncSaber
                             if (PluginConfig.Instance.AutoDownloadSongs) {
                                 this.DisplayNotification($"Downloading {songName}");
 
-                                while (Plugin.instance?.IsInGame == true) {
+                                while (Plugin.Instance?.IsInGame == true) {
                                     await Task.Delay(200);
                                 }
                                 var buff = await WebClient.DownloadSong(downloadUrl, new CancellationTokenSource().Token);
@@ -434,7 +434,7 @@ namespace SyncSaber
                                     Logger.Notice($"Failed to download song : {songName}");
                                     continue;
                                 }
-                                while (Plugin.instance?.IsInGame == true) {
+                                while (Plugin.Instance?.IsInGame == true) {
                                     await Task.Delay(200);
                                 }
                                 using (var st = new MemoryStream(buff)) {
@@ -496,7 +496,7 @@ namespace SyncSaber
             }
             foreach (var ppMap in songlist.Values) {
                 try {
-                    while (Plugin.instance?.IsInGame != false) {
+                    while (Plugin.Instance?.IsInGame != false) {
                         await Task.Delay(200);
                     }
                     var hash = ppMap["id"].Value;
@@ -521,7 +521,7 @@ namespace SyncSaber
                         Logger.Notice($"Failed to download song : {jsonObject["name"].Value}");
                         continue;
                     }
-                    while (Plugin.instance?.IsInGame == true) {
+                    while (Plugin.Instance?.IsInGame == true) {
                         await Task.Delay(200);
                     }
                     var songDirectory = Path.Combine(_customLevelsPath, Regex.Replace($"{key} ({jsonObject["name"].Value} - {author})", "[\\\\:*/?\"<>|]", "_")); ;

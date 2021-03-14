@@ -23,7 +23,7 @@ namespace SyncSaber
 
         public bool IsPlaylistDownlaoderInstalled => PluginManager.GetPlugin("PlaylistDownLoader") != null;
         public static HashSet<string> SongDownloadHistory { get; } = new HashSet<string>();
-        internal static Plugin instance { get; private set; }
+        internal static Plugin Instance { get; private set; }
         public string Name => "SyncSaber";
 
         [Init]
@@ -34,11 +34,11 @@ namespace SyncSaber
         /// </summary>
         public void Init(IPALogger logger, IPA.Config.Config conf, Zenjector zenjector)
         {
-            instance = this;
-            Logger.log = logger;
-            Logger.log.Debug("Logger initialized.");
+            Instance = this;
+            Logger.Log = logger;
+            Logger.Log.Debug("Logger initialized.");
             Configuration.PluginConfig.Instance = conf.Generated<Configuration.PluginConfig>();
-            Logger.log.Debug("Config loaded");
+            Logger.Log.Debug("Config loaded");
             zenjector.OnMenu<SyncSaberInstaller>();
         }
 
@@ -56,7 +56,7 @@ namespace SyncSaber
         [OnStart]
         public void OnApplicationStart()
         {
-            instance = this;
+            Instance = this;
 
             BSEvents.earlyMenuSceneLoadedFresh += this.BSEvents_earlyMenuSceneLoadedFresh;
             SceneManager.activeSceneChanged += this.SceneManagerOnActiveSceneChanged;

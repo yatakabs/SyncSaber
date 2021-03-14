@@ -8,7 +8,7 @@ namespace SyncSaber
     {
         public static IEnumerator RefreshSongs(bool fullRefresh = false)
         {
-            yield return new WaitWhile(() => !Loader.AreSongsLoaded || Loader.AreSongsLoading || Plugin.instance.IsInGame);
+            yield return new WaitWhile(() => !Loader.AreSongsLoaded || Loader.AreSongsLoading || Plugin.Instance.IsInGame);
             Loader.Instance.RefreshSongs(fullRefresh);
         }
     }

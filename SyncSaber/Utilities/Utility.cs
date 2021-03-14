@@ -165,7 +165,7 @@ namespace SyncSaber.Utilities
 
         public static IPlaylistDownloader GetPlaylistDownloader(DiContainer container)
         {
-            if (!Plugin.instance.IsPlaylistDownlaoderInstalled) {
+            if (!Plugin.Instance.IsPlaylistDownlaoderInstalled) {
                 return null;
             }
             return container.Resolve<IPlaylistDownloader>();

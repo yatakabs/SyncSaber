@@ -27,8 +27,6 @@ namespace SyncSaber.Views
         }
         [Inject]
         private readonly ISyncSaber _syncSaber;
-        [Inject]
-        private readonly DiContainer _diContainer;
         private DateTime _uiResetTime;
         private FloatingScreen _floatingScreen;
 
@@ -69,7 +67,7 @@ namespace SyncSaber.Views
             try {
                 this._syncSaber.NotificationTextChange -= this.NotificationTextChange;
                 this._syncSaber.NotificationTextChange += this.NotificationTextChange;
-                if (Plugin.instance.IsPlaylistDownlaoderInstalled) {
+                if (Plugin.Instance.IsPlaylistDownlaoderInstalled) {
                     this._syncSaber.SetEvent();
                 }
                 await this._syncSaber.Sync();
