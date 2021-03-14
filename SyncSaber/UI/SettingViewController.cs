@@ -77,6 +77,7 @@ namespace SyncSaber.UI
         [UIValue("current-mode")]
         public object CurrentMode
         {
+#pragma warning disable CS0162 // 到達できないコードが検出されました
             get
             {
                 switch (PluginConfig.Instance.RankSort) {
@@ -91,6 +92,7 @@ namespace SyncSaber.UI
                         break;
                 }
             }
+#pragma warning restore CS0162 // 到達できないコードが検出されました
             set
             {
                 if (value == this.SortModes[0]) {

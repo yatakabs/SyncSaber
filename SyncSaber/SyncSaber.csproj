@@ -92,7 +92,7 @@
     <Reference Include="SongBrowser">
       <HintPath>$(BeatSaberDir)\Plugins\SongBrowser.dll</HintPath>
     </Reference>
-    <Reference Include="SongCore, Version=2.9.11.0, Culture=neutral, processorArchitecture=MSIL">
+    <Reference Include="SongCore, Version=3.2.1.0, Culture=neutral, processorArchitecture=MSIL">
       <Private>False</Private>
       <HintPath>$(BeatSaberDir)\Plugins\SongCore.dll</HintPath>
       <SpecificVersion>False</SpecificVersion>
