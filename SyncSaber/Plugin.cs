@@ -3,7 +3,6 @@ using BS_Utils.Utilities;
 using IPA;
 using IPA.Config.Stores;
 using IPA.Loader;
-using PlaylistDownLoader.Interfaces;
 using SiraUtil.Zenject;
 using SyncSaber.Installers;
 using SyncSaber.UI;
@@ -60,8 +59,8 @@ namespace SyncSaber
             instance = this;
 
             BSEvents.earlyMenuSceneLoadedFresh += this.BSEvents_earlyMenuSceneLoadedFresh;
-            SceneManager.activeSceneChanged += SceneManagerOnActiveSceneChanged;
-            _ = DelayedStartup();
+            SceneManager.activeSceneChanged += this.SceneManagerOnActiveSceneChanged;
+            _ = this.DelayedStartup();
         }
 
         private void BSEvents_earlyMenuSceneLoadedFresh(ScenesTransitionSetupDataSO obj)
@@ -78,11 +77,11 @@ namespace SyncSaber
         [OnExit]
         public void OnApplicationQuit()
         {
-            SceneManager.activeSceneChanged -= SceneManagerOnActiveSceneChanged;
+            SceneManager.activeSceneChanged -= this.SceneManagerOnActiveSceneChanged;
             BSEvents.earlyMenuSceneLoadedFresh -= this.BSEvents_earlyMenuSceneLoadedFresh;
         }
 
-        void SceneManagerOnActiveSceneChanged(Scene arg0, Scene scene)
+        private void SceneManagerOnActiveSceneChanged(Scene arg0, Scene scene)
         {
             this.IsInGame = scene.name == "GameCore";
         }

@@ -1,11 +1,7 @@
-﻿using SyncSaber.SimpleJSON;
-using SyncSaber.NetWorks;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using SyncSaber.NetWorks;
+using SyncSaber.SimpleJSON;
 using System.Threading;
+using System.Threading.Tasks;
 
 namespace SyncSaber.ScoreSabers
 {

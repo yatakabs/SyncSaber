@@ -1,12 +1,8 @@
 ﻿using SyncSaber.SimpleJSON;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text;
-using System.Threading.Tasks;
 
 namespace SyncSaber.NetWorks
 {
@@ -22,20 +18,20 @@ namespace SyncSaber.NetWorks
 
         internal WebResponse(HttpResponseMessage resp, byte[] body)
         {
-            StatusCode = resp.StatusCode;
-            ReasonPhrase = resp.ReasonPhrase;
-            Headers = resp.Headers;
-            RequestMessage = resp.RequestMessage;
-            IsSuccessStatusCode = resp.IsSuccessStatusCode;
+            this.StatusCode = resp.StatusCode;
+            this.ReasonPhrase = resp.ReasonPhrase;
+            this.Headers = resp.Headers;
+            this.RequestMessage = resp.RequestMessage;
+            this.IsSuccessStatusCode = resp.IsSuccessStatusCode;
 
-            _content = body;
+            this._content = body;
         }
 
-        public byte[] ContentToBytes() => _content;
-        public string ContentToString() => Encoding.UTF8.GetString(_content);
+        public byte[] ContentToBytes() => this._content;
+        public string ContentToString() => Encoding.UTF8.GetString(this._content);
         public JSONNode ConvertToJsonNode()
         {
-            return JSONNode.Parse(ContentToString());
+            return JSONNode.Parse(this.ContentToString());
         }
     }
 }
