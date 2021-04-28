@@ -63,10 +63,10 @@ namespace SyncSaber.Utilities
 
         public static void MoveFilesRecursively(DirectoryInfo source, DirectoryInfo target)
         {
-            foreach (DirectoryInfo dir in source.GetDirectories())
+            foreach (var dir in source.GetDirectories())
                 MoveFilesRecursively(dir, target.CreateSubdirectory(dir.Name));
-            foreach (FileInfo file in source.GetFiles()) {
-                string newFilePath = Path.Combine(target.FullName, file.Name);
+            foreach (var file in source.GetFiles()) {
+                var newFilePath = Path.Combine(target.FullName, file.Name);
                 if (File.Exists(newFilePath)) {
                     try {
                         File.Delete(newFilePath);
@@ -74,7 +74,7 @@ namespace SyncSaber.Utilities
                     catch (Exception e) {
                         Logger.Error(e);
                         //Logger.Info($"Failed to delete file {Path.GetFileName(newFilePath)}! File is in use!");
-                        string filesToDelete = Path.Combine(Environment.CurrentDirectory, "FilesToDelete");
+                        var filesToDelete = Path.Combine(Environment.CurrentDirectory, "FilesToDelete");
                         if (!Directory.Exists(filesToDelete))
                             Directory.CreateDirectory(filesToDelete);
                         File.Move(newFilePath, Path.Combine(filesToDelete, file.Name));
@@ -144,10 +144,7 @@ namespace SyncSaber.Utilities
             }
         }
 
-        public static bool IsModInstalled(string modName)
-        {
-            return PluginManager.GetPlugin(modName) != null;
-        }
+        public static bool IsModInstalled(string modName) => PluginManager.GetPlugin(modName) != null;
 
         public static void WriteStringListSafe(string path, List<string> data, bool sort = true)
         {

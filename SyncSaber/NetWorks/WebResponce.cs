@@ -29,9 +29,6 @@ namespace SyncSaber.NetWorks
 
         public byte[] ContentToBytes() => this._content;
         public string ContentToString() => Encoding.UTF8.GetString(this._content);
-        public JSONNode ConvertToJsonNode()
-        {
-            return JSONNode.Parse(this.ContentToString());
-        }
+        public JSONNode ConvertToJsonNode() => JSONNode.Parse(this.ContentToString());
     }
 }

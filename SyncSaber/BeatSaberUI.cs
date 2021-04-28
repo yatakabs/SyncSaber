@@ -13,10 +13,7 @@ namespace SyncSaber
         /// <param name="text">The text to be displayed.</param>
         /// <param name="anchoredPosition">The position the button should be anchored to.</param>
         /// <returns>The newly created TextMeshProUGUI component.</returns>
-        public static TextMeshProUGUI CreateText(RectTransform parent, string text, Vector2 anchoredPosition)
-        {
-            return CreateText(parent, text, anchoredPosition, new Vector2(60f, 10f));
-        }
+        public static TextMeshProUGUI CreateText(RectTransform parent, string text, Vector2 anchoredPosition) => CreateText(parent, text, anchoredPosition, new Vector2(60f, 10f));
 
         /// <summary>
         /// Creates a TextMeshProUGUI component.
@@ -28,10 +25,10 @@ namespace SyncSaber
         /// <returns>The newly created TextMeshProUGUI component.</returns>
         public static TextMeshProUGUI CreateText(RectTransform parent, string text, Vector2 anchoredPosition, Vector2 sizeDelta)
         {
-            GameObject gameObj = new GameObject("CustomUIText");
+            var gameObj = new GameObject("CustomUIText");
             gameObj.SetActive(false);
 
-            TextMeshProUGUI textMesh = gameObj.AddComponent<TextMeshProUGUI>();
+            var textMesh = gameObj.AddComponent<TextMeshProUGUI>();
             textMesh.font = Instantiate(Resources.FindObjectsOfTypeAll<TMP_FontAsset>().First(t => t.name == "Teko-Medium SDF No Glow"));
             textMesh.rectTransform.SetParent(parent, false);
             textMesh.text = text;

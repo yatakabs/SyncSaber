@@ -44,7 +44,8 @@ namespace SyncSaber
         private readonly Dictionary<string, string> _beastSaberFeeds = new Dictionary<string, string>();
         [Inject]
         private readonly DiContainer _diContainer;
-
+        [Inject]
+        private readonly SongListUtil utils;
         #region UinityMethod
         private void Awake()
         {
@@ -125,7 +126,7 @@ namespace SyncSaber
         public async Task Sync()
         {
             var tasks = new List<Task>();
-            foreach (string mapper in File.ReadAllLines(_favoriteMappersPath)) {
+            foreach (var mapper in File.ReadAllLines(_favoriteMappersPath)) {
                 Logger.Info($"Mapper: {mapper}");
                 this.AuthorDownloadQueue.Push(mapper);
             }
@@ -175,10 +176,7 @@ namespace SyncSaber
             }
         }
 
-        public void StartTimer()
-        {
-            this.SyncTimer.Start();
-        }
+        public void StartTimer() => this.SyncTimer.Start();
 
         private int GetMaxBeastSaberPages(int feedToDownload)
         {
@@ -197,7 +195,7 @@ namespace SyncSaber
         {
             yield return new WaitWhile(() => !Loader.AreSongsLoaded || Loader.AreSongsLoading || Plugin.Instance.IsInGame);
             if (this._didDownloadAnySong) {
-                yield return this.StartCoroutine(SongListUtils.RefreshSongs());
+                yield return this.StartCoroutine(this.utils.RefreshSongs());
             }
             yield return new WaitWhile(() => !Loader.AreSongsLoaded || Loader.AreSongsLoading || Plugin.Instance.IsInGame);
             this.DisplayNotification("Finished checking for new songs!");
@@ -227,7 +225,7 @@ namespace SyncSaber
         private void UpdatePlaylist(Playlist playlist, string hash, string songName)
         {
             // Update our playlist with the new song if it doesn't exist, or replace the old song id/name with the updated info if it does
-            bool playlistSongFound = playlist.Songs.Any(x => x.hash.ToUpper() == hash.ToUpper());
+            var playlistSongFound = playlist.Songs.Any(x => x.hash.ToUpper() == hash.ToUpper());
 
             if (!playlistSongFound) {
                 playlist.Add(hash, songName);
@@ -300,7 +298,7 @@ namespace SyncSaber
                             try {
                                 var metaData = song["metadata"].AsObject;
                                 Logger.Debug($"{hash} : {songName}");
-                                string currentSongDirectory = Path.Combine(_customLevelsPath, Regex.Replace($"{key} ({songName} - {metaData["songAuthorName"].Value})", "[\\\\:*/?\"<>|]", "_"));
+                                var currentSongDirectory = Path.Combine(_customLevelsPath, Regex.Replace($"{key} ({songName} - {metaData["songAuthorName"].Value})", "[\\\\:*/?\"<>|]", "_"));
                                 Logger.Debug($"{songName} : {currentSongDirectory}");
                                 this.DisplayNotification($"Downloading {songName}");
                                 var url = $"https://beatsaver.com{song["downloadURL"].Value}";
@@ -362,13 +360,13 @@ namespace SyncSaber
         private async Task DownloadBeastSaberFeeds(int feedToDownload)
         {
             var startTime = DateTime.Now;
-            int downloadCount = 0;
-            int totalSongs = 0;
-            int pageIndex = 0;
+            var downloadCount = 0;
+            var totalSongs = 0;
+            var pageIndex = 0;
 
             while (true) {
-                int totalSongsForPage = 0;
-                int downloadCountForPage = 0;
+                var totalSongsForPage = 0;
+                var downloadCountForPage = 0;
 
                 this.DisplayNotification($"Checking page {pageIndex} of {this._beastSaberFeeds.ElementAt(feedToDownload).Key} feed from BeastSaber!");
 
@@ -380,8 +378,8 @@ namespace SyncSaber
                     if (!res.IsSuccessStatusCode) {
                         return;
                     }
-                    string beastSaberFeed = res.ContentToString();
-                    XmlDocument doc = new XmlDocument();
+                    var beastSaberFeed = res.ContentToString();
+                    var doc = new XmlDocument();
                     try {
                         doc.LoadXml(beastSaberFeed);
                     }
@@ -390,7 +388,7 @@ namespace SyncSaber
                         return;
                     }
 
-                    XmlNodeList nodes = doc.DocumentElement.SelectNodes("/rss/channel/item");
+                    var nodes = doc.DocumentElement.SelectNodes("/rss/channel/item");
                     if (nodes?.Count != 0) {
                         foreach (XmlNode node in nodes) {
                             while (Plugin.Instance?.IsInGame != false || Loader.AreSongsLoading) {
@@ -402,8 +400,8 @@ namespace SyncSaber
                                 continue;
                             }
 
-                            string songName = node["SongTitle"].InnerText;
-                            string downloadUrl = node["DownloadURL"].InnerText;
+                            var songName = node["SongTitle"].InnerText;
+                            var downloadUrl = node["DownloadURL"].InnerText;
 
                             if (downloadUrl.Contains("dl.php")) {
                                 Logger.Info("Skipping BeastSaber download with old url format!");
@@ -412,10 +410,10 @@ namespace SyncSaber
                                 continue;
                             }
 
-                            string key = node["SongKey"].InnerText;
-                            string hash = node["Hash"].InnerText;
-                            string currentSongDirectory = Path.Combine(_customLevelsPath, Regex.Replace($"{key} ({songName} - {node["LevelAuthorName"].InnerText})", "[\\\\:*/?\"<>|]", "_"));
-                            bool downloadSucess = false;
+                            var key = node["SongKey"].InnerText;
+                            var hash = node["Hash"].InnerText;
+                            var currentSongDirectory = Path.Combine(_customLevelsPath, Regex.Replace($"{key} ({songName} - {node["LevelAuthorName"].InnerText})", "[\\\\:*/?\"<>|]", "_"));
+                            var downloadSucess = false;
                             if (SongDownloadHistory.Contains(hash.ToLower()) || Loader.GetLevelByHash(hash.ToUpper()) != null) {
                                 SongDownloadHistory.Add(hash.ToLower());
                                 // Update our playlist with the latest song info

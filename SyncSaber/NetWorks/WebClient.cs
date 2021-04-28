@@ -104,7 +104,7 @@ namespace SyncSaber.NetWorks
                     var buffer = new byte[8192];
                     var bytesRead = 0; ;
 
-                    long? contentLength = resp?.Content.Headers.ContentLength;
+                    var contentLength = resp?.Content.Headers.ContentLength;
                     var totalRead = 0;
 
                     // send report
@@ -122,7 +122,7 @@ namespace SyncSaber.NetWorks
                     }
 
                     progress?.Report(1);
-                    byte[] bytes = memoryStream.ToArray();
+                    var bytes = memoryStream.ToArray();
 
                     return new WebResponse(resp, bytes);
                 }
