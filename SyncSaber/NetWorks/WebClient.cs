@@ -52,9 +52,9 @@ namespace SyncSaber.NetWorks
         internal static async Task<byte[]> DownloadSong(string url, CancellationToken token, IProgress<double> progress = null)
         {
             // check if beatsaver url needs to be pre-pended
-            if (!url.StartsWith(@"https://beatsaver.com/")) {
-                url = $"https://beatsaver.com/{url}";
-            }
+            //if (!url.StartsWith(@"https://beatsaver.com/")) {
+            //    url = $"https://beatsaver.com/{url}";
+            //}
             try {
                 var response = await SendAsync(HttpMethod.Get, url, token, progress: progress);
 

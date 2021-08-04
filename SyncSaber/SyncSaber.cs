@@ -263,28 +263,41 @@ namespace SyncSaber
             JSONNode result;
             var stopWatch = new Stopwatch();
             var pageCount = 0;
-            int lastPage;
-
+            var docsCount = 0;
+            while (Plugin.Instance?.IsInGame == true) {
+                await Task.Delay(200);
+            }
+            this.DisplayNotification($"Checking {author}'s maps. ({pageCount} page)");
+            var res = await WebClient.GetAsync($"https://beatsaver.com/api/search/text/0?q={author}", new CancellationTokenSource().Token).ConfigureAwait(false);
+            if (!res.IsSuccessStatusCode) {
+                Logger.Info($"{res.StatusCode}");
+                return;
+            }
+            result = JSON.Parse(res.ContentToString());
+            if (!result["user"].IsObject) {
+                return;
+            }
+            var user = result["user"].AsObject;
+            var userid = user["id"].AsInt;
             try {
                 stopWatch.Start();
                 do {
-                    while (Plugin.Instance?.IsInGame == true) {
-                        await Task.Delay(200);
-                    }
-                    this.DisplayNotification($"Checking {author}'s maps. ({pageCount} page)");
-                    var res = await WebClient.GetAsync($"https://beatsaver.com/api/search/advanced/{pageCount}?q=uploader.username:{author}", new CancellationTokenSource().Token).ConfigureAwait(false);
+                    res = await WebClient.GetAsync($"https://beatsaver.com/api/maps/uploader/{userid}/{pageCount}", new CancellationTokenSource().Token).ConfigureAwait(false);
                     if (!res.IsSuccessStatusCode) {
                         Logger.Info($"{res.StatusCode}");
                         return;
+                    
                     }
-                    result = JSON.Parse(res.ContentToString());
                     var docs = result["docs"].AsArray;
-                    lastPage = result["lastPage"].AsInt;
+                    docsCount = docs.Count;
+                    result = JSON.Parse(res.ContentToString());
+
 
                     foreach (var keyvalue in docs) {
                         var song = keyvalue.Value as JSONObject;
-                        var hash = song["hash"].Value;
-                        var key = song["key"].Value;
+                        var version = song["versions"].AsArray[0].AsObject;
+                        var hash = version["hash"].Value;
+                        var key = song["id"].Value;
                         var songName = song["name"].Value;
                         var downloadSucess = false;
                         if (SongDownloadHistory.Contains(hash.ToLower()) || Loader.GetLevelByHash(hash.ToUpper()) != null) {
@@ -301,7 +314,10 @@ namespace SyncSaber
                                 var currentSongDirectory = Path.Combine(_customLevelsPath, Regex.Replace($"{key} ({songName} - {metaData["songAuthorName"].Value})", "[\\\\:*/?\"<>|]", "_"));
                                 Logger.Debug($"{songName} : {currentSongDirectory}");
                                 this.DisplayNotification($"Downloading {songName}");
-                                var url = $"https://beatsaver.com{song["downloadURL"].Value}";
+                                var url = $"{version["downloadURL"].Value}";
+                                if (string.IsNullOrEmpty(url)) {
+                                    continue;
+                                }
                                 Logger.Info(url);
                                 this.DisplayNotification($"Download - {songName}");
                                 while (Plugin.Instance?.IsInGame == true) {
@@ -338,8 +354,8 @@ namespace SyncSaber
                         }
                     }
                     pageCount++;
-                    Logger.Info($"pageCount : {pageCount} lastPage : {lastPage} [{pageCount <= lastPage}]");
-                } while (pageCount <= lastPage);
+                    
+                } while (docsCount != 0);
             }
             catch (Exception e) {
                 Logger.Error(e);
@@ -497,24 +513,24 @@ namespace SyncSaber
                     while (Plugin.Instance?.IsInGame != false) {
                         await Task.Delay(200);
                     }
-                    var hash = ppMap["id"].Value;
+                    var hash = ppMap["id"].Value.ToLower();
                     var beatmap = Loader.GetLevelByHash(hash);
                     if (SongDownloadHistory.Contains(hash.ToLower()) || beatmap != null) {
                         this.UpdatePlaylist(this._syncSaberSongs, hash, beatmap.songName);
                         SongDownloadHistory.Add(hash.ToLower());
                         continue;
                     }
-                    var songInfo = await WebClient.GetAsync($"https://beatsaver.com/api/maps/by-hash/{hash}", new CancellationTokenSource().Token);
+                    var songInfo = await WebClient.GetAsync($"https://beatsaver.com/api/maps/hash/{hash}", new CancellationTokenSource().Token);
                     var jsonObject = JSON.Parse(songInfo?.ContentToString());
                     if (jsonObject == null) {
-                        Logger.Info($"missing pp song : https://beatsaver.com/api/maps/by-hash/{hash}");
+                        Logger.Info($"missing pp song : https://beatsaver.com/api/maps/hash/{hash}");
                         continue;
                     }
                     var key = jsonObject["key"].Value.ToLower();
                     var chara = jsonObject["characteristics"].AsObject;
                     var author = ppMap["levelAuthorName"].Value;
                     this.DisplayNotification($"Downloading {jsonObject["name"].Value}");
-                    var buff = await WebClient.DownloadSong($"https://beatsaver.com/api/download/key/{key}", new CancellationTokenSource().Token);
+                    var buff = await WebClient.DownloadSong($"https://cdn.beatsaver.com/{hash}.zip", new CancellationTokenSource().Token);
                     if (buff == null) {
                         Logger.Notice($"Failed to download song : {jsonObject["name"].Value}");
                         continue;
