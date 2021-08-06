@@ -296,8 +296,12 @@ namespace SyncSaber
 
 
                     foreach (var keyvalue in docs) {
-                        var song = keyvalue.Value as JSONObject;
-                        var version = song["versions"].AsArray[0].AsObject;
+                        var song = keyvalue.Value.AsObject;
+                        var versionNode = song["versions"].AsArray.Children.FirstOrDefault(x => string.Equals(x["state"].Value, "Published", StringComparison.InvariantCultureIgnoreCase));
+                        if (versionNode == null) {
+                            continue;
+                        }
+                        var version = versionNode.AsObject;
                         var hash = version["hash"].Value;
                         var key = song["id"].Value;
                         var songName = song["name"].Value;
