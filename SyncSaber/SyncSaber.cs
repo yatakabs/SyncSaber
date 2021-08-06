@@ -46,6 +46,8 @@ namespace SyncSaber
         private readonly DiContainer _diContainer;
         [Inject]
         private readonly SongListUtil utils;
+        public const string ROOT_BEATSAVER_URL = "https://beatsaver.com/api";
+
         #region UinityMethod
         private void Awake()
         {
@@ -268,7 +270,7 @@ namespace SyncSaber
                 await Task.Delay(200);
             }
             this.DisplayNotification($"Checking {author}'s maps. ({pageCount} page)");
-            var res = await WebClient.GetAsync($"https://beatsaver.com/api/search/text/0?q={author}", new CancellationTokenSource().Token).ConfigureAwait(false);
+            var res = await WebClient.GetAsync($"{ROOT_BEATSAVER_URL}/search/text/0?q={author}", new CancellationTokenSource().Token).ConfigureAwait(false);
             if (!res.IsSuccessStatusCode) {
                 Logger.Info($"{res.StatusCode}");
                 return;
@@ -282,7 +284,7 @@ namespace SyncSaber
             try {
                 stopWatch.Start();
                 do {
-                    res = await WebClient.GetAsync($"https://beatsaver.com/api/maps/uploader/{userid}/{pageCount}", new CancellationTokenSource().Token).ConfigureAwait(false);
+                    res = await WebClient.GetAsync($"{ROOT_BEATSAVER_URL}/maps/uploader/{userid}/{pageCount}", new CancellationTokenSource().Token).ConfigureAwait(false);
                     if (!res.IsSuccessStatusCode) {
                         Logger.Info($"{res.StatusCode}");
                         return;
@@ -520,17 +522,24 @@ namespace SyncSaber
                         SongDownloadHistory.Add(hash.ToLower());
                         continue;
                     }
-                    var songInfo = await WebClient.GetAsync($"https://beatsaver.com/api/maps/hash/{hash}", new CancellationTokenSource().Token);
+                    var songInfo = await WebClient.GetAsync($"{ROOT_BEATSAVER_URL}/maps/hash/{hash}", new CancellationTokenSource().Token);
                     var jsonObject = JSON.Parse(songInfo?.ContentToString());
                     if (jsonObject == null) {
-                        Logger.Info($"missing pp song : https://beatsaver.com/api/maps/hash/{hash}");
+                        Logger.Info($"missing pp song : {ROOT_BEATSAVER_URL}/maps/hash/{hash}");
                         continue;
                     }
-                    var key = jsonObject["key"].Value.ToLower();
-                    var chara = jsonObject["characteristics"].AsObject;
+                    var key = jsonObject["id"].Value.ToLower();
+                    var version = jsonObject["versions"].AsArray.Children.FirstOrDefault(x => string.Equals(x["state"].Value, "Published", StringComparison.InvariantCultureIgnoreCase));
+                    if (version == null) {
+                        Logger.Debug($"{hash} is not published.");
+                        continue;
+                    }
+                    //var chara = version.AsObject.
+                    var dlUrl = version.AsObject["downloadURL"].Value;
                     var author = ppMap["levelAuthorName"].Value;
+
                     this.DisplayNotification($"Downloading {jsonObject["name"].Value}");
-                    var buff = await WebClient.DownloadSong($"https://cdn.beatsaver.com/{hash}.zip", new CancellationTokenSource().Token);
+                    var buff = await WebClient.DownloadSong($"{dlUrl}", new CancellationTokenSource().Token);
                     if (buff == null) {
                         Logger.Notice($"Failed to download song : {jsonObject["name"].Value}");
                         continue;
