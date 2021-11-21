@@ -187,6 +187,7 @@
     <Compile Include="ScoreSabers\ScoreSaberManager.cs" />
     <Compile Include="SimpleJSON\SimpleJSON.cs" />
     <Compile Include="SongListUtil.cs" />
+    <Compile Include="Statics\Enums.cs" />
     <Compile Include="SyncSaber.cs" />
     <Compile Include="UI\SettingViewController.cs" />
     <Compile Include="Utilities\Utility.cs" />

@@ -139,7 +139,7 @@ namespace SyncSaber.Utilities
                 }
             }
             catch (Exception e) {
-                Logger.Info($"{e}");
+                Logger.Error(e);
                 return;
             }
         }
