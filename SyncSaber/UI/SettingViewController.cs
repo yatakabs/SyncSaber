@@ -84,7 +84,7 @@ namespace SyncSaber.UI
                     case ScoreSabers.ScoreSaberManager.RankSort.DateRanked:
                         return this.SortModes[0];
                         break;
-                    case ScoreSabers.ScoreSaberManager.RankSort.Difficurity:
+                    case ScoreSabers.ScoreSaberManager.RankSort.StarDifficulity:
                         return this.SortModes[1];
                         break;
                     default:
@@ -99,7 +99,7 @@ namespace SyncSaber.UI
                     PluginConfig.Instance.RankSort = ScoreSabers.ScoreSaberManager.RankSort.DateRanked;
                 }
                 else {
-                    PluginConfig.Instance.RankSort = ScoreSabers.ScoreSaberManager.RankSort.Difficurity;
+                    PluginConfig.Instance.RankSort = ScoreSabers.ScoreSaberManager.RankSort.StarDifficulity;
                 }
             }
         }

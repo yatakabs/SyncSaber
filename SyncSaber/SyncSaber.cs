@@ -521,7 +521,7 @@ namespace SyncSaber
         {
             this.DisplayNotification("Download PPSongs.");
 
-            var songlist = await ScoreSaberManager.Ranked(PluginConfig.Instance.MaxPPSongsCount, PluginConfig.Instance.RankSort); //SongDataCore.Plugin.Songs.Data.Songs?.Where(x => x.Value.diffs.Max(y => y.pp) > 0d).OrderByDescending(x => x.Value.diffs.Max(y => y.pp))?.ToList();
+            var songlist = await ScoreSaberManager.Ranked(PluginConfig.Instance.MaxPPSongsCount, PluginConfig.Instance.RankSort);
             if (songlist == null) {
                 return;
             }
@@ -530,7 +530,7 @@ namespace SyncSaber
                     while (Plugin.Instance?.IsInGame != false) {
                         await Task.Delay(200);
                     }
-                    var hash = ppMap["id"].Value.ToLower();
+                    var hash = ppMap["songHash"].Value.ToLower();
                     var beatmap = Loader.GetLevelByHash(hash);
                     if (beatmap != null) {
                         this.UpdatePlaylist(this._syncSaberSongs, hash, beatmap.songName);
