@@ -8,7 +8,7 @@ namespace SyncSaber.Installers
     {
         public override void InstallBindings()
         {
-            this.Container.BindInterfacesAndSelfTo<SyncSaber>().FromNewComponentOnNewGameObject(nameof(SyncSaber)).AsSingle();
+            this.Container.BindInterfacesAndSelfTo<SyncSaber>().FromNewComponentOnNewGameObject().AsSingle();
             this.Container.BindInterfacesAndSelfTo<SyncSaberController>().FromNewComponentAsViewController().AsSingle().NonLazy();
             this.Container.BindInterfacesAndSelfTo<SongListUtil>().AsCached();
         }
