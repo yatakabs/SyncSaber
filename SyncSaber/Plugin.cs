@@ -39,7 +39,7 @@ namespace SyncSaber
             Logger.Log.Debug("Logger initialized.");
             Configuration.PluginConfig.Instance = conf.Generated<Configuration.PluginConfig>();
             Logger.Log.Debug("Config loaded");
-            zenjector.OnMenu<SyncSaberInstaller>();
+            zenjector.Install<SyncSaberInstaller>(Location.Menu);
         }
 
         private async Task DelayedStartup()
