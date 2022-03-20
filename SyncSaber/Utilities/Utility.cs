@@ -63,8 +63,10 @@ namespace SyncSaber.Utilities
 
         public static void MoveFilesRecursively(DirectoryInfo source, DirectoryInfo target)
         {
-            foreach (var dir in source.GetDirectories())
+            foreach (var dir in source.GetDirectories()) {
                 MoveFilesRecursively(dir, target.CreateSubdirectory(dir.Name));
+            }
+
             foreach (var file in source.GetFiles()) {
                 var newFilePath = Path.Combine(target.FullName, file.Name);
                 if (File.Exists(newFilePath)) {
@@ -75,8 +77,10 @@ namespace SyncSaber.Utilities
                         Logger.Error(e);
                         //Logger.Info($"Failed to delete file {Path.GetFileName(newFilePath)}! File is in use!");
                         var filesToDelete = Path.Combine(Environment.CurrentDirectory, "FilesToDelete");
-                        if (!Directory.Exists(filesToDelete))
+                        if (!Directory.Exists(filesToDelete)) {
                             Directory.CreateDirectory(filesToDelete);
+                        }
+
                         File.Move(newFilePath, Path.Combine(filesToDelete, file.Name));
                         //Logger.Info("Moved file into FilesToDelete directory!");
                     }
@@ -144,16 +148,21 @@ namespace SyncSaber.Utilities
             }
         }
 
-        public static bool IsModInstalled(string modName) => PluginManager.GetPlugin(modName) != null;
+        public static bool IsModInstalled(string modName)
+        {
+            return PluginManager.GetPlugin(modName) != null;
+        }
 
         public static void WriteStringListSafe(string path, List<string> data, bool sort = true)
         {
             lock (_lockObject) {
-                if (File.Exists(path))
+                if (File.Exists(path)) {
                     File.Copy(path, path + ".bak", true);
+                }
 
-                if (sort)
+                if (sort) {
                     data.Sort();
+                }
 
                 File.WriteAllLines(path, data);
                 File.Delete(path + ".bak");

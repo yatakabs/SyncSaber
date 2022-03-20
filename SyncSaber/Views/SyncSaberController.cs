@@ -50,8 +50,9 @@ namespace SyncSaber.Views
 
         private void Update()
         {
-            if (!string.IsNullOrEmpty(this.NotificationText) && this._uiResetTime <= DateTime.Now)
+            if (!string.IsNullOrEmpty(this.NotificationText) && this._uiResetTime <= DateTime.Now) {
                 this.NotificationText = "";
+            }
         }
 
         public async void Initialize()

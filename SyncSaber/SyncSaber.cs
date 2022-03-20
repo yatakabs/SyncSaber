@@ -62,7 +62,7 @@ namespace SyncSaber
             }
             if (this.SyncTimer == null) {
 #if DEBUG
-                SyncTimer = new System.Timers.Timer(new TimeSpan(0, 0, 30).TotalMilliseconds);
+                this.SyncTimer = new System.Timers.Timer(new TimeSpan(0, 0, 30).TotalMilliseconds);
 #else
                 this.SyncTimer = new System.Timers.Timer(new TimeSpan(0, 30, 0).TotalMilliseconds);
 #endif
@@ -73,7 +73,10 @@ namespace SyncSaber
 
             if (File.Exists(_historyPath + ".bak")) {
                 // Something went wrong when the history file was being written previously, restore it from backup
-                if (File.Exists(_historyPath)) File.Delete(_historyPath);
+                if (File.Exists(_historyPath)) {
+                    File.Delete(_historyPath);
+                }
+
                 File.Move(_historyPath + ".bak", _historyPath);
             }
             if (File.Exists(_historyPath)) {
@@ -188,7 +191,10 @@ namespace SyncSaber
             }
         }
 
-        public void StartTimer() => this.SyncTimer.Start();
+        public void StartTimer()
+        {
+            this.SyncTimer.Start();
+        }
 
         private int GetMaxBeastSaberPages(DownloadFeed feedToDownload)
         {
@@ -251,7 +257,9 @@ namespace SyncSaber
 
         private void RemoveOldVersions(string hash)
         {
-            if (!PluginConfig.Instance.DeleteOldVersions) return;
+            if (!PluginConfig.Instance.DeleteOldVersions) {
+                return;
+            }
 
             var levelMap = Loader.CustomLevels.FirstOrDefault(x => x.Value.levelID.ToUpper() == $"CUSTOM_LEVEL_{hash.ToUpper()}");
 
@@ -300,7 +308,7 @@ namespace SyncSaber
                     if (!res.IsSuccessStatusCode) {
                         Logger.Info($"{res.StatusCode}");
                         return;
-                    
+
                     }
                     var docs = result["docs"].AsArray;
                     docsCount = docs.Count;
@@ -372,7 +380,7 @@ namespace SyncSaber
                         }
                     }
                     pageCount++;
-                    
+
                 } while (docsCount != 0);
             }
             catch (Exception e) {
@@ -432,7 +440,7 @@ namespace SyncSaber
                                 continue;
                             }
                             var dlUrl = $"{DOWNLOAD_URL}/{hash}.zip";
-                            
+
                             Logger.Info(dlUrl);
                             this.DisplayNotification($"Download - {songName}");
                             while (Plugin.Instance?.IsInGame == true) {
@@ -452,7 +460,7 @@ namespace SyncSaber
                             downloadSucess = true;
                             downloadCount++;
                         }
-                        
+
                         // Keep a history of all the songs we download- count it as downloaded even if the user already had it downloaded previously so if they delete it it doesn't get redownloaded
                         if (downloadSucess) {
                             SongDownloadHistory.Add(hash.ToLower());
@@ -477,8 +485,9 @@ namespace SyncSaber
                 }
 
                 //Logger.Info($"Reached end of page! Found {totalSongsForPage.ToString()} songs total, downloaded {downloadCountForPage.ToString()}!");
-                if (pageIndex > this.GetMaxBeastSaberPages(feedToDownload) + 1 && this.GetMaxBeastSaberPages(feedToDownload) != 0)
+                if (pageIndex > this.GetMaxBeastSaberPages(feedToDownload) + 1 && this.GetMaxBeastSaberPages(feedToDownload) != 0) {
                     break;
+                }
             }
             // Write our download history to file
             Utility.WriteStringListSafe(_historyPath, SongDownloadHistory.ToList());

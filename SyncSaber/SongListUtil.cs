@@ -31,7 +31,10 @@ namespace SyncSaber
                 this.SelectBeatMapLevel(this._lastSelectedBeatmap);
             }
         }
-        private void TableView_didSelectLevelEvent(LevelCollectionTableView arg1, IPreviewBeatmapLevel arg2) => this.CurrentPreviewBeatmapLevel = arg2;
+        private void TableView_didSelectLevelEvent(LevelCollectionTableView arg1, IPreviewBeatmapLevel arg2)
+        {
+            this.CurrentPreviewBeatmapLevel = arg2;
+        }
 
         public IEnumerator RefreshSongs(bool fullRefresh = false)
         {
@@ -39,7 +42,7 @@ namespace SyncSaber
             this._lastSelectedBeatmap = this.CurrentPreviewBeatmapLevel;
             Loader.Instance.RefreshSongs(fullRefresh);
             yield return new WaitWhile(() => !Loader.AreSongsLoaded || Loader.AreSongsLoading || Plugin.Instance.IsInGame);
-            
+
         }
 
         public void SelectBeatMapLevel(IPreviewBeatmapLevel beatmapLevel)
