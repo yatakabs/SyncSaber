@@ -1,5 +1,4 @@
-﻿using SiraUtil;
-using SyncSaber.Views;
+﻿using SyncSaber.Views;
 using Zenject;
 
 namespace SyncSaber.Installers

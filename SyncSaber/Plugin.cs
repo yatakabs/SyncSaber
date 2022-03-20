@@ -81,6 +81,9 @@ namespace SyncSaber
             BSEvents.earlyMenuSceneLoadedFresh -= this.BSEvents_earlyMenuSceneLoadedFresh;
         }
 
-        private void SceneManagerOnActiveSceneChanged(Scene arg0, Scene scene) => this.IsInGame = scene.name == "GameCore";
+        private void SceneManagerOnActiveSceneChanged(Scene arg0, Scene scene)
+        {
+            this.IsInGame = scene.name == "GameCore";
+        }
     }
 }

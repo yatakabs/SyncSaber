@@ -75,7 +75,10 @@ namespace SyncSaber
 
                 playlistNode.Add("fileLoc", new JSONString("1"));
 
-                if (!Directory.Exists("Playlists")) Directory.CreateDirectory("Playlists");
+                if (!Directory.Exists("Playlists")) {
+                    Directory.CreateDirectory("Playlists");
+                }
+
                 File.WriteAllText($"Playlists\\{playlist.fileName}{(playlist.oldFormat ? ".json" : ".bplist")}", playlistNode.ToString());
             }
         }
@@ -103,9 +106,15 @@ namespace SyncSaber
             this.ReadPlaylist();
         }
 
-        public void Add(string hash, string songName) => this.Songs.Add(new PlaylistSong(hash, songName));
+        public void Add(string hash, string songName)
+        {
+            this.Songs.Add(new PlaylistSong(hash, songName));
+        }
 
-        public void WritePlaylist() => PlaylistIO.WritePlaylist(this);
+        public void WritePlaylist()
+        {
+            PlaylistIO.WritePlaylist(this);
+        }
 
         public bool ReadPlaylist()
         {

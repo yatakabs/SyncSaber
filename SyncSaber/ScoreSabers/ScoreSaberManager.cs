@@ -1,6 +1,5 @@
 ﻿using SyncSaber.NetWorks;
 using SyncSaber.SimpleJSON;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
