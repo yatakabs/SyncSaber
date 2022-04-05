@@ -188,17 +188,17 @@
     <Compile Include="SimpleJSON\SimpleJSON.cs" />
     <Compile Include="SongListUtil.cs" />
     <Compile Include="Statics\Enums.cs" />
-    <Compile Include="SyncSaber.cs" />
+    <Compile Include="SyncSaberController.cs" />
     <Compile Include="UI\SettingViewController.cs" />
     <Compile Include="Utilities\Utility.cs" />
-    <Compile Include="Views\SyncSaberController.cs" />
+    <Compile Include="Views\NotificationViewController.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="BuildTargets.targets" />
     <EmbeddedResource Include="UI\SettingView.bsml" />
     <EmbeddedResource Include="UI\SyncSaber.bsml" />
-    <EmbeddedResource Include="Views\SyncSaberController.bsml">
-      <DependentUpon>SyncSaberController.cs</DependentUpon>
+    <EmbeddedResource Include="Views\NotificationViewController.bsml">
+      <DependentUpon>NotificationViewController.cs</DependentUpon>
     </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>

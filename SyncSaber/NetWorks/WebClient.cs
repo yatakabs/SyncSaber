@@ -18,7 +18,7 @@ namespace SyncSaber.NetWorks
         {
             client = new HttpClient()
             {
-                Timeout = new TimeSpan(0, 0, 30)
+                Timeout = new TimeSpan(0, 0, 15)
             };
             client.DefaultRequestHeaders.UserAgent.TryParseAdd($"SyncSaber/{Assembly.GetExecutingAssembly().GetName().Version}");
         }

@@ -9,7 +9,7 @@ using Zenject;
 namespace SyncSaber.Views
 {
     [HotReload]
-    internal class SyncSaberController : BSMLAutomaticViewController, IInitializable
+    internal class NotificationViewController : BSMLAutomaticViewController, IInitializable
     {
         /// <summary>説明 を取得、設定</summary>
         private string notificationText_;
