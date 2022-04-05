@@ -22,7 +22,7 @@ using Zenject;
 
 namespace SyncSaber
 {
-    public class SyncSaber : MonoBehaviour, ISyncSaber
+    public class SyncSaberController : MonoBehaviour, ISyncSaber
     {
         private static SemaphoreSlim _semaphoreSlim;
         private System.Timers.Timer SyncTimer { get; set; }
@@ -48,7 +48,7 @@ namespace SyncSaber
         private readonly DiContainer _diContainer;
         [Inject]
         private readonly SongListUtil utils;
-        public const string ROOT_BEATSAVER_URL = "https://beatsaver.com/api";
+        public const string ROOT_BEATSAVER_URL = "https://api.beatsaver.com";
         public const string DOWNLOAD_URL = "https://cdn.beatsaver.com";
         public const string ROOT_BEASTSABER_URL = "https://bsaber.com/wp-json/bsaber-api/songs";
 
