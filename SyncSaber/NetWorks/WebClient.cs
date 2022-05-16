@@ -10,17 +10,17 @@ namespace SyncSaber.NetWorks
 {
     public static class WebClient
     {
-        private static readonly HttpClient client;
-        private static readonly int RETRY_COUNT = 5;
-        private static readonly SemaphoreSlim semaphoreSlim = new SemaphoreSlim(2, 2);
+        private static readonly HttpClient s_client;
+        private static readonly int s_retryCount = 5;
+        private static readonly SemaphoreSlim s_semaphoreSlim = new SemaphoreSlim(2, 2);
 
         static WebClient()
         {
-            client = new HttpClient()
+            s_client = new HttpClient()
             {
                 Timeout = new TimeSpan(0, 0, 15)
             };
-            client.DefaultRequestHeaders.UserAgent.TryParseAdd($"SyncSaber/{Assembly.GetExecutingAssembly().GetName().Version}");
+            s_client.DefaultRequestHeaders.UserAgent.TryParseAdd($"SyncSaber/{Assembly.GetExecutingAssembly().GetName().Version}");
         }
 
         internal static async Task<WebResponse> GetAsync(string url, CancellationToken token)
@@ -75,7 +75,7 @@ namespace SyncSaber.NetWorks
 
             // send request
             try {
-                await semaphoreSlim.WaitAsync();
+                await s_semaphoreSlim.WaitAsync();
 
                 HttpResponseMessage resp = null;
                 var retryCount = 0;
@@ -87,14 +87,14 @@ namespace SyncSaber.NetWorks
                             await Task.Delay(1000);
                         }
                         retryCount++;
-                        resp = await client.SendAsync(req, HttpCompletionOption.ResponseHeadersRead, token).ConfigureAwait(false);
+                        resp = await s_client.SendAsync(req, HttpCompletionOption.ResponseHeadersRead, token).ConfigureAwait(false);
                         Logger.Info($"resp code : {resp.StatusCode}");
                     }
                     catch (Exception e) {
                         Logger.Error($"Error : {e}");
                         Logger.Error($"{resp?.StatusCode}");
                     }
-                } while (resp?.StatusCode != HttpStatusCode.NotFound && resp?.IsSuccessStatusCode != true && retryCount <= RETRY_COUNT);
+                } while (resp?.StatusCode != HttpStatusCode.NotFound && resp?.IsSuccessStatusCode != true && retryCount <= s_retryCount);
 
 
                 if (token.IsCancellationRequested) {
@@ -136,7 +136,7 @@ namespace SyncSaber.NetWorks
                 throw;
             }
             finally {
-                semaphoreSlim.Release();
+                s_semaphoreSlim.Release();
             }
         }
     }

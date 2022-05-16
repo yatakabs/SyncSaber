@@ -16,7 +16,6 @@ using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Xml;
 using UnityEngine;
 using Zenject;
 
@@ -24,12 +23,15 @@ namespace SyncSaber
 {
     public class SyncSaberController : MonoBehaviour, ISyncSaber
     {
-        private static SemaphoreSlim _semaphoreSlim;
+        private SemaphoreSlim _semaphoreSlim;
         private System.Timers.Timer SyncTimer { get; set; }
 
-        private static readonly string _historyPath = Path.Combine(Environment.CurrentDirectory, "UserData", "SyncSaberHistory.txt");
-        private static readonly string _favoriteMappersPath = Path.Combine(Environment.CurrentDirectory, "UserData", "FavoriteMappers.ini");
-        private static readonly string _customLevelsPath = Path.Combine(Environment.CurrentDirectory, "Beat Saber_Data", "CustomLevels");
+        private static readonly string s_historyPath = Path.Combine(Environment.CurrentDirectory, "UserData", "SyncSaberHistory.txt");
+        private static readonly string s_favoriteMappersPath = Path.Combine(Environment.CurrentDirectory, "UserData", "FavoriteMappers.ini");
+        private static readonly string s_customLevelsPath = Path.Combine(Environment.CurrentDirectory, "Beat Saber_Data", "CustomLevels");
+
+        private static readonly Regex s_invalidDirectoryAndFileChars = new Regex($@"[{Regex.Escape(new string(Path.GetInvalidFileNameChars()) + new string(Path.GetInvalidPathChars()))}]");
+
         private Stack<string> AuthorDownloadQueue { get; } = new Stack<string>();
         public static HashSet<string> SongDownloadHistory => Plugin.SongDownloadHistory;
         private readonly Playlist _syncSaberSongs = new Playlist("SyncSaberPlaylist", "SyncSaber Playlist", "brian91292", "1");
@@ -47,18 +49,21 @@ namespace SyncSaber
         [Inject]
         private readonly DiContainer _diContainer;
         [Inject]
-        private readonly SongListUtil utils;
+        private readonly SongListUtil _utils;
+
+#pragma warning disable IDE1006 // 命名スタイル
         public const string ROOT_BEATSAVER_URL = "https://api.beatsaver.com";
         public const string DOWNLOAD_URL = "https://cdn.beatsaver.com";
         public const string ROOT_BEASTSABER_URL = "https://bsaber.com/wp-json/bsaber-api/songs";
+#pragma warning restore IDE1006 // 命名スタイル
 
         #region UinityMethod
         private void Awake()
         {
             Logger.Info("Start Awake.");
             DontDestroyOnLoad(this);
-            if (_semaphoreSlim == null) {
-                _semaphoreSlim = new SemaphoreSlim(1, 1);
+            if (this._semaphoreSlim == null) {
+                this._semaphoreSlim = new SemaphoreSlim(1, 1);
             }
             if (this.SyncTimer == null) {
 #if DEBUG
@@ -71,27 +76,27 @@ namespace SyncSaber
             this._beastSaberFeeds.Add(DownloadFeed.Bookmarks, $"{ROOT_BEASTSABER_URL}/?bookmarked_by=%BeastSaberUserName%&count=200&page=%PageNumber%");
             this._beastSaberFeeds.Add(DownloadFeed.CuratorRecommended, $"{ROOT_BEASTSABER_URL}/?bookmarked_by=curatorrecommended&count=50&page=%PageNumber%");
 
-            if (File.Exists(_historyPath + ".bak")) {
+            if (File.Exists(s_historyPath + ".bak")) {
                 // Something went wrong when the history file was being written previously, restore it from backup
-                if (File.Exists(_historyPath)) {
-                    File.Delete(_historyPath);
+                if (File.Exists(s_historyPath)) {
+                    File.Delete(s_historyPath);
                 }
 
-                File.Move(_historyPath + ".bak", _historyPath);
+                File.Move(s_historyPath + ".bak", s_historyPath);
             }
-            if (File.Exists(_historyPath)) {
+            if (File.Exists(s_historyPath)) {
                 SongDownloadHistory.Clear();
-                SongDownloadHistory.AddRange(File.ReadAllLines(_historyPath));
+                SongDownloadHistory.AddRange(File.ReadAllLines(s_historyPath));
             }
-            if (!Directory.Exists(_customLevelsPath)) {
-                Directory.CreateDirectory(_customLevelsPath);
+            if (!Directory.Exists(s_customLevelsPath)) {
+                Directory.CreateDirectory(s_customLevelsPath);
             }
 
-            if (!File.Exists(_favoriteMappersPath)) {
+            if (!File.Exists(s_favoriteMappersPath)) {
 #if DEBUG
                 File.WriteAllLines(_favoriteMappersPath, new string[] { "denpadokei", "ejiejidayo", "fefy" });
 #else
-                File.WriteAllLines(_favoriteMappersPath, new string[] { "" });
+                File.WriteAllLines(s_favoriteMappersPath, new string[] { "" });
 #endif
             }
             this.SyncTimer.Elapsed -= this.Timer_Elapsed;
@@ -135,12 +140,12 @@ namespace SyncSaber
         public async Task Sync()
         {
             var tasks = new List<Task>();
-            foreach (var mapper in File.ReadAllLines(_favoriteMappersPath)) {
+            foreach (var mapper in File.ReadAllLines(s_favoriteMappersPath)) {
                 Logger.Info($"Mapper: {mapper}");
                 this.AuthorDownloadQueue.Push(mapper);
             }
             try {
-                await _semaphoreSlim.WaitAsync();
+                await this._semaphoreSlim.WaitAsync();
                 this._didDownloadAnySong = false;
                 while (!this._initialized || !Loader.AreSongsLoaded) {
                     await Task.Delay(200);
@@ -187,7 +192,7 @@ namespace SyncSaber
                 Logger.Error(e);
             }
             finally {
-                _semaphoreSlim.Release();
+                this._semaphoreSlim.Release();
             }
         }
 
@@ -214,7 +219,7 @@ namespace SyncSaber
         {
             yield return new WaitWhile(() => !Loader.AreSongsLoaded || Loader.AreSongsLoading || Plugin.Instance.IsInGame);
             if (this._didDownloadAnySong) {
-                yield return this.StartCoroutine(this.utils.RefreshSongs());
+                yield return this.StartCoroutine(this._utils.RefreshSongs());
             }
             yield return new WaitWhile(() => !Loader.AreSongsLoaded || Loader.AreSongsLoading || Plugin.Instance.IsInGame);
             this.DisplayNotification("Finished checking for new songs!");
@@ -391,7 +396,7 @@ namespace SyncSaber
             }
 
             // Write our download history to file
-            Utility.WriteStringListSafe(_historyPath, SongDownloadHistory.ToList());
+            Utility.WriteStringListSafe(s_historyPath, SongDownloadHistory.ToList());
 
             // Write to the SyncSaber playlist
             this._syncSaberSongs.WritePlaylist();
@@ -490,7 +495,7 @@ namespace SyncSaber
                 }
             }
             // Write our download history to file
-            Utility.WriteStringListSafe(_historyPath, SongDownloadHistory.ToList());
+            Utility.WriteStringListSafe(s_historyPath, SongDownloadHistory.ToList());
             // Write to the SynCSaber playlist
             this._syncSaberSongs.WritePlaylist();
             this.GetPlaylistForFeed(feedToDownload).WritePlaylist();
@@ -559,7 +564,7 @@ namespace SyncSaber
             }
             try {
                 // Write our download history to file
-                Utility.WriteStringListSafe(_historyPath, SongDownloadHistory.ToList());
+                Utility.WriteStringListSafe(s_historyPath, SongDownloadHistory.ToList());
                 // Write to the SyncSaber playlist
                 this._syncSaberSongs.WritePlaylist();
             }
@@ -595,7 +600,7 @@ namespace SyncSaber
             if (string.IsNullOrEmpty(key)) {
                 key = songNode["song_key"].Value.ToLower();
                 var author = songNode["level_author_name"].Value;
-                var result = Path.Combine(_customLevelsPath, Regex.Replace($"{key} ({songNode["title"].Value} - {author})", "[\\\\:*/?\"<>|]", "_"));
+                var result = Path.Combine(s_customLevelsPath, s_invalidDirectoryAndFileChars.Replace($"{key} ({songNode["title"].Value} - {author})", "_"));
 
                 var count = 1;
                 var resultLength = result.Length;
@@ -608,7 +613,7 @@ namespace SyncSaber
             else {
                 var meta = songNode["metadata"].AsObject;
                 var author = meta["levelAuthorName"].Value;
-                var result = Path.Combine(_customLevelsPath, Regex.Replace($"{key} ({songNode["name"].Value} - {author})", "[\\\\:*/?\"<>|]", "_"));
+                var result = Path.Combine(s_customLevelsPath, s_invalidDirectoryAndFileChars.Replace($"{key} ({songNode["name"].Value} - {author})", "_"));
 
                 var count = 1;
                 var resultLength = result.Length;
@@ -620,20 +625,20 @@ namespace SyncSaber
             }
         }
 
-        private string CreateSongDirectory(XmlNode songNode)
-        {
-            var key = songNode["SongKey"].InnerText;
-            var author = songNode["LevelAuthorName"].InnerText;
-            var result = Path.Combine(_customLevelsPath, Regex.Replace($"{key} ({songNode["SongTitle"].InnerText} - {author})", "[\\\\:*/?\"<>|]", "_"));
+        //private string CreateSongDirectory(XmlNode songNode)
+        //{
+        //    var key = songNode["SongKey"].InnerText;
+        //    var author = songNode["LevelAuthorName"].InnerText;
+        //    var result = Path.Combine(_customLevelsPath, Regex.Replace($"{key} ({songNode["SongTitle"].InnerText} - {author})", "[\\\\:*/?\"<>|]", "_"));
 
-            var count = 1;
-            var resultLength = result.Length;
-            while (Directory.Exists(result)) {
-                result = $"{result.Substring(0, resultLength)}({count})";
-                count++;
-            }
-            return result;
-        }
+        //    var count = 1;
+        //    var resultLength = result.Length;
+        //    while (Directory.Exists(result)) {
+        //        result = $"{result.Substring(0, resultLength)}({count})";
+        //        count++;
+        //    }
+        //    return result;
+        //}
 
         public void Dispose()
         {
@@ -641,8 +646,8 @@ namespace SyncSaber
             this.SyncTimer.Elapsed -= this.Timer_Elapsed;
             ((IDisposable)this.SyncTimer).Dispose();
             this.SyncTimer = null;
-            _semaphoreSlim.Dispose();
-            _semaphoreSlim = null;
+            this._semaphoreSlim?.Dispose();
+            this._semaphoreSlim = null;
         }
     }
 }

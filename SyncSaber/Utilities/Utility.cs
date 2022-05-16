@@ -13,7 +13,7 @@ namespace SyncSaber.Utilities
 {
     public class Utility
     {
-        private static readonly object _lockObject = new object();
+        private static readonly object s_lockObject = new object();
 
         public static TextMeshProUGUI CreateNotificationText(string text, FloatingScreen screen)
         {
@@ -155,7 +155,7 @@ namespace SyncSaber.Utilities
 
         public static void WriteStringListSafe(string path, List<string> data, bool sort = true)
         {
-            lock (_lockObject) {
+            lock (s_lockObject) {
                 if (File.Exists(path)) {
                     File.Copy(path, path + ".bak", true);
                 }
