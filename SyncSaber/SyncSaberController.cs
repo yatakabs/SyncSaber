@@ -7,8 +7,10 @@ using SyncSaber.ScoreSabers;
 using SyncSaber.SimpleJSON;
 using SyncSaber.Statics;
 using SyncSaber.Utilities;
+using SyncSaber.Utilities.PlaylistDownLoader;
 using System;
 using System.Collections;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -32,7 +34,7 @@ namespace SyncSaber
 
         private static readonly Regex s_invalidDirectoryAndFileChars = new Regex($@"[{Regex.Escape(new string(Path.GetInvalidFileNameChars()) + new string(Path.GetInvalidPathChars()))}]");
 
-        private Stack<string> AuthorDownloadQueue { get; } = new Stack<string>();
+        private ConcurrentStack<string> AuthorDownloadQueue { get; } = new ConcurrentStack<string>();
         public static HashSet<string> SongDownloadHistory => Plugin.SongDownloadHistory;
         private readonly Playlist _syncSaberSongs = new Playlist("SyncSaberPlaylist", "SyncSaber Playlist", "brian91292", "1");
         private readonly Playlist _curatorRecommendedSongs = new Playlist("SyncSaberCuratorRecommendedPlaylist", "BeastSaber Curator Recommended", "brian91292", "1");
@@ -46,16 +48,21 @@ namespace SyncSaber
         /// ほんとはボックス化しちゃうからEnumをDictionaryに放り込みたくない
         /// </summary>
         private readonly Dictionary<DownloadFeed, string> _beastSaberFeeds = new Dictionary<DownloadFeed, string>();
-        [Inject]
-        private readonly DiContainer _diContainer;
-        [Inject]
-        private readonly SongListUtil _utils;
+        private DiContainer _diContainer;
+        private SongListUtil _utils;
 
 #pragma warning disable IDE1006 // 命名スタイル
         public const string ROOT_BEATSAVER_URL = "https://api.beatsaver.com";
         public const string DOWNLOAD_URL = "https://cdn.beatsaver.com";
         public const string ROOT_BEASTSABER_URL = "https://bsaber.com/wp-json/bsaber-api/songs";
 #pragma warning restore IDE1006 // 命名スタイル
+
+        [Inject]
+        protected void Constractor(DiContainer container, SongListUtil songListUtil)
+        {
+            this._diContainer = container;
+            this._utils = songListUtil;
+        }
 
         #region UinityMethod
         private void Awake()
@@ -94,7 +101,7 @@ namespace SyncSaber
 
             if (!File.Exists(s_favoriteMappersPath)) {
 #if DEBUG
-                File.WriteAllLines(_favoriteMappersPath, new string[] { "denpadokei", "ejiejidayo", "fefy" });
+                File.WriteAllLines(s_favoriteMappersPath, new string[] { "denpadokei", "ejiejidayo", "fefy" });
 #else
                 File.WriteAllLines(s_favoriteMappersPath, new string[] { "" });
 #endif
@@ -184,7 +191,7 @@ namespace SyncSaber
                 }
                 await Task.WhenAll(tasks);
                 this.StartCoroutine(this.BeforeDownloadSongs());
-                if (Plugin.Instance.IsPlaylistDownlaoderInstalled) {
+                if (Utility.IsPlaylistDownLoaderInstalled()) {
                     this.StartCoroutine(this.CheckPlaylist());
                 }
             }
@@ -363,7 +370,7 @@ namespace SyncSaber
                                     await Task.Delay(200);
                                 }
                                 using (var st = new MemoryStream(buff)) {
-                                    Utility.ExtractZip(st, currentSongDirectory);
+                                    IO_Util.ExtractZip(st, currentSongDirectory);
                                 }
                                 downloadSucess = true;
                                 this._didDownloadAnySong = true;
@@ -460,7 +467,7 @@ namespace SyncSaber
                                 await Task.Delay(200);
                             }
                             using (var st = new MemoryStream(buff)) {
-                                Utility.ExtractZip(st, currentSongDirectory);
+                                IO_Util.ExtractZip(st, currentSongDirectory);
                             }
                             downloadSucess = true;
                             downloadCount++;
@@ -551,7 +558,7 @@ namespace SyncSaber
                     }
                     var songDirectory = this.CreateSongDirectory(jsonObject);
                     using (var st = new MemoryStream(buff)) {
-                        Utility.ExtractZip(st, songDirectory);
+                        IO_Util.ExtractZip(st, songDirectory);
                     }
                     this._didDownloadAnySong = true;
                     SongDownloadHistory.Add(hash.ToLower());
@@ -575,8 +582,8 @@ namespace SyncSaber
         public void SetEvent()
         {
             try {
-                Utility.GetPlaylistDownloader(this._diContainer).ChangeNotificationText -= this.NotificationTextChange;
-                Utility.GetPlaylistDownloader(this._diContainer).ChangeNotificationText += this.NotificationTextChange;
+                Utility.RemoveEventHandler(_diContainer, this.RaiseEvent);
+                Utility.AddEventHandler(_diContainer, this.RaiseEvent);
             }
             catch (Exception e) {
                 Logger.Error(e);
@@ -587,7 +594,7 @@ namespace SyncSaber
         {
             yield return new WaitWhile(() => !Loader.AreSongsLoaded || Loader.AreSongsLoading);
             try {
-                _ = Utility.GetPlaylistDownloader(this._diContainer).CheckPlaylistsSong();
+                _ = Utility.CheckPlaylistsSong(_diContainer);
             }
             catch (Exception e) {
                 Logger.Error(e);
@@ -623,6 +630,11 @@ namespace SyncSaber
                 }
                 return result;
             }
+        }
+
+        private void RaiseEvent(string text)
+        {
+            this.NotificationTextChange?.Invoke(text);
         }
 
         //private string CreateSongDirectory(XmlNode songNode)
