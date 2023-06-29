@@ -3,7 +3,7 @@
     "id": "SyncSaber",
     "name": "SyncSaber",
     "author": "denpadokei",
-    "version": "5.0.0",
+    "version": "5.0.0-rc1",
     "description": "",
     "gameVersion": "1.30.2",
   "dependsOn": {
@@ -12,8 +12,8 @@
     "BeatSaberMarkupLanguage": "^1.7.3",
     "BS Utils": "^1.12.3",
     "SongCore": "^3.10.3"
+
   },
-    "features": [],
     "links": {
       "project-source": "https://github.com/denpadokei/SyncSaber"
     }
