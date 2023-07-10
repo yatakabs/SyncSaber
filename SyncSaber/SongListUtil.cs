@@ -7,7 +7,7 @@ using Zenject;
 
 namespace SyncSaber
 {
-    internal class SongListUtil : IDisposable
+    public class SongListUtil : IDisposable
     {
         private LevelCollectionViewController _levelCollectionViewController;
         private LevelCollectionTableView levelCollectionTableView;

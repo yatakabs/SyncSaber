@@ -42,10 +42,6 @@
     <RunPostBuildEvent>OnBuildSuccess</RunPostBuildEvent>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="BeatSaverDownloader, Version=3.2.4.0, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>$(BeatSaberDir)\Plugins\BeatSaverDownloader.dll</HintPath>
-    </Reference>
     <Reference Include="BSML, Version=1.3.4.0, Culture=neutral, processorArchitecture=MSIL">
       <Private>False</Private>
       <HintPath>$(BeatSaberDir)\Plugins\BSML.dll</HintPath>
@@ -79,18 +75,10 @@
       <HintPath>$(BeatSaberDir)\Beat Saber_Data\Managed\Main.dll</HintPath>
       <SpecificVersion>False</SpecificVersion>
     </Reference>
-    <Reference Include="PlaylistDownLoader, Version=0.2.1.0, Culture=neutral, processorArchitecture=MSIL">
-      <Private>False</Private>
-      <HintPath>$(BeatSaberDir)\Plugins\PlaylistDownLoader.dll</HintPath>
-      <SpecificVersion>False</SpecificVersion>
-    </Reference>
     <Reference Include="SiraUtil, Version=2.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <Private>False</Private>
       <HintPath>$(BeatSaberDir)\Plugins\SiraUtil.dll</HintPath>
       <SpecificVersion>False</SpecificVersion>
-    </Reference>
-    <Reference Include="SongBrowser">
-      <HintPath>$(BeatSaberDir)\Plugins\SongBrowser.dll</HintPath>
     </Reference>
     <Reference Include="SongCore, Version=3.2.1.0, Culture=neutral, processorArchitecture=MSIL">
       <Private>False</Private>
@@ -106,6 +94,11 @@
     <Reference Include="System.Data.DataSetExtensions" />
     <Reference Include="System.Data" />
     <Reference Include="System.Xml" />
+    <Reference Include="Unity.ResourceManager, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <Private>False</Private>
+      <HintPath>$(BeatSaberDir)\Beat Saber_Data\Managed\Unity.ResourceManager.dll</HintPath>
+      <SpecificVersion>False</SpecificVersion>
+    </Reference>
     <Reference Include="Unity.TextMeshPro">
       <HintPath>$(BeatSaberDir)\Beat Saber_Data\Managed\Unity.TextMeshPro.dll</HintPath>
     </Reference>
@@ -172,7 +165,6 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="BeatSaberUI.cs" />
     <Compile Include="Configuration\PluginConfig.cs" />
     <Compile Include="Extentions\HashSetExtention.cs" />
     <Compile Include="Extentions\LoaderExtention.cs" />
@@ -190,7 +182,11 @@
     <Compile Include="Statics\Enums.cs" />
     <Compile Include="SyncSaberController.cs" />
     <Compile Include="UI\SettingViewController.cs" />
-    <Compile Include="Utilities\Utility.cs" />
+    <Compile Include="Utilities\IO_Util.cs" />
+    <Compile Include="Utilities\MainThreadInvoker.cs" />
+    <Compile Include="Utilities\PlaylistDownLoader\Utility.cs" />
+    <Compile Include="Utilities\Stack.cs" />
+    <Compile Include="Utilities\TMPUtil.cs" />
     <Compile Include="Views\NotificationViewController.cs" />
   </ItemGroup>
   <ItemGroup>
@@ -203,6 +199,9 @@
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="manifest.json" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="SyncSaber.csproj.user" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Import Project="BuildTargets.targets" />

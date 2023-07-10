@@ -2,6 +2,7 @@
 using BeatSaberMarkupLanguage.FloatingScreen;
 using BeatSaberMarkupLanguage.ViewControllers;
 using SyncSaber.Interfaces;
+using SyncSaber.Utilities.PlaylistDownLoader;
 using System;
 using UnityEngine;
 using Zenject;
@@ -25,10 +26,15 @@ namespace SyncSaber.Views
                 this.NotifyPropertyChanged();
             }
         }
-        [Inject]
-        private readonly ISyncSaber _syncSaber;
+        private ISyncSaber _syncSaber;
         private DateTime _uiResetTime;
         private FloatingScreen _floatingScreen;
+
+        [Inject]
+        protected void Constractor(ISyncSaber syncSaber)
+        {
+            this._syncSaber = syncSaber;
+        }
 
         private void Awake()
         {
@@ -68,7 +74,7 @@ namespace SyncSaber.Views
             try {
                 this._syncSaber.NotificationTextChange -= this.NotificationTextChange;
                 this._syncSaber.NotificationTextChange += this.NotificationTextChange;
-                if (Plugin.Instance.IsPlaylistDownlaoderInstalled) {
+                if (Utility.IsPlaylistDownLoaderInstalled()) {
                     this._syncSaber.SetEvent();
                 }
                 await this._syncSaber.Sync();
