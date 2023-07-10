@@ -6,7 +6,7 @@ using IPA.Loader;
 using SiraUtil.Zenject;
 using SyncSaber.Installers;
 using SyncSaber.UI;
-using SyncSaber.Utilities;
+using SyncSaber.Utilities.PlaylistDownLoader;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -20,8 +20,6 @@ namespace SyncSaber
     public class Plugin
     {
         public bool IsInGame { get; private set; }
-
-        public bool IsPlaylistDownlaoderInstalled => PluginManager.GetPlugin("PlaylistDownLoader") != null;
         public static HashSet<string> SongDownloadHistory { get; } = new HashSet<string>();
         internal static Plugin Instance { get; private set; }
         public string Name => "SyncSaber";
@@ -65,12 +63,6 @@ namespace SyncSaber
 
         private void BSEvents_earlyMenuSceneLoadedFresh(ScenesTransitionSetupDataSO obj)
         {
-            try {
-                BSMLSettings.instance.AddSettingsMenu("SYNC SABER", SettingViewController.instance.ResourceName, SettingViewController.instance);
-            }
-            catch (Exception e) {
-                Logger.Error(e);
-            }
         }
 
 
