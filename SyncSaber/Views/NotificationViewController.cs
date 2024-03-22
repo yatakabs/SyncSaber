@@ -1,10 +1,13 @@
 ﻿using BeatSaberMarkupLanguage.Attributes;
 using BeatSaberMarkupLanguage.FloatingScreen;
 using BeatSaberMarkupLanguage.ViewControllers;
+using HMUI;
 using SyncSaber.Interfaces;
 using SyncSaber.Utilities.PlaylistDownLoader;
 using System;
+using System.Linq;
 using UnityEngine;
+using UnityEngine.UI;
 using Zenject;
 
 namespace SyncSaber.Views
@@ -22,8 +25,14 @@ namespace SyncSaber.Views
 
             set
             {
+                if (!this._floatingScreen.isActiveAndEnabled && !string.IsNullOrEmpty(notificationText_)) {
+                    this._floatingScreen.gameObject.SetActive(true);
+                }
                 this.notificationText_ = value;
                 this.NotifyPropertyChanged();
+                if (string.IsNullOrEmpty(notificationText_)) {
+                    this._floatingScreen.gameObject.SetActive(false);
+                }
             }
         }
         private ISyncSaber _syncSaber;
@@ -67,6 +76,9 @@ namespace SyncSaber.Views
             try {
                 this._floatingScreen = FloatingScreen.CreateFloatingScreen(new Vector2(100f, 20f), false, new Vector3(0f, 0.3f, 2.8f), new Quaternion(0f, 0f, 0f, 0f));
                 this._floatingScreen.SetRootViewController(this, AnimationType.None);
+                foreach (var g in this._floatingScreen.gameObject.GetComponentsInChildren<Graphic>()) {
+                    g.raycastTarget = false;
+                }
             }
             catch (Exception e) {
                 Logger.Error(e);

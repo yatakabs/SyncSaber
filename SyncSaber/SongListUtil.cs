@@ -13,8 +13,8 @@ namespace SyncSaber
         private LevelCollectionTableView levelCollectionTableView;
         private bool disposedValue;
 
-        public IPreviewBeatmapLevel CurrentPreviewBeatmapLevel { get; private set; }
-        private IPreviewBeatmapLevel _lastSelectedBeatmap;
+        public BeatmapLevel CurrentPreviewBeatmapLevel { get; private set; }
+        private BeatmapLevel _lastSelectedBeatmap;
         [Inject]
         public void Constractor(LevelCollectionViewController levelView)
         {
@@ -31,7 +31,7 @@ namespace SyncSaber
                 this.SelectBeatMapLevel(this._lastSelectedBeatmap);
             }
         }
-        private void TableView_didSelectLevelEvent(LevelCollectionTableView arg1, IPreviewBeatmapLevel arg2)
+        private void TableView_didSelectLevelEvent(LevelCollectionTableView arg1, BeatmapLevel arg2)
         {
             this.CurrentPreviewBeatmapLevel = arg2;
         }
@@ -45,7 +45,7 @@ namespace SyncSaber
 
         }
 
-        public void SelectBeatMapLevel(IPreviewBeatmapLevel beatmapLevel)
+        public void SelectBeatMapLevel(BeatmapLevel beatmapLevel)
         {
             if (!this.levelCollectionTableView) {
                 return;
