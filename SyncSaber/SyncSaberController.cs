@@ -287,6 +287,32 @@ namespace SyncSaber
             }
         }
 
+        private async Task<int> GetMapperUserId(string mapperName)
+        {
+            if (string.IsNullOrEmpty(mapperName)) {
+                return -1;
+            }
+
+            var uri = $"{ROOT_BEATSAVER_URL}/users/name/{mapperName}";
+            var res = await WebClient.GetAsync(uri, default);
+
+            if (!res.IsSuccessStatusCode) {
+                Logger.Info($"{res.StatusCode}");
+                return -1;
+            }
+
+            var result = JSON.Parse(res.ContentToString());
+
+            var idNode = result["id"];
+            if (!idNode.IsNumber) {
+                Logger.Notice($"Failed to get mapper id for {mapperName}");
+                return -1;
+            }
+
+            var mapperId = idNode.AsInt;
+            return mapperId;
+        }
+
         private async Task DownloadAllSongsByAuthor(string author)
         {
             if (string.IsNullOrEmpty(author)) {
@@ -294,37 +320,40 @@ namespace SyncSaber
             }
 
             Logger.Info($"Downloading all songs from {author}");
-            JSONNode result;
             var stopWatch = new Stopwatch();
             var pageCount = 0;
             var docsCount = 0;
             while (Plugin.Instance?.IsInGame == true) {
                 await Task.Delay(200);
             }
-            this.DisplayNotification($"Checking {author}'s maps. ({pageCount} page)");
-            var res = await WebClient.GetAsync($"{ROOT_BEATSAVER_URL}/search/text/0?q={author}", new CancellationTokenSource().Token).ConfigureAwait(false);
-            if (!res.IsSuccessStatusCode) {
-                Logger.Info($"{res.StatusCode}");
+
+            this.DisplayNotification($"Looking for {author}'s mapper id...");
+            var userid = await this.GetMapperUserId(author);
+
+            if (userid == -1) {
+                Logger.Info($"Failed to get mapper id for {author}");
+                this.DisplayNotification($"Failed to get mapper id for {author}");
                 return;
             }
-            result = JSON.Parse(res.ContentToString());
-            if (!result["user"].IsObject) {
-                return;
-            }
-            var user = result["user"].AsObject;
-            var userid = user["id"].AsInt;
+
+            Logger.Info($"Found mapper id for {author}: {userid}");
+            this.DisplayNotification($"Found mapper id for {author}: {userid}");
+
             try {
                 stopWatch.Start();
+
                 do {
-                    res = await WebClient.GetAsync($"{ROOT_BEATSAVER_URL}/maps/uploader/{userid}/{pageCount}", new CancellationTokenSource().Token).ConfigureAwait(false);
+                    this.DisplayNotification($"Checking {author}'s maps. ({pageCount} page)");
+                    var res = await WebClient.GetAsync($"{ROOT_BEATSAVER_URL}/maps/uploader/{userid}/{pageCount}", new CancellationTokenSource().Token).ConfigureAwait(false);
                     if (!res.IsSuccessStatusCode) {
                         Logger.Info($"{res.StatusCode}");
                         return;
-
                     }
+
+                    var result = JSON.Parse(res.ContentToString());
+
                     var docs = result["docs"].AsArray;
                     docsCount = docs.Count;
-                    result = JSON.Parse(res.ContentToString());
 
 
                     foreach (var keyvalue in docs) {
